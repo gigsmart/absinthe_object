@@ -55,17 +55,42 @@ end
 
 See the [Authorization Guide](authorization.html) for details.
 
-### Custom Field Loaders
+### Field Resolution
 
-Override DataLoader with custom loading functions:
+All fields use the `field` macro. Resolution is determined by:
+
+- **`resolve`** - Single-item resolver (receives one parent)
+- **`loader`** - Batch loader (receives list of parents, returns map)
+- **Default** - Adapter provides default (Map.get for scalars, DataLoader for associations)
+
+A field cannot have both `resolve` and `loader` - they are mutually exclusive.
 
 ```elixir
 type "Worker", struct: MyApp.Worker do
+  # Association fields - adapter handles loading
+  field :organization, :organization
+  field :projects, list_of(:project)
+
+  # Computed field with resolver
+  field :display_name, :string do
+    resolve fn worker, _, _ ->
+      {:ok, worker.name || worker.email}
+    end
+  end
+
+  # Custom batch loader
   field :nearby_gigs, list_of(:gig) do
     arg :location, non_null(:geo_point)
 
-    loader fn worker, args, ctx ->
-      MyApp.Gigs.find_nearby(worker.id, args.location)
+    loader fn workers, args, ctx ->
+      worker_ids = Enum.map(workers, & &1.id)
+      gigs = MyApp.Gigs.find_nearby(worker_ids, args.location)
+
+      Enum.group_by(gigs, & &1.worker_id)
+      |> Map.new(fn {worker_id, worker_gigs} ->
+        worker = Enum.find(workers, & &1.id == worker_id)
+        {worker, worker_gigs}
+      end)
     end
   end
 end

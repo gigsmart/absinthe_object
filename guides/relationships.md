@@ -2,13 +2,19 @@
 
 This guide covers how to define relationships between types and use DataLoader for efficient batching.
 
-## Relationship Macros
+## Unified Field API
 
-Absinthe.Object provides three relationship macros that automatically generate DataLoader resolvers:
+Absinthe.Object uses a single `field` macro for all fields, including associations. Resolution is determined by:
 
-### has_many
+- **`resolve`** - Single-item resolver (receives one parent)
+- **`loader`** - Batch loader (receives list of parents)
+- **Default** - Adapter provides default resolution (Map.get for scalars, DataLoader for associations)
 
-Use `has_many` for one-to-many relationships:
+A field cannot have both `resolve` and `loader` - they are mutually exclusive.
+
+## Association Fields
+
+For associations, simply define fields with the appropriate type:
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
@@ -18,50 +24,75 @@ defmodule MyApp.GraphQL.Types.User do
     field :id, non_null(:id)
     field :name, :string
 
-    # A user has many posts
-    has_many :posts, MyApp.GraphQL.Types.Post
+    # One-to-many: user has many posts
+    field :posts, list_of(:post)
+
+    # One-to-one: user has one profile
+    field :profile, :profile
+
+    # Many-to-one: user belongs to organization
+    field :organization, :organization
   end
 end
 ```
 
-### has_one
+The adapter automatically determines how to load these fields based on the backing struct's associations.
 
-Use `has_one` for one-to-one relationships:
+## Explicit Loaders
+
+When you need custom batch loading logic, use the `loader` macro:
 
 ```elixir
-defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+type "User", struct: MyApp.User do
+  field :id, non_null(:id)
 
-  type "User", struct: MyApp.User do
-    field :id, non_null(:id)
+  # Loader receives list of parent objects and returns results
+  field :recent_activity, list_of(:activity) do
+    loader fn users, _args, ctx ->
+      user_ids = Enum.map(users, & &1.id)
+      activities = MyApp.Activity.recent_for_users(user_ids)
 
-    # A user has one profile
-    has_one :profile, MyApp.GraphQL.Types.Profile
+      # Return a map of parent -> result
+      Enum.group_by(activities, & &1.user_id)
+      |> Map.new(fn {user_id, acts} ->
+        user = Enum.find(users, & &1.id == user_id)
+        {user, acts}
+      end)
+    end
   end
 end
 ```
 
-### belongs_to
+## Resolvers vs Loaders
 
-Use `belongs_to` for the inverse side of relationships:
+Use `resolve` when you need per-item resolution:
 
 ```elixir
-defmodule MyApp.GraphQL.Types.Post do
-  use Absinthe.Object.Type
+field :display_name, :string do
+  resolve fn user, _, _ ->
+    {:ok, user.name || user.email}
+  end
+end
+```
 
-  type "Post", struct: MyApp.Post do
-    field :id, non_null(:id)
-    field :title, :string
+Use `loader` when you can batch load multiple items efficiently:
 
-    # A post belongs to a user (author)
-    belongs_to :author, MyApp.GraphQL.Types.User
+```elixir
+field :friends_count, :integer do
+  loader fn users, _args, _ctx ->
+    user_ids = Enum.map(users, & &1.id)
+    counts = MyApp.Friendship.count_by_user_ids(user_ids)
+
+    Map.new(users, fn user ->
+      {user, Map.get(counts, user.id, 0)}
+    end)
   end
 end
 ```
 
 ## DataLoader Setup
 
-To use relationships, you need to configure DataLoader in your schema:
+To enable automatic association loading, configure DataLoader in your schema:
 
 ### 1. Create a DataLoader Source
 
@@ -99,38 +130,32 @@ defmodule MyApp.GraphQL.Schema do
 end
 ```
 
-## Relationship Options
+## Loader with Arguments
 
-All relationship macros accept options:
-
-```elixir
-has_many :posts, MyApp.GraphQL.Types.Post,
-  source: :blog,           # DataLoader source name
-  args: %{published: true} # Additional args passed to loader
-```
-
-## Custom Resolvers
-
-If you need custom logic, you can still use a regular field with a resolver:
+Loaders can access arguments for filtering:
 
 ```elixir
-type "User", struct: MyApp.User do
-  field :recent_posts, list_of(:post) do
-    resolve fn user, _, %{context: %{loader: loader}} ->
-      loader
-      |> Dataloader.load(:repo, {:posts, %{limit: 5}}, user)
-      |> on_load(fn loader ->
-        posts = Dataloader.get(loader, :repo, {:posts, %{limit: 5}}, user)
-        {:ok, posts}
-      end)
-    end
+field :posts, list_of(:post) do
+  arg :status, :post_status
+
+  loader fn users, args, ctx ->
+    user_ids = Enum.map(users, & &1.id)
+    status = args[:status]
+
+    posts = MyApp.Posts.list_for_users(user_ids, status: status)
+
+    Enum.group_by(posts, & &1.author_id)
+    |> Map.new(fn {user_id, user_posts} ->
+      user = Enum.find(users, & &1.id == user_id)
+      {user, user_posts}
+    end)
   end
 end
 ```
 
 ## N+1 Query Prevention
 
-DataLoader automatically batches queries. For example, if you query:
+DataLoader and custom loaders automatically batch queries. For example, if you query:
 
 ```graphql
 {
@@ -148,3 +173,14 @@ DataLoader will:
 2. Batch all post queries into a single query using `WHERE user_id IN (...)`
 
 This prevents the N+1 query problem common in GraphQL APIs.
+
+## Selection-Aware Loading
+
+The Ecto adapter can be configured to select only the fields being queried:
+
+```elixir
+# Only loads the fields actually requested in the GraphQL query
+field :organization, :organization
+```
+
+When a query only requests `{ organization { name } }`, the loader will only SELECT the `name` column (plus required columns like `id`).

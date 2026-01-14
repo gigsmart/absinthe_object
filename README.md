@@ -45,16 +45,16 @@ defmodule MyApp.GraphQL.Types.User do
     field :email, non_null(:string)
     field :name, :string
 
-    # Computed field
+    # Computed field with resolver
     field :display_name, :string do
       resolve fn user, _, _ ->
         {:ok, user.name || user.email}
       end
     end
 
-    # Relationships with DataLoader
-    belongs_to :organization, MyApp.GraphQL.Types.Organization
-    has_many :posts, MyApp.GraphQL.Types.Post
+    # Association fields - adapter provides DataLoader resolution
+    field :organization, :organization
+    field :posts, list_of(:post)
 
     # Relay-style pagination
     connection :friends, MyApp.GraphQL.Types.User do
@@ -253,9 +253,31 @@ def update_user(_, %{input: input}, %{context: ctx}) do
 end
 ```
 
-## Custom Field Loaders
+## Field Resolution
 
-Override DataLoader with custom batch loading functions:
+All fields use the `field` macro with resolution determined by:
+
+- **`resolve`** - Single-item resolver (receives one parent)
+- **`loader`** - Batch loader (receives list of parents, returns map)
+- **Default** - Adapter provides default (Map.get for scalars, DataLoader for associations)
+
+A field cannot have both `resolve` and `loader` - they are mutually exclusive.
+
+### Resolvers
+
+Use `resolve` for computed fields that need per-item logic:
+
+```elixir
+field :display_name, :string do
+  resolve fn user, _, _ ->
+    {:ok, user.name || user.email}
+  end
+end
+```
+
+### Batch Loaders
+
+Use `loader` for efficient batch loading:
 
 ```elixir
 type "Worker", struct: MyApp.Worker do
@@ -263,29 +285,28 @@ type "Worker", struct: MyApp.Worker do
     arg :location, non_null(:geo_point)
     arg :radius, :integer, default_value: 10
 
-    # Custom loader replaces default DataLoader behavior
-    loader fn worker, args, ctx ->
-      MyApp.Gigs.find_nearby(worker.id, args.location, args.radius)
+    # Batch loader receives all parents at once
+    loader fn workers, args, ctx ->
+      worker_ids = Enum.map(workers, & &1.id)
+      gigs = MyApp.Gigs.find_nearby(worker_ids, args.location, args.radius)
+
+      # Return a map of parent -> result
+      Enum.group_by(gigs, & &1.worker_id)
+      |> Map.new(fn {worker_id, worker_gigs} ->
+        worker = Enum.find(workers, & &1.id == worker_id)
+        {worker, worker_gigs}
+      end)
     end
   end
 
-  field :stats, :worker_stats do
-    # 2-arity version (no context needed)
-    loader fn worker, _args ->
-      MyApp.Stats.get_for_worker(worker.id)
+  field :analytics, :analytics do
+    loader fn workers, _args, _ctx ->
+      MyApp.Analytics.batch_load(Enum.map(workers, & &1.id))
+      |> Map.new(fn a ->
+        worker = Enum.find(workers, & &1.id == a.worker_id)
+        {worker, a}
+      end)
     end
-  end
-end
-```
-
-For batch loading multiple parents together:
-
-```elixir
-field :analytics, :analytics do
-  batch_loader fn workers, args, ctx ->
-    # Called once with all parent workers
-    MyApp.Analytics.batch_load(Enum.map(workers, & &1.id))
-    |> Map.new(fn a -> {a.worker_id, a} end)
   end
 end
 ```
@@ -422,7 +443,7 @@ lib/my_app/graphql/
 ### Field Helpers
 - `Absinthe.Object.Field.Connection` - Relay-style pagination
 - `Absinthe.Object.Field.Dataloader` - DataLoader integration
-- `Absinthe.Object.Field.Loader` - Custom field loaders
+- `Absinthe.Object.Field.Loader` - Custom batch loaders
 - `Absinthe.Object.Field.Middleware` - Middleware helpers
 
 ### Extensions
