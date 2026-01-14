@@ -33,11 +33,12 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          # Get the diff for the PR
-          git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+          # Get the diff for the PR (limit size to avoid token limits)
+          git diff origin/${{ github.base_ref }}...HEAD | head -c 50000 > pr_diff.txt
 
-          # Run Claude Code to review the changes
-          claude -p "Review this pull request diff for an Elixir GraphQL library called Absinthe.Object.
+          # Create the review prompt
+          cat > review_prompt.txt << 'PROMPT_EOF'
+          Review this pull request diff for an Elixir GraphQL library called Absinthe.Object.
 
           Focus on:
           1. Code quality and Elixir best practices
@@ -47,9 +48,15 @@ jobs:
           5. Security considerations
 
           Provide actionable feedback. Be constructive and specific.
+          Format your response in markdown.
 
           Here's the diff:
-          $(cat pr_diff.txt)" --output-format json > review_output.json || true
+          PROMPT_EOF
+
+          cat pr_diff.txt >> review_prompt.txt
+
+          # Run Claude Code in print mode
+          claude -p "$(cat review_prompt.txt)" > review_output.txt 2>&1 || echo "Claude review encountered an error" > review_output.txt
 
       - name: Post Review Comment
         if: always()
@@ -60,16 +67,9 @@ jobs:
 
             let review = 'Claude Code Review could not be completed.';
             try {
-              const output = fs.readFileSync('review_output.json', 'utf8');
-              const parsed = JSON.parse(output);
-              review = parsed.result || parsed.message || output;
+              review = fs.readFileSync('review_output.txt', 'utf8');
             } catch (e) {
-              console.log('Error parsing review output:', e);
-              try {
-                review = fs.readFileSync('review_output.json', 'utf8');
-              } catch (e2) {
-                console.log('Could not read review output');
-              }
+              console.log('Could not read review output:', e);
             }
 
             // Truncate if too long
