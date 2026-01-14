@@ -70,8 +70,8 @@
           #
           {Credo.Check.Refactor.Apply, []},
           {Credo.Check.Refactor.CondStatements, []},
-          # Allow higher complexity for compile-time code generation with macros
-          {Credo.Check.Refactor.CyclomaticComplexity, [max_complexity: 20]},
+          # Allow slightly higher complexity for compile-time code generation with macros
+          {Credo.Check.Refactor.CyclomaticComplexity, [max_complexity: 15]},
           {Credo.Check.Refactor.FunctionArity, []},
           {Credo.Check.Refactor.LongQuoteBlocks, []},
           {Credo.Check.Refactor.MatchInCondition, []},
@@ -105,7 +105,30 @@
           {Credo.Check.Warning.UnusedRegexOperation, []},
           {Credo.Check.Warning.UnusedStringOperation, []},
           {Credo.Check.Warning.UnusedTupleOperation, []},
-          {Credo.Check.Warning.WrongTestFileExtension, []}
+          {Credo.Check.Warning.WrongTestFileExtension, []},
+          # Re-enabled with exclusions for controlled atom creation in compile-time code
+          {Credo.Check.Warning.UnsafeToAtom,
+           [
+             files: %{
+               excluded: [
+                 # These modules create atoms from known schema fields, not user input
+                 "lib/absinthe/object/extensions/cql.ex",
+                 "lib/absinthe/object/extensions/cql/filter_input.ex",
+                 "lib/absinthe/object/naming.ex",
+                 "lib/absinthe/object/authorization_info.ex",
+                 # Compile-time code generation for types and connections
+                 "lib/absinthe/object/field/connection.ex",
+                 "lib/absinthe/object/deferred/schema.ex",
+                 "lib/absinthe/object/deferred/compiler.ex",
+                 "lib/absinthe/object/adapter.ex",
+                 "lib/absinthe/object/filter/impl.ex",
+                 # Mix tasks create atoms from module names at compile time
+                 "lib/mix/tasks/",
+                 # Test files - atom creation is controlled
+                 "test/"
+               ]
+             }
+           ]}
         ],
         disabled: [
           #
@@ -151,8 +174,7 @@
           #
           {Credo.Check.Warning.LeakyEnvironment, []},
           {Credo.Check.Warning.MapGetUnsafePass, []},
-          {Credo.Check.Warning.MixEnv, []},
-          {Credo.Check.Warning.UnsafeToAtom, []}
+          {Credo.Check.Warning.MixEnv, []}
         ]
       }
     }

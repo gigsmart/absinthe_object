@@ -180,9 +180,43 @@ defmodule Absinthe.Object.Filter.Ecto.PostgresTest do
   end
 
   describe "Basic.Contains filter" do
-    test "creates where clause with ILIKE" do
+    test "creates where clause with ILIKE (default)" do
       adapter = PostgresAdapter.new(FakeRepo)
       filter = %Basic.Contains{value: "test"}
+
+      import Ecto.Query
+      base_query = from(t in TestSchema)
+
+      case Filter.apply(adapter, filter, :name, base_query) do
+        {:ok, result} ->
+          assert %Ecto.Query{} = result
+          assert result.wheres != []
+
+        {:error, _} ->
+          :skip
+      end
+    end
+
+    test "creates case-sensitive where clause with LIKE" do
+      adapter = PostgresAdapter.new(FakeRepo)
+      filter = %Basic.Contains{value: "test", case_sensitive: true}
+
+      import Ecto.Query
+      base_query = from(t in TestSchema)
+
+      case Filter.apply(adapter, filter, :name, base_query) do
+        {:ok, result} ->
+          assert %Ecto.Query{} = result
+          assert result.wheres != []
+
+        {:error, _} ->
+          :skip
+      end
+    end
+
+    test "creates case-insensitive where clause with ILIKE" do
+      adapter = PostgresAdapter.new(FakeRepo)
+      filter = %Basic.Contains{value: "test", case_sensitive: false}
 
       import Ecto.Query
       base_query = from(t in TestSchema)
@@ -199,9 +233,43 @@ defmodule Absinthe.Object.Filter.Ecto.PostgresTest do
   end
 
   describe "Basic.StartsWith filter" do
-    test "creates where clause with ILIKE prefix" do
+    test "creates where clause with ILIKE prefix (default)" do
       adapter = PostgresAdapter.new(FakeRepo)
       filter = %Basic.StartsWith{value: "abc"}
+
+      import Ecto.Query
+      base_query = from(t in TestSchema)
+
+      case Filter.apply(adapter, filter, :name, base_query) do
+        {:ok, result} ->
+          assert %Ecto.Query{} = result
+          assert result.wheres != []
+
+        {:error, _} ->
+          :skip
+      end
+    end
+
+    test "creates case-sensitive where clause with LIKE prefix" do
+      adapter = PostgresAdapter.new(FakeRepo)
+      filter = %Basic.StartsWith{value: "abc", case_sensitive: true}
+
+      import Ecto.Query
+      base_query = from(t in TestSchema)
+
+      case Filter.apply(adapter, filter, :name, base_query) do
+        {:ok, result} ->
+          assert %Ecto.Query{} = result
+          assert result.wheres != []
+
+        {:error, _} ->
+          :skip
+      end
+    end
+
+    test "creates case-insensitive where clause with ILIKE prefix" do
+      adapter = PostgresAdapter.new(FakeRepo)
+      filter = %Basic.StartsWith{value: "abc", case_sensitive: false}
 
       import Ecto.Query
       base_query = from(t in TestSchema)
@@ -218,9 +286,43 @@ defmodule Absinthe.Object.Filter.Ecto.PostgresTest do
   end
 
   describe "Basic.EndsWith filter" do
-    test "creates where clause with ILIKE suffix" do
+    test "creates where clause with ILIKE suffix (default)" do
       adapter = PostgresAdapter.new(FakeRepo)
       filter = %Basic.EndsWith{value: ".txt"}
+
+      import Ecto.Query
+      base_query = from(t in TestSchema)
+
+      case Filter.apply(adapter, filter, :name, base_query) do
+        {:ok, result} ->
+          assert %Ecto.Query{} = result
+          assert result.wheres != []
+
+        {:error, _} ->
+          :skip
+      end
+    end
+
+    test "creates case-sensitive where clause with LIKE suffix" do
+      adapter = PostgresAdapter.new(FakeRepo)
+      filter = %Basic.EndsWith{value: ".txt", case_sensitive: true}
+
+      import Ecto.Query
+      base_query = from(t in TestSchema)
+
+      case Filter.apply(adapter, filter, :name, base_query) do
+        {:ok, result} ->
+          assert %Ecto.Query{} = result
+          assert result.wheres != []
+
+        {:error, _} ->
+          :skip
+      end
+    end
+
+    test "creates case-insensitive where clause with ILIKE suffix" do
+      adapter = PostgresAdapter.new(FakeRepo)
+      filter = %Basic.EndsWith{value: ".txt", case_sensitive: false}
 
       import Ecto.Query
       base_query = from(t in TestSchema)

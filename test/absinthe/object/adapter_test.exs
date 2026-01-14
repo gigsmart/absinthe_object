@@ -217,4 +217,36 @@ defmodule Absinthe.Object.AdapterTest do
                %{order_by: :inserted_at}
     end
   end
+
+  describe "filter_adapter_for/2" do
+    test "returns explicit filter adapter when provided" do
+      explicit_adapter = %{type: :custom, index: "test"}
+      result = Adapter.filter_adapter_for(MockEctoSchema, filter_adapter: explicit_adapter)
+      assert result == explicit_adapter
+    end
+
+    test "returns error for non-Ecto struct without explicit adapter" do
+      result = Adapter.filter_adapter_for(PlainStruct)
+      assert result == {:error, :unknown_struct_type}
+    end
+
+    test "returns error when repo cannot be inferred" do
+      # MockEctoSchema has __schema__ but no inferable repo
+      result = Adapter.filter_adapter_for(MockEctoSchema)
+      assert result == {:error, :repo_not_found}
+    end
+  end
+
+  describe "supports?/2 edge cases" do
+    test "returns default capabilities for module without capabilities/0" do
+      defmodule NoCapabilitiesModule do
+        # Module with no capabilities function
+      end
+
+      # Falls back to default [:cql, :dataloader]
+      assert Adapter.supports?(NoCapabilitiesModule, :cql) == true
+      assert Adapter.supports?(NoCapabilitiesModule, :dataloader) == true
+      assert Adapter.supports?(NoCapabilitiesModule, :full_text_search) == false
+    end
+  end
 end

@@ -169,11 +169,20 @@ jobs:
         run: mix deps.get
 
       - name: Build documentation
-        run: mix docs
-
-      - name: Check for broken doc references
         run: |
-          if grep -r "module not found" doc/ 2>/dev/null; then
-            echo "Found broken module references in documentation"
+          # Capture warnings from ExDoc
+          mix docs 2>&1 | tee doc_output.txt
+
+          # Check for broken references in ExDoc output
+          if grep -E "(module|function) .* not found" doc_output.txt; then
+            echo "Found broken references in documentation"
             exit 1
+          fi
+
+          # Also check the generated docs directory if it exists
+          if [ -d "doc" ]; then
+            if grep -r "module not found" doc/ 2>/dev/null; then
+              echo "Found broken module references in documentation"
+              exit 1
+            fi
           fi

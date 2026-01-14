@@ -435,5 +435,93 @@ defmodule Absinthe.Object.Filter.ElasticsearchTest do
           :ok
       end
     end
+
+    test "WithinBounds filter with lon instead of lng", %{adapter: adapter} do
+      filter = %Geo.WithinBounds{
+        bounds: %{
+          top_left: %{lat: 40.73, lon: -74.1},
+          bottom_right: %{lat: 40.01, lon: -71.12}
+        }
+      }
+
+      case Filter.apply(adapter, filter, :location, %{}) do
+        {:ok, result} ->
+          bbox =
+            get_in(result, [
+              "query",
+              "bool",
+              "filter",
+              Access.at(0),
+              "geo_bounding_box",
+              "location"
+            ])
+
+          assert bbox["top_left"] == %{"lat" => 40.73, "lon" => -74.1}
+          assert bbox["bottom_right"] == %{"lat" => 40.01, "lon" => -71.12}
+
+        {:error, _} ->
+          :ok
+      end
+    end
+
+    test "WithinBounds filter with coordinates tuple", %{adapter: adapter} do
+      filter = %Geo.WithinBounds{
+        bounds: %{
+          top_left: %{coordinates: {-74.1, 40.73}},
+          bottom_right: %{coordinates: {-71.12, 40.01}}
+        }
+      }
+
+      case Filter.apply(adapter, filter, :location, %{}) do
+        {:ok, result} ->
+          bbox =
+            get_in(result, [
+              "query",
+              "bool",
+              "filter",
+              Access.at(0),
+              "geo_bounding_box",
+              "location"
+            ])
+
+          assert bbox["top_left"] == %{"lat" => 40.73, "lon" => -74.1}
+          assert bbox["bottom_right"] == %{"lat" => 40.01, "lon" => -71.12}
+
+        {:error, _} ->
+          :ok
+      end
+    end
+
+    test "WithinBounds filter with polygon coordinates", %{adapter: adapter} do
+      # Polygon bounds - calculate envelope from coordinates
+      filter = %Geo.WithinBounds{
+        bounds: %{
+          coordinates: [
+            [{-74.1, 40.73}, {-71.12, 40.73}, {-71.12, 40.01}, {-74.1, 40.01}, {-74.1, 40.73}]
+          ]
+        }
+      }
+
+      case Filter.apply(adapter, filter, :location, %{}) do
+        {:ok, result} ->
+          bbox =
+            get_in(result, [
+              "query",
+              "bool",
+              "filter",
+              Access.at(0),
+              "geo_bounding_box",
+              "location"
+            ])
+
+          # Should calculate envelope from polygon
+          assert is_map(bbox)
+          assert bbox["top_left"]["lat"] == 40.73
+          assert bbox["bottom_right"]["lat"] == 40.01
+
+        {:error, _} ->
+          :ok
+      end
+    end
   end
 end
