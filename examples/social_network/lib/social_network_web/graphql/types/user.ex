@@ -1,5 +1,5 @@
 defmodule SocialNetworkWeb.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   alias SocialNetworkWeb.GraphQL.Interfaces
 

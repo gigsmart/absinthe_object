@@ -1,6 +1,6 @@
 # Social Network Example
 
-A comprehensive example demonstrating Absinthe.Object's GraphQL DSL with a social networking domain.
+A comprehensive example demonstrating GreenFairy's GraphQL DSL with a social networking domain.
 
 ## Features
 
@@ -138,7 +138,7 @@ Each GraphQL type is defined in its own module using the clean DSL:
 
 ```elixir
 defmodule SocialNetworkWeb.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   alias SocialNetworkWeb.GraphQL.Interfaces
 

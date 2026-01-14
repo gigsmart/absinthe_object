@@ -6,7 +6,7 @@ config :social_network, SocialNetwork.Repo,
 
 config :social_network, ecto_repos: [SocialNetwork.Repo]
 
-config :absinthe_object, :generators,
+config :green_fairy, :generators,
   graphql_namespace: SocialNetworkWeb.GraphQL,
   domain_namespace: SocialNetwork,
   default_implements: [SocialNetworkWeb.GraphQL.Interfaces.Node],

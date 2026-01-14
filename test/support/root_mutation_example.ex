@@ -1,5 +1,5 @@
-defmodule Absinthe.Object.Test.RootMutationExample do
-  use Absinthe.Object.RootMutation
+defmodule GreenFairy.Test.RootMutationExample do
+  use GreenFairy.RootMutation
 
   root_mutation_fields do
     field :echo, :string do

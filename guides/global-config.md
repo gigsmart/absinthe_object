@@ -1,6 +1,6 @@
 # Global Configuration
 
-Absinthe.Object supports global configuration for authorization and node resolution that applies across all types in your schema.
+GreenFairy supports global configuration for authorization and node resolution that applies across all types in your schema.
 
 ## Global Authorization
 
@@ -8,10 +8,10 @@ Define a global authorization function that runs before type-specific authorizat
 
 ```elixir
 defmodule MyApp.GraphQL.Schema do
-  use Absinthe.Object.Schema, discover: [MyApp.GraphQL]
-  use Absinthe.Object.Relay, repo: MyApp.Repo
+  use GreenFairy.Schema, discover: [MyApp.GraphQL]
+  use GreenFairy.Relay, repo: MyApp.Repo
 
-  use Absinthe.Object.Config,
+  use GreenFairy.Config,
     authorize: fn object, ctx ->
       # This runs before type-specific authorization
       if ctx[:current_user] do
@@ -28,7 +28,7 @@ end
 For more complex authorization that needs access path information:
 
 ```elixir
-use Absinthe.Object.Config,
+use GreenFairy.Config,
   authorize_with_info: fn object, ctx, info ->
     # info contains: path, field, parent, parents
     current_user = ctx[:current_user]
@@ -53,7 +53,7 @@ When both global and type-level authorization are defined:
 
 ```elixir
 # Schema-level
-use Absinthe.Object.Config,
+use GreenFairy.Config,
   authorize: fn _object, ctx ->
     if ctx[:current_user], do: :all, else: [:id, :name]
   end
@@ -87,9 +87,9 @@ For viewing self: intersection of `:all` and `:all` = `:all`
 Configure how nodes are fetched by default:
 
 ```elixir
-use Absinthe.Object.Relay,
+use GreenFairy.Relay,
   node_resolver: fn type_module, id, ctx ->
-    struct = type_module.__absinthe_object_struct__()
+    struct = type_module.__green_fairy_struct__()
     repo = ctx[:repo] || MyApp.Repo
     repo.get(struct, id)
   end
@@ -104,7 +104,7 @@ Individual types can still override with `node_resolver`:
 
 ```elixir
 type "User", struct: MyApp.User do
-  implements Absinthe.Object.BuiltIns.Node
+  implements GreenFairy.BuiltIns.Node
 
   node_resolver fn id, ctx ->
     # Custom resolution for this type only
@@ -118,14 +118,14 @@ end
 
 ## Configuration Options
 
-### Absinthe.Object.Config Options
+### GreenFairy.Config Options
 
 | Option | Description |
 |--------|-------------|
 | `:authorize` | Global auth function `fn object, ctx -> :all \| :none \| [fields] end` |
 | `:authorize_with_info` | Auth with path info `fn object, ctx, info -> ... end` |
 
-### Absinthe.Object.Relay Options
+### GreenFairy.Relay Options
 
 | Option | Description |
 |--------|-------------|
@@ -134,10 +134,10 @@ end
 
 ## Helper Functions
 
-The `Absinthe.Object.Config` module provides helper functions:
+The `GreenFairy.Config` module provides helper functions:
 
 ```elixir
-alias Absinthe.Object.Config
+alias GreenFairy.Config
 
 # Check if global auth is configured
 Config.has_global_auth?(MyApp.GraphQL.Schema)

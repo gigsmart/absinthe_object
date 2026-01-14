@@ -2,8 +2,8 @@
 # These modules register themselves at compile time, but we need to ensure
 # they're loaded before tests run to populate the persistent_term registry
 filter_modules = [
-  Absinthe.Object.Filter.Elasticsearch,
-  Absinthe.Object.Filter.Ecto.Postgres
+  GreenFairy.Filter.Elasticsearch,
+  GreenFairy.Filter.Ecto.Postgres
 ]
 
 for module <- filter_modules do
@@ -24,7 +24,7 @@ for module <- filter_modules do
       # Code.ensure_loaded/1 returns {:module, mod} or {:error, reason}
       case Code.ensure_loaded(impl_module) do
         {:module, _} ->
-          Absinthe.Object.Filter.register_implementation(adapter, filter_type, impl_module)
+          GreenFairy.Filter.register_implementation(adapter, filter_type, impl_module)
 
         {:error, _reason} ->
           :skip

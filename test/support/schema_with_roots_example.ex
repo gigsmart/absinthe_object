@@ -1,6 +1,6 @@
-defmodule Absinthe.Object.Test.SchemaWithRootsExample do
-  use Absinthe.Object.Schema,
+defmodule GreenFairy.Test.SchemaWithRootsExample do
+  use GreenFairy.Schema,
     discover: [],
-    query: Absinthe.Object.Test.RootQueryExample,
-    mutation: Absinthe.Object.Test.RootMutationExample
+    query: GreenFairy.Test.RootQueryExample,
+    mutation: GreenFairy.Test.RootMutationExample
 end

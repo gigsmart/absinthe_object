@@ -1,5 +1,5 @@
 defmodule SocialNetworkWeb.GraphQL.Schema do
-  use Absinthe.Object.Schema
+  use GreenFairy.Schema
 
   alias SocialNetworkWeb.GraphQL
 

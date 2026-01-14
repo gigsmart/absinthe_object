@@ -2,11 +2,11 @@
 
 ## Overview
 
-A new Elixir library (`absinthe_object`) providing a cleaner DSL for GraphQL schema definitions, built on top of Absinthe. One module = one type, following SOLID principles.
+A new Elixir library (`green_fairy`) providing a cleaner DSL for GraphQL schema definitions, built on top of Absinthe. One module = one type, following SOLID principles.
 
 ## Library Name
 
-**`absinthe_object`** (package: `github.com/gigsmart/absinthe_object`)
+**`green_fairy`** (package: `github.com/gigsmart/green_fairy`)
 
 **Architecture Decision: Separate Library**
 
@@ -17,7 +17,7 @@ The library extends Absinthe without requiring core changes:
 
 ```
 ┌─────────────────────┐
-│  absinthe_object    │  ← Clean DSL layer
+│  green_fairy    │  ← Clean DSL layer
 ├─────────────────────┤
 │  Generates Absinthe │
 │  Blueprint structs  │
@@ -39,20 +39,20 @@ lib/
     object.ex                     # Main entry, configuration
     object/
       # Core DSL
-      type.ex                     # use Absinthe.Object.Type
-      interface.ex                # use Absinthe.Object.Interface
-      input.ex                    # use Absinthe.Object.Input
-      enum.ex                     # use Absinthe.Object.Enum
-      union.ex                    # use Absinthe.Object.Union
-      scalar.ex                   # use Absinthe.Object.Scalar
+      type.ex                     # use GreenFairy.Type
+      interface.ex                # use GreenFairy.Interface
+      input.ex                    # use GreenFairy.Input
+      enum.ex                     # use GreenFairy.Enum
+      union.ex                    # use GreenFairy.Union
+      scalar.ex                   # use GreenFairy.Scalar
 
       # Operations
-      query.ex                    # use Absinthe.Object.Query
-      mutation.ex                 # use Absinthe.Object.Mutation
-      subscription.ex             # use Absinthe.Object.Subscription
+      query.ex                    # use GreenFairy.Query
+      mutation.ex                 # use GreenFairy.Mutation
+      subscription.ex             # use GreenFairy.Subscription
 
       # Schema assembly
-      schema.ex                   # use Absinthe.Object.Schema
+      schema.ex                   # use GreenFairy.Schema
       discovery.ex                # Auto-discovery of type modules
       registry.ex                 # Runtime type registry
 
@@ -217,7 +217,7 @@ Generates `lib/my_app/graphql/types/user.ex`:
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   type "User", struct: MyApp.User do
     implements MyApp.GraphQL.Interfaces.Node
@@ -236,7 +236,7 @@ end
 In `config/config.exs`:
 
 ```elixir
-config :absinthe_object, :generators,
+config :green_fairy, :generators,
   graphql_namespace: MyApp.GraphQL,
   domain_namespace: MyApp,
   default_implements: [MyApp.GraphQL.Interfaces.Node],
@@ -251,7 +251,7 @@ config :absinthe_object, :generators,
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   # Specify the backing struct for auto-resolve_type generation
   type "User", struct: MyApp.User do
@@ -290,7 +290,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Interfaces.Node do
-  use Absinthe.Object.Interface
+  use GreenFairy.Interface
 
   interface "Node" do
     field :id, :id, null: false
@@ -301,7 +301,7 @@ end
 
 # Interfaces can implement other interfaces (GraphQL spec June 2018)
 defmodule MyApp.GraphQL.Interfaces.Resource do
-  use Absinthe.Object.Interface
+  use GreenFairy.Interface
 
   interface "Resource" do
     implements MyApp.GraphQL.Interfaces.Node  # Interface implements interface!
@@ -316,7 +316,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Inputs.CreateUserInput do
-  use Absinthe.Object.Input
+  use GreenFairy.Input
 
   input "CreateUserInput" do
     field :email, :string, null: false
@@ -330,7 +330,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Enums.UserStatus do
-  use Absinthe.Object.Enum
+  use GreenFairy.Enum
 
   enum "UserStatus" do
     value :active
@@ -344,7 +344,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Queries.UserQueries do
-  use Absinthe.Object.Query
+  use GreenFairy.Query
 
   queries do
     field :user, MyApp.GraphQL.Types.User do
@@ -364,7 +364,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Mutations.UserMutations do
-  use Absinthe.Object.Mutation
+  use GreenFairy.Mutation
 
   mutations do
     field :create_user, MyApp.GraphQL.Types.User do
@@ -381,7 +381,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Subscriptions.UserSubscriptions do
-  use Absinthe.Object.Subscription
+  use GreenFairy.Subscription
 
   subscriptions do
     field :user_updated, MyApp.GraphQL.Types.User do
@@ -404,7 +404,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Schema do
-  use Absinthe.Object.Schema,
+  use GreenFairy.Schema,
     discover: [MyApp.GraphQL],
     dataloader: [
       sources: [
@@ -422,14 +422,14 @@ end
 ### Phase 1: Core Foundation
 
 1. **Create mix project** with basic structure
-2. **Implement `Absinthe.Object.Type`**
+2. **Implement `GreenFairy.Type`**
    - `type/2` macro with block support
    - `field/2-3` macro with type inference
    - `implements/1` macro for interfaces
    - Compile-time validation (one type per file)
-   - Generate `__absinthe_object_definition__/0` callback
+   - Generate `__green_fairy_definition__/0` callback
 
-3. **Implement `Absinthe.Object.Interface`**
+3. **Implement `GreenFairy.Interface`**
    - `interface/2` macro
    - `resolve_type/1` macro
    - Field definitions same as Type
@@ -446,20 +446,20 @@ end
 
 ### Phase 2: Additional Types
 
-6. **Implement `Absinthe.Object.Input`**
+6. **Implement `GreenFairy.Input`**
    - `input/2` macro
    - Field definitions (no resolvers)
 
-7. **Implement `Absinthe.Object.Enum`**
+7. **Implement `GreenFairy.Enum`**
    - `enum/2` macro
    - `value/1-2` macro with custom GraphQL names
 
-8. **Implement `Absinthe.Object.Union`**
+8. **Implement `GreenFairy.Union`**
    - `union/2` macro
    - `types/1` macro
    - `resolve_type/1` macro (can also be auto-generated)
 
-9. **Implement `Absinthe.Object.Scalar`**
+9. **Implement `GreenFairy.Scalar`**
    - `scalar/2` macro
    - `parse/1` and `serialize/1` macros
 
@@ -494,35 +494,35 @@ end
 
 ### Phase 5: Operations
 
-16. **Implement `Absinthe.Object.Query`**
+16. **Implement `GreenFairy.Query`**
     - `queries do` block
     - Field definitions with args
     - Connection support
 
-17. **Implement `Absinthe.Object.Mutation`**
+17. **Implement `GreenFairy.Mutation`**
     - `mutations do` block
     - Middleware support
 
-18. **Implement `Absinthe.Object.Subscription`**
+18. **Implement `GreenFairy.Subscription`**
     - `subscriptions do` block
     - `config/1` macro
     - `trigger/2` macro with multi-topic support
 
 ### Phase 6: Schema Assembly
 
-19. **Implement `Absinthe.Object.Discovery`**
-    - Scan modules for `__absinthe_object_definition__/0`
+19. **Implement `GreenFairy.Discovery`**
+    - Scan modules for `__green_fairy_definition__/0`
     - Filter by namespace
     - Compile-time discovery
 
-20. **Implement `Absinthe.Object.Schema`**
+20. **Implement `GreenFairy.Schema`**
     - `use` macro with options
     - Assemble discovered types
     - Generate root query/mutation/subscription types
     - Auto-generate `resolve_type` for interfaces based on implementors
     - Configure DataLoader in context
 
-21. **Implement `Absinthe.Object.Generator`**
+21. **Implement `GreenFairy.Generator`**
     - Convert definitions to Absinthe Blueprint AST
     - Handle interface field inheritance
     - Wire up resolvers and middleware
@@ -535,8 +535,8 @@ end
     - Schema-level defaults
 
 23. **Built-in interfaces**
-    - `Absinthe.Object.BuiltIns.Node`
-    - `Absinthe.Object.BuiltIns.Timestampable`
+    - `GreenFairy.BuiltIns.Node`
+    - `GreenFairy.BuiltIns.Timestampable`
 
 24. **Validation & errors**
     - One definition per file enforcement
@@ -557,7 +557,7 @@ end
     - `gen.schema` (main schema module)
 
 27. **Generator configuration**
-    - Read from `config :absinthe_object, :generators`
+    - Read from `config :green_fairy, :generators`
     - Support custom templates
 
 ### Phase 9: Authorization & Extensibility
@@ -626,7 +626,7 @@ A single GraphQL type module should be able to handle **all** its concerns:
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   type "User", struct: MyApp.User do
     # Built-in field authorization
@@ -694,7 +694,7 @@ end
 
 ## Open Questions (Resolved)
 
-- [x] Library name: `absinthe_object`
+- [x] Library name: `green_fairy`
 - [x] Schema discovery: Auto-discover under configured namespaces
 - [x] Resolver defaults: Map.get for basic, DataLoader for relationships
 - [x] Connections: Relay-style with configurability

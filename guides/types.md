@@ -1,6 +1,6 @@
 # Types
 
-This guide covers all the type modules available in Absinthe.Object.
+This guide covers all the type modules available in GreenFairy.
 
 ## Object Types
 
@@ -8,7 +8,7 @@ Object types are the most common type in GraphQL. They represent entities in you
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   type "User", struct: MyApp.User do
     @desc "A user in the system"
@@ -103,7 +103,7 @@ Interfaces define a common set of fields that types can implement.
 
 ```elixir
 defmodule MyApp.GraphQL.Interfaces.Node do
-  use Absinthe.Object.Interface
+  use GreenFairy.Interface
 
   interface "Node" do
     @desc "A globally unique identifier"
@@ -135,7 +135,7 @@ Input types are used for complex arguments, typically in mutations.
 
 ```elixir
 defmodule MyApp.GraphQL.Inputs.CreateUserInput do
-  use Absinthe.Object.Input
+  use GreenFairy.Input
 
   input "CreateUserInput" do
     field :email, non_null(:string)
@@ -152,7 +152,7 @@ Control which fields different users can submit:
 
 ```elixir
 defmodule MyApp.GraphQL.Inputs.UpdateUserInput do
-  use Absinthe.Object.Input
+  use GreenFairy.Input
 
   input "UpdateUserInput" do
     authorize fn _input, ctx ->
@@ -186,7 +186,7 @@ Enums define a set of allowed values.
 
 ```elixir
 defmodule MyApp.GraphQL.Enums.UserRole do
-  use Absinthe.Object.Enum
+  use GreenFairy.Enum
 
   enum "UserRole" do
     value :admin
@@ -203,7 +203,7 @@ Unions allow a field to return one of several types.
 
 ```elixir
 defmodule MyApp.GraphQL.Unions.SearchResult do
-  use Absinthe.Object.Union
+  use GreenFairy.Union
 
   union "SearchResult" do
     types [:user, :post, :comment]
@@ -224,7 +224,7 @@ Custom scalars define how values are parsed and serialized.
 
 ```elixir
 defmodule MyApp.GraphQL.Scalars.DateTime do
-  use Absinthe.Object.Scalar
+  use GreenFairy.Scalar
 
   scalar "DateTime" do
     parse fn
@@ -250,7 +250,7 @@ the [`geo`](https://hex.pm/packages/geo) library for geographic data:
 
 ```elixir
 defmodule MyApp.GraphQL.Scalars.Point do
-  use Absinthe.Object.Scalar
+  use GreenFairy.Scalar
 
   @moduledoc "GraphQL scalar for Geo.Point from the geo library"
 

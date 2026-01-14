@@ -1,5 +1,5 @@
-defmodule Absinthe.Object.Test.RootQueryExample do
-  use Absinthe.Object.RootQuery
+defmodule GreenFairy.Test.RootQueryExample do
+  use GreenFairy.RootQuery
 
   root_query_fields do
     field :hello, :string do

@@ -1,13 +1,21 @@
-# Absinthe.Object
+<p align="center">
+  <img src="assets/logo.svg" alt="GreenFairy Logo" width="200">
+</p>
 
-[![Hex.pm](https://img.shields.io/hexpm/v/absinthe_object.svg)](https://hex.pm/packages/absinthe_object)
-[![Documentation](https://img.shields.io/badge/docs-hexdocs-blue.svg)](https://hexdocs.pm/absinthe_object)
+<h1 align="center">GreenFairy</h1>
 
-A cleaner DSL for GraphQL schema definitions built on [Absinthe](https://github.com/absinthe-graphql/absinthe).
+<p align="center">
+  <a href="https://hex.pm/packages/green_fairy"><img src="https://img.shields.io/hexpm/v/green_fairy.svg" alt="Hex.pm"></a>
+  <a href="https://hexdocs.pm/green_fairy"><img src="https://img.shields.io/badge/docs-hexdocs-blue.svg" alt="Documentation"></a>
+</p>
+
+<p align="center">
+  A cleaner DSL for GraphQL schema definitions built on <a href="https://github.com/absinthe-graphql/absinthe">Absinthe</a>.
+</p>
 
 ## Overview
 
-Absinthe.Object provides a streamlined way to define GraphQL schemas following SOLID principles:
+GreenFairy provides a streamlined way to define GraphQL schemas following SOLID principles:
 
 - **One module = one type** - Each GraphQL type lives in its own file
 - **Convention over configuration** - Smart defaults reduce boilerplate
@@ -20,12 +28,12 @@ Absinthe.Object provides a streamlined way to define GraphQL schemas following S
 
 ## Installation
 
-Add `absinthe_object` to your list of dependencies in `mix.exs`:
+Add `green_fairy` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:absinthe_object, "~> 0.1.0"}
+    {:green_fairy, "~> 0.1.0"}
   ]
 end
 ```
@@ -36,7 +44,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   type "User", struct: MyApp.User do
     implements MyApp.GraphQL.Interfaces.Node
@@ -70,7 +78,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Interfaces.Node do
-  use Absinthe.Object.Interface
+  use GreenFairy.Interface
 
   interface "Node" do
     @desc "A globally unique identifier"
@@ -86,7 +94,7 @@ The `resolve_type` is automatically generated based on types that call `implemen
 
 ```elixir
 defmodule MyApp.GraphQL.Inputs.CreateUserInput do
-  use Absinthe.Object.Input
+  use GreenFairy.Input
 
   input "CreateUserInput" do
     field :email, non_null(:string)
@@ -99,7 +107,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Enums.UserRole do
-  use Absinthe.Object.Enum
+  use GreenFairy.Enum
 
   enum "UserRole" do
     value :admin
@@ -114,7 +122,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Queries.UserQueries do
-  use Absinthe.Object.Query
+  use GreenFairy.Query
 
   queries do
     field :user, :user do
@@ -133,7 +141,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Mutations.UserMutations do
-  use Absinthe.Object.Mutation
+  use GreenFairy.Mutation
 
   mutations do
     field :create_user, :user do
@@ -150,7 +158,7 @@ end
 
 ```elixir
 defmodule MyApp.GraphQL.Schema do
-  use Absinthe.Object.Schema,
+  use GreenFairy.Schema,
     discover: [MyApp.GraphQL]
 end
 ```
@@ -163,13 +171,13 @@ That's it! The schema automatically:
 
 ## Authorization
 
-Absinthe.Object provides simple, type-owned authorization. Each type controls which fields are visible based on the object data and context.
+GreenFairy provides simple, type-owned authorization. Each type controls which fields are visible based on the object data and context.
 
 ### Basic Authorization
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   type "User", struct: MyApp.User do
     # Define which fields are visible based on object and context
@@ -226,7 +234,7 @@ Control which input fields users can submit:
 
 ```elixir
 defmodule MyApp.GraphQL.Inputs.UpdateUserInput do
-  use Absinthe.Object.Input
+  use GreenFairy.Input
 
   input "UpdateUserInput" do
     authorize fn input, ctx ->
@@ -326,7 +334,7 @@ the [`geo`](https://hex.pm/packages/geo) library for geographic data:
 
 ```elixir
 defmodule MyApp.GraphQL.Scalars.Point do
-  use Absinthe.Object.Scalar
+  use GreenFairy.Scalar
 
   @moduledoc "GraphQL scalar for Geo.Point from the geo library"
 
@@ -374,8 +382,8 @@ The CQL extension automatically generates filter inputs for Ecto schemas:
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
-  alias Absinthe.Object.Extensions.CQL
+  use GreenFairy.Type
+  alias GreenFairy.Extensions.CQL
 
   type "User", struct: MyApp.User do
     use CQL  # Enable CQL for this type
@@ -406,22 +414,22 @@ This generates a `UserFilter` input type automatically with operators appropriat
 
 ## Relay Support
 
-Absinthe.Object provides built-in Relay specification support, eliminating the need for `absinthe_relay`:
+GreenFairy provides built-in Relay specification support, eliminating the need for `absinthe_relay`:
 
 ```elixir
 defmodule MyApp.GraphQL.Schema do
-  use Absinthe.Object.Schema, discover: [MyApp.GraphQL]
-  use Absinthe.Object.Relay, repo: MyApp.Repo
+  use GreenFairy.Schema, discover: [MyApp.GraphQL]
+  use GreenFairy.Relay, repo: MyApp.Repo
 end
 ```
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
-  import Absinthe.Object.Relay.Field
+  use GreenFairy.Type
+  import GreenFairy.Relay.Field
 
   type "User", struct: MyApp.User do
-    implements Absinthe.Object.BuiltIns.Node
+    implements GreenFairy.BuiltIns.Node
 
     global_id :id  # Generates globally unique ID
     field :email, :string
@@ -437,7 +445,7 @@ Features included:
 - **Connections** - Built-in cursor-based pagination
 - **Relay Mutations** - `relay_mutation` macro with `clientMutationId` support
 
-See the [Relay Guide](https://hexdocs.pm/absinthe_object/relay.html) for full documentation.
+See the [Relay Guide](https://hexdocs.pm/green_fairy/relay.html) for full documentation.
 
 ## Directory Structure
 
@@ -472,59 +480,59 @@ lib/my_app/graphql/
 ## Available Modules
 
 ### Core DSL
-- `Absinthe.Object.Type` - Define object types
-- `Absinthe.Object.Interface` - Define interfaces
-- `Absinthe.Object.Input` - Define input types
-- `Absinthe.Object.Enum` - Define enums
-- `Absinthe.Object.Union` - Define unions
-- `Absinthe.Object.Scalar` - Define custom scalars
+- `GreenFairy.Type` - Define object types
+- `GreenFairy.Interface` - Define interfaces
+- `GreenFairy.Input` - Define input types
+- `GreenFairy.Enum` - Define enums
+- `GreenFairy.Union` - Define unions
+- `GreenFairy.Scalar` - Define custom scalars
 
 ### Operations
-- `Absinthe.Object.Query` - Define query fields
-- `Absinthe.Object.Mutation` - Define mutation fields
-- `Absinthe.Object.Subscription` - Define subscription fields
+- `GreenFairy.Query` - Define query fields
+- `GreenFairy.Mutation` - Define mutation fields
+- `GreenFairy.Subscription` - Define subscription fields
 
 ### Schema & Discovery
-- `Absinthe.Object.Schema` - Schema with auto-discovery
-- `Absinthe.Object.Discovery` - Type discovery utilities
+- `GreenFairy.Schema` - Schema with auto-discovery
+- `GreenFairy.Discovery` - Type discovery utilities
 
 ### Field Helpers
-- `Absinthe.Object.Field.Connection` - Relay-style pagination
-- `Absinthe.Object.Field.Dataloader` - DataLoader integration
-- `Absinthe.Object.Field.Loader` - Custom batch loaders
-- `Absinthe.Object.Field.Middleware` - Middleware helpers
+- `GreenFairy.Field.Connection` - Relay-style pagination
+- `GreenFairy.Field.Dataloader` - DataLoader integration
+- `GreenFairy.Field.Loader` - Custom batch loaders
+- `GreenFairy.Field.Middleware` - Middleware helpers
 
 ### Extensions
-- `Absinthe.Object.Extensions.CQL` - Automatic filter input generation
-- `Absinthe.Object.Extensions.Auth` - Authentication middleware helpers
+- `GreenFairy.Extensions.CQL` - Automatic filter input generation
+- `GreenFairy.Extensions.Auth` - Authentication middleware helpers
 
 ### Relay Support
-- `Absinthe.Object.Relay` - Full Relay specification support
-- `Absinthe.Object.Relay.GlobalId` - Global ID encoding/decoding
-- `Absinthe.Object.Relay.Node` - Node query field
-- `Absinthe.Object.Relay.Field` - Field helpers (global_id, node_resolver)
-- `Absinthe.Object.Relay.Mutation` - Relay mutation helpers
+- `GreenFairy.Relay` - Full Relay specification support
+- `GreenFairy.Relay.GlobalId` - Global ID encoding/decoding
+- `GreenFairy.Relay.Node` - Node query field
+- `GreenFairy.Relay.Field` - Field helpers (global_id, node_resolver)
+- `GreenFairy.Relay.Mutation` - Relay mutation helpers
 
 ### Built-ins
-- `Absinthe.Object.BuiltIns.Node` - Relay Node interface
-- `Absinthe.Object.BuiltIns.PageInfo` - Connection PageInfo type
-- `Absinthe.Object.BuiltIns.Timestampable` - Timestamp interface
+- `GreenFairy.BuiltIns.Node` - Relay Node interface
+- `GreenFairy.BuiltIns.PageInfo` - Connection PageInfo type
+- `GreenFairy.BuiltIns.Timestampable` - Timestamp interface
 
 ## Documentation
 
-Full documentation is available at [HexDocs](https://hexdocs.pm/absinthe_object).
+Full documentation is available at [HexDocs](https://hexdocs.pm/green_fairy).
 
 ### Guides
 
-- [Getting Started](https://hexdocs.pm/absinthe_object/getting-started.html)
-- [Types](https://hexdocs.pm/absinthe_object/types.html)
-- [Authorization](https://hexdocs.pm/absinthe_object/authorization.html)
-- [Relationships and DataLoader](https://hexdocs.pm/absinthe_object/relationships.html)
-- [CQL (Filterable Queries)](https://hexdocs.pm/absinthe_object/cql.html)
-- [Connections (Pagination)](https://hexdocs.pm/absinthe_object/connections.html)
-- [Relay Support](https://hexdocs.pm/absinthe_object/relay.html)
-- [Global Configuration](https://hexdocs.pm/absinthe_object/global-config.html)
-- [Operations](https://hexdocs.pm/absinthe_object/operations.html)
+- [Getting Started](https://hexdocs.pm/green_fairy/getting-started.html)
+- [Types](https://hexdocs.pm/green_fairy/types.html)
+- [Authorization](https://hexdocs.pm/green_fairy/authorization.html)
+- [Relationships and DataLoader](https://hexdocs.pm/green_fairy/relationships.html)
+- [CQL (Filterable Queries)](https://hexdocs.pm/green_fairy/cql.html)
+- [Connections (Pagination)](https://hexdocs.pm/green_fairy/connections.html)
+- [Relay Support](https://hexdocs.pm/green_fairy/relay.html)
+- [Global Configuration](https://hexdocs.pm/green_fairy/global-config.html)
+- [Operations](https://hexdocs.pm/green_fairy/operations.html)
 
 ## License
 

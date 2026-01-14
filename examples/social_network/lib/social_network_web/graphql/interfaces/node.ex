@@ -1,5 +1,5 @@
 defmodule SocialNetworkWeb.GraphQL.Interfaces.Node do
-  use Absinthe.Object.Interface
+  use GreenFairy.Interface
 
   interface "Node" do
     description "An object with a globally unique ID"

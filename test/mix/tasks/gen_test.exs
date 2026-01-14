@@ -1,7 +1,7 @@
-defmodule Mix.Tasks.Absinthe.Object.GenTest do
+defmodule Mix.Tasks.Gf.GenTest do
   use ExUnit.Case, async: true
 
-  alias Mix.Tasks.Absinthe.Object.Gen
+  alias Mix.Tasks.Gf.Gen
 
   describe "parse_field/1" do
     test "parses simple field" do

@@ -1,6 +1,6 @@
 # Relay Support
 
-Absinthe.Object provides built-in support for the [Relay GraphQL specification](https://relay.dev/docs/guides/graphql-server-specification/), eliminating the need for the separate `absinthe_relay` dependency.
+GreenFairy provides built-in support for the [Relay GraphQL specification](https://relay.dev/docs/guides/graphql-server-specification/), eliminating the need for the separate `absinthe_relay` dependency.
 
 ## Overview
 
@@ -10,7 +10,7 @@ The Relay specification defines three key patterns:
 2. **Cursor Connections** - Standardized pagination with edges and cursors
 3. **Mutations** - Input/payload pattern with `clientMutationId`
 
-Absinthe.Object supports all three patterns natively.
+GreenFairy supports all three patterns natively.
 
 ## Quick Start
 
@@ -18,8 +18,8 @@ Absinthe.Object supports all three patterns natively.
 
 ```elixir
 defmodule MyApp.GraphQL.Schema do
-  use Absinthe.Object.Schema, discover: [MyApp.GraphQL]
-  use Absinthe.Object.Relay, repo: MyApp.Repo
+  use GreenFairy.Schema, discover: [MyApp.GraphQL]
+  use GreenFairy.Relay, repo: MyApp.Repo
 end
 ```
 
@@ -33,14 +33,14 @@ Configure a default resolver for all node types:
 
 ```elixir
 defmodule MyApp.GraphQL.Schema do
-  use Absinthe.Object.Schema, discover: [MyApp.GraphQL]
-  use Absinthe.Object.Relay,
+  use GreenFairy.Schema, discover: [MyApp.GraphQL]
+  use GreenFairy.Relay,
     repo: MyApp.Repo,
     node_resolver: fn type_module, id, ctx ->
       # type_module is the GraphQL type module (e.g., MyApp.GraphQL.Types.User)
       # id is the local ID (already parsed to integer if numeric)
       # ctx is the Absinthe context
-      struct = type_module.__absinthe_object_struct__()
+      struct = type_module.__green_fairy_struct__()
       MyApp.Repo.get(struct, id)
     end
 end
@@ -52,11 +52,11 @@ The default node resolver is called when a type doesn't define its own `node_res
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
-  import Absinthe.Object.Relay.Field
+  use GreenFairy.Type
+  import GreenFairy.Relay.Field
 
   type "User", struct: MyApp.User do
-    implements Absinthe.Object.BuiltIns.Node
+    implements GreenFairy.BuiltIns.Node
 
     # Generates globally unique ID
     global_id :id
@@ -81,10 +81,10 @@ global_id :id, type_name: "User" # Override the type name
 
 ### Encoding and Decoding
 
-Use `Absinthe.Object.Relay.GlobalId` to work with global IDs:
+Use `GreenFairy.Relay.GlobalId` to work with global IDs:
 
 ```elixir
-alias Absinthe.Object.Relay.GlobalId
+alias GreenFairy.Relay.GlobalId
 
 # Encoding
 GlobalId.encode("User", 123)
@@ -143,7 +143,7 @@ By default, nodes are resolved using your Ecto repo. You can customize resolutio
 
 ```elixir
 type "User", struct: MyApp.User do
-  implements Absinthe.Object.BuiltIns.Node
+  implements GreenFairy.BuiltIns.Node
 
   node_resolver fn id, ctx ->
     MyApp.Accounts.get_user_with_permissions(id, ctx[:current_user])
@@ -203,7 +203,7 @@ end
 Use the connection helpers:
 
 ```elixir
-alias Absinthe.Object.Field.Connection
+alias GreenFairy.Field.Connection
 
 # From a list
 def resolve_posts(user, args, _resolution) do
@@ -226,8 +226,8 @@ Use `relay_mutation` for Relay-compliant mutations with automatic `clientMutatio
 
 ```elixir
 defmodule MyApp.GraphQL.Mutations.UserMutations do
-  use Absinthe.Object.Mutation
-  import Absinthe.Object.Relay.Mutation
+  use GreenFairy.Mutation
+  import GreenFairy.Relay.Mutation
 
   mutations do
     relay_mutation :create_user do
@@ -296,7 +296,7 @@ For custom mutations that don't use `relay_mutation`, use the middleware:
 ```elixir
 field :custom_operation, :custom_payload do
   arg :input, non_null(:custom_input)
-  middleware Absinthe.Object.Relay.Mutation.ClientMutationId
+  middleware GreenFairy.Relay.Mutation.ClientMutationId
   resolve &MyResolver.custom/3
 end
 ```
@@ -304,7 +304,7 @@ end
 Then in your resolver:
 
 ```elixir
-alias Absinthe.Object.Relay.Mutation.ClientMutationId
+alias GreenFairy.Relay.Mutation.ClientMutationId
 
 def custom(_, %{input: input}, resolution) do
   result = do_custom_operation(input)
@@ -317,14 +317,14 @@ end
 
 ### Modules
 
-- `Absinthe.Object.Relay` - Main Relay integration module
-- `Absinthe.Object.Relay.GlobalId` - Global ID encoding/decoding
-- `Absinthe.Object.Relay.Node` - Node query field
-- `Absinthe.Object.Relay.Field` - Field helpers (`global_id`, `node_resolver`)
-- `Absinthe.Object.Relay.Mutation` - Mutation helpers (`relay_mutation`)
-- `Absinthe.Object.Field.Connection` - Connection pagination
-- `Absinthe.Object.BuiltIns.Node` - Node interface
-- `Absinthe.Object.BuiltIns.PageInfo` - PageInfo type
+- `GreenFairy.Relay` - Main Relay integration module
+- `GreenFairy.Relay.GlobalId` - Global ID encoding/decoding
+- `GreenFairy.Relay.Node` - Node query field
+- `GreenFairy.Relay.Field` - Field helpers (`global_id`, `node_resolver`)
+- `GreenFairy.Relay.Mutation` - Mutation helpers (`relay_mutation`)
+- `GreenFairy.Field.Connection` - Connection pagination
+- `GreenFairy.BuiltIns.Node` - Node interface
+- `GreenFairy.BuiltIns.PageInfo` - PageInfo type
 
 ### GlobalId Functions
 

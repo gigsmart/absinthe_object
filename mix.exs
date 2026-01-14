@@ -1,12 +1,12 @@
-defmodule Absinthe.Object.MixProject do
+defmodule GreenFairy.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/gigsmart/absinthe_object"
+  @source_url "https://github.com/gigsmart/green_fairy"
 
   def project do
     [
-      app: :absinthe_object,
+      app: :green_fairy,
       version: @version,
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -15,7 +15,7 @@ defmodule Absinthe.Object.MixProject do
       deps: deps(),
       package: package(),
       docs: docs(),
-      name: "Absinthe.Object",
+      name: "GreenFairy",
       description: "A cleaner DSL for GraphQL schema definitions built on Absinthe",
       source_url: @source_url,
       test_coverage: [tool: ExCoveralls],
@@ -24,28 +24,28 @@ defmodule Absinthe.Object.MixProject do
         summary: [threshold: 75],
         ignore_modules: [
           # Mix tasks - tested via command line, not unit tests
-          Mix.Tasks.Absinthe.Object.Gen,
-          Mix.Tasks.Absinthe.Object.Gen.Type,
-          Mix.Tasks.Absinthe.Object.Gen.Enum,
-          Mix.Tasks.Absinthe.Object.Gen.Input,
-          Mix.Tasks.Absinthe.Object.Gen.Interface,
-          Mix.Tasks.Absinthe.Object.Gen.Schema,
+          Mix.Tasks.GreenFairy.Gen,
+          Mix.Tasks.GreenFairy.Gen.Type,
+          Mix.Tasks.GreenFairy.Gen.Enum,
+          Mix.Tasks.GreenFairy.Gen.Input,
+          Mix.Tasks.GreenFairy.Gen.Interface,
+          Mix.Tasks.GreenFairy.Gen.Schema,
           # Deferred definition structs - just data structures
-          Absinthe.Object.Deferred.Definition.Arg,
-          Absinthe.Object.Deferred.Definition.Connection,
-          Absinthe.Object.Deferred.Definition.Enum,
-          Absinthe.Object.Deferred.Definition.Field,
-          Absinthe.Object.Deferred.Definition.Input,
-          Absinthe.Object.Deferred.Definition.Interface,
-          Absinthe.Object.Deferred.Definition.Object,
-          Absinthe.Object.Deferred.Definition.Scalar,
-          Absinthe.Object.Deferred.Definition.Union,
-          Absinthe.Object.Deferred.Schema,
+          GreenFairy.Deferred.Definition.Arg,
+          GreenFairy.Deferred.Definition.Connection,
+          GreenFairy.Deferred.Definition.Enum,
+          GreenFairy.Deferred.Definition.Field,
+          GreenFairy.Deferred.Definition.Input,
+          GreenFairy.Deferred.Definition.Interface,
+          GreenFairy.Deferred.Definition.Object,
+          GreenFairy.Deferred.Definition.Scalar,
+          GreenFairy.Deferred.Definition.Union,
+          GreenFairy.Deferred.Schema,
           # Macro-only modules
-          Absinthe.Object.Extensions.Auth.Macros,
+          GreenFairy.Extensions.Auth.Macros,
           # Relay macros - primarily compile-time
-          Absinthe.Object.Relay.Node,
-          Absinthe.Object.Relay.Mutation
+          GreenFairy.Relay.Node,
+          GreenFairy.Relay.Mutation
         ]
       ],
       preferred_cli_env: [
@@ -99,6 +99,7 @@ defmodule Absinthe.Object.MixProject do
   defp docs do
     [
       main: "readme",
+      logo: "assets/logo.svg",
       extras: [
         "README.md",
         "guides/getting-started.md",
@@ -109,53 +110,54 @@ defmodule Absinthe.Object.MixProject do
         "guides/connections.md",
         "guides/operations.md"
       ],
+      assets: %{"assets" => "assets"},
       groups_for_extras: [
         Guides: ~r/guides\/.*/
       ],
       groups_for_modules: [
         "Core DSL": [
-          Absinthe.Object,
-          Absinthe.Object.Type,
-          Absinthe.Object.Interface,
-          Absinthe.Object.Input,
-          Absinthe.Object.Enum,
-          Absinthe.Object.Union,
-          Absinthe.Object.Scalar
+          GreenFairy,
+          GreenFairy.Type,
+          GreenFairy.Interface,
+          GreenFairy.Input,
+          GreenFairy.Enum,
+          GreenFairy.Union,
+          GreenFairy.Scalar
         ],
         Operations: [
-          Absinthe.Object.Query,
-          Absinthe.Object.Mutation,
-          Absinthe.Object.Subscription
+          GreenFairy.Query,
+          GreenFairy.Mutation,
+          GreenFairy.Subscription
         ],
         "Schema & Discovery": [
-          Absinthe.Object.Schema,
-          Absinthe.Object.Discovery
+          GreenFairy.Schema,
+          GreenFairy.Discovery
         ],
         "Field Helpers": [
-          Absinthe.Object.Field.Connection,
-          Absinthe.Object.Field.Dataloader,
-          Absinthe.Object.Field.Loader,
-          Absinthe.Object.Field.Middleware
+          GreenFairy.Field.Connection,
+          GreenFairy.Field.Dataloader,
+          GreenFairy.Field.Loader,
+          GreenFairy.Field.Middleware
         ],
         Extensions: [
-          Absinthe.Object.Extensions.CQL,
-          Absinthe.Object.Extensions.Auth
+          GreenFairy.Extensions.CQL,
+          GreenFairy.Extensions.Auth
         ],
         Authorization: [
-          Absinthe.Object.AuthorizedObject,
-          Absinthe.Object.AuthorizationInfo
+          GreenFairy.AuthorizedObject,
+          GreenFairy.AuthorizationInfo
         ],
         Adapters: [
-          Absinthe.Object.Adapter,
-          Absinthe.Object.Adapters.Ecto
+          GreenFairy.Adapter,
+          GreenFairy.Adapters.Ecto
         ],
         "Built-ins": [
-          Absinthe.Object.BuiltIns.Node,
-          Absinthe.Object.BuiltIns.PageInfo,
-          Absinthe.Object.BuiltIns.Timestampable
+          GreenFairy.BuiltIns.Node,
+          GreenFairy.BuiltIns.PageInfo,
+          GreenFairy.BuiltIns.Timestampable
         ],
         Utilities: [
-          Absinthe.Object.Naming
+          GreenFairy.Naming
         ]
       ]
     ]

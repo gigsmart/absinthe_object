@@ -60,8 +60,8 @@ Enable CQL on a type by using the extension:
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
-  alias Absinthe.Object.Extensions.CQL
+  use GreenFairy.Type
+  alias GreenFairy.Extensions.CQL
 
   type "User", struct: MyApp.User do
     use CQL
@@ -194,7 +194,7 @@ Define CQL operators on custom scalar types. This example uses the
 
 ```elixir
 defmodule MyApp.GraphQL.Scalars.Point do
-  use Absinthe.Object.Scalar
+  use GreenFairy.Scalar
 
   @moduledoc "GraphQL scalar for Geo.Point from the geo library"
 
@@ -268,7 +268,7 @@ The `__cql_config__/0` function returns:
 
 ```elixir
 %{
-  adapter: Absinthe.Object.Adapters.Ecto,  # Detected adapter
+  adapter: GreenFairy.Adapters.Ecto,  # Detected adapter
   adapter_fields: [:id, :name, :email],     # Fields from adapter
   adapter_field_types: %{                   # Types for each field
     id: :id,
@@ -289,11 +289,11 @@ CQL uses adapters to detect field information. The built-in Ecto adapter:
 - Extracts field types from the schema
 - Maps Ecto types to CQL operators
 
-Custom adapters can be created by implementing the `Absinthe.Object.Adapter` behaviour:
+Custom adapters can be created by implementing the `GreenFairy.Adapter` behaviour:
 
 ```elixir
 defmodule MyApp.CustomAdapter do
-  use Absinthe.Object.Adapter
+  use GreenFairy.Adapter
 
   @impl true
   def handles?(module), do: # check if this adapter handles the module
@@ -326,7 +326,7 @@ Include CQL types in your schema using the CQL.Schema module:
 ```elixir
 defmodule MyApp.Schema do
   use Absinthe.Schema
-  use Absinthe.Object.Extensions.CQL.Schema
+  use GreenFairy.Extensions.CQL.Schema
 
   # Import your types that use CQL
   import_types MyApp.GraphQL.Types.User

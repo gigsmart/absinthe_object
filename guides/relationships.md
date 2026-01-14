@@ -4,7 +4,7 @@ This guide covers how to define relationships between types and use DataLoader f
 
 ## Unified Field API
 
-Absinthe.Object uses a single `field` macro for all fields, including associations. Resolution is determined by:
+GreenFairy uses a single `field` macro for all fields, including associations. Resolution is determined by:
 
 - **`resolve`** - Single-item resolver (receives one parent)
 - **`loader`** - Batch loader (receives list of parents)
@@ -18,7 +18,7 @@ For associations, simply define fields with the appropriate type:
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   type "User", struct: MyApp.User do
     field :id, non_null(:id)

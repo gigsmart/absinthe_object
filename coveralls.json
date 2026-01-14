@@ -5,10 +5,10 @@
   },
   "skip_files": [
     "lib/mix/tasks/",
-    "lib/absinthe/object/deferred/definition/",
-    "lib/absinthe/object/deferred/schema.ex",
-    "lib/absinthe/object/extensions/auth/macros.ex",
-    "lib/absinthe/object/relay/node.ex",
-    "lib/absinthe/object/relay/mutation.ex"
+    "lib/green_fairy/deferred/definition/",
+    "lib/green_fairy/deferred/schema.ex",
+    "lib/green_fairy/extensions/auth/macros.ex",
+    "lib/green_fairy/relay/node.ex",
+    "lib/green_fairy/relay/mutation.ex"
   ]
 }

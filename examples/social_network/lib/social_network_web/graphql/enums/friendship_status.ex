@@ -1,5 +1,5 @@
 defmodule SocialNetworkWeb.GraphQL.Enums.FriendshipStatus do
-  use Absinthe.Object.Enum
+  use GreenFairy.Enum
 
   enum "FriendshipStatus" do
     value :pending, description: "Friend request sent but not yet accepted"

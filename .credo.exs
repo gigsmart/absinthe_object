@@ -112,16 +112,16 @@
              files: %{
                excluded: [
                  # These modules create atoms from known schema fields, not user input
-                 "lib/absinthe/object/extensions/cql.ex",
-                 "lib/absinthe/object/extensions/cql/filter_input.ex",
-                 "lib/absinthe/object/naming.ex",
-                 "lib/absinthe/object/authorization_info.ex",
+                 "lib/green_fairy/extensions/cql.ex",
+                 "lib/green_fairy/extensions/cql/filter_input.ex",
+                 "lib/green_fairy/naming.ex",
+                 "lib/green_fairy/authorization_info.ex",
                  # Compile-time code generation for types and connections
-                 "lib/absinthe/object/field/connection.ex",
-                 "lib/absinthe/object/deferred/schema.ex",
-                 "lib/absinthe/object/deferred/compiler.ex",
-                 "lib/absinthe/object/adapter.ex",
-                 "lib/absinthe/object/filter/impl.ex",
+                 "lib/green_fairy/field/connection.ex",
+                 "lib/green_fairy/deferred/schema.ex",
+                 "lib/green_fairy/deferred/compiler.ex",
+                 "lib/green_fairy/adapter.ex",
+                 "lib/green_fairy/filter/impl.ex",
                  # Mix tasks create atoms from module names at compile time
                  "lib/mix/tasks/",
                  # Test files - atom creation is controlled

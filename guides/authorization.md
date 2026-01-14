@@ -1,10 +1,10 @@
 # Authorization
 
-Absinthe.Object provides a simple, type-owned authorization system. Each type controls which fields are visible based on the object data and the request context.
+GreenFairy provides a simple, type-owned authorization system. Each type controls which fields are visible based on the object data and the request context.
 
 ## Design Philosophy
 
-Unlike complex permission systems that require separate policy classes or middleware chains, Absinthe.Object keeps authorization where it belongs - with the type that owns the data. This approach:
+Unlike complex permission systems that require separate policy classes or middleware chains, GreenFairy keeps authorization where it belongs - with the type that owns the data. This approach:
 
 - **Keeps related logic together** - The type knows its fields, so it should know who can see them
 - **Stays flexible** - Your context is your domain, put whatever you need in it
@@ -16,7 +16,7 @@ Define an `authorize` callback inside your type to control field visibility:
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   type "User", struct: MyApp.User do
     authorize fn user, ctx ->
@@ -101,7 +101,7 @@ Control which fields users can submit in input types:
 
 ```elixir
 defmodule MyApp.GraphQL.Inputs.UpdateUserInput do
-  use Absinthe.Object.Input
+  use GreenFairy.Input
 
   input "UpdateUserInput" do
     authorize fn _input, ctx ->
@@ -188,7 +188,7 @@ Authorization integrates seamlessly with the CQL extension. Users can only filte
 
 ```elixir
 type "User", struct: MyApp.User do
-  use Absinthe.Object.Extensions.CQL
+  use GreenFairy.Extensions.CQL
 
   authorize fn user, ctx ->
     if ctx[:current_user]?.admin, do: :all, else: [:id, :name]

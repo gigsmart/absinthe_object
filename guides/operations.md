@@ -8,7 +8,7 @@ Query modules group related query fields:
 
 ```elixir
 defmodule MyApp.GraphQL.Queries.UserQueries do
-  use Absinthe.Object.Query
+  use GreenFairy.Query
 
   queries do
     @desc "Get a user by ID"
@@ -39,7 +39,7 @@ Mutation modules group related mutation fields:
 
 ```elixir
 defmodule MyApp.GraphQL.Mutations.UserMutations do
-  use Absinthe.Object.Mutation
+  use GreenFairy.Mutation
 
   mutations do
     @desc "Create a new user"
@@ -78,7 +78,7 @@ Subscription modules define real-time event streams:
 
 ```elixir
 defmodule MyApp.GraphQL.Subscriptions.UserSubscriptions do
-  use Absinthe.Object.Subscription
+  use GreenFairy.Subscription
 
   subscriptions do
     @desc "Subscribe to user updates"
@@ -127,15 +127,15 @@ defmodule MyApp.GraphQL.Schema do
   import_types MyApp.GraphQL.Subscriptions.UserSubscriptions
 
   query do
-    import_fields :__absinthe_object_queries__
+    import_fields :__green_fairy_queries__
   end
 
   mutation do
-    import_fields :__absinthe_object_mutations__
+    import_fields :__green_fairy_mutations__
   end
 
   subscription do
-    import_fields :__absinthe_object_subscriptions__
+    import_fields :__green_fairy_subscriptions__
   end
 end
 ```
@@ -154,14 +154,14 @@ end
 
 ### Built-in Middleware
 
-Absinthe.Object provides some helper middleware:
+GreenFairy provides some helper middleware:
 
 ```elixir
 # Require a specific capability
-middleware Absinthe.Object.Field.Middleware.require_capability(:admin)
+middleware GreenFairy.Field.Middleware.require_capability(:admin)
 
 # Cache the result (placeholder - implement your own caching)
-middleware Absinthe.Object.Field.Middleware.cache(ttl: 300)
+middleware GreenFairy.Field.Middleware.cache(ttl: 300)
 ```
 
 ## Publishing Subscription Events
@@ -196,8 +196,8 @@ import_types MyApp.GraphQL.Queries.CommentQueries
 
 query do
   # Fields from all query modules are imported
-  import_fields :__absinthe_object_queries__
+  import_fields :__green_fairy_queries__
 end
 ```
 
-Note: If using multiple modules, each will define its own `:__absinthe_object_queries__` object. You may need to rename them or manually import fields.
+Note: If using multiple modules, each will define its own `:__green_fairy_queries__` object. You may need to rename them or manually import fields.

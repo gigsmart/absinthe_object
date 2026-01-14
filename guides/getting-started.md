@@ -1,15 +1,15 @@
 # Getting Started
 
-This guide will help you get started with Absinthe.Object, a cleaner DSL for defining GraphQL schemas in Elixir.
+This guide will help you get started with GreenFairy, a cleaner DSL for defining GraphQL schemas in Elixir.
 
 ## Installation
 
-Add `absinthe_object` to your list of dependencies in `mix.exs`:
+Add `green_fairy` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:absinthe_object, "~> 0.1.0"}
+    {:green_fairy, "~> 0.1.0"}
   ]
 end
 ```
@@ -22,7 +22,7 @@ Interfaces define a common set of fields that types can implement:
 
 ```elixir
 defmodule MyApp.GraphQL.Interfaces.Node do
-  use Absinthe.Object.Interface
+  use GreenFairy.Interface
 
   interface "Node" do
     @desc "A globally unique identifier"
@@ -43,7 +43,7 @@ Types represent your domain objects:
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   type "User", struct: MyApp.User do
     implements MyApp.GraphQL.Interfaces.Node
@@ -69,7 +69,7 @@ Input types are used for mutations:
 
 ```elixir
 defmodule MyApp.GraphQL.Inputs.CreateUserInput do
-  use Absinthe.Object.Input
+  use GreenFairy.Input
 
   input "CreateUserInput" do
     field :email, non_null(:string)
@@ -85,7 +85,7 @@ Query modules group related query fields:
 
 ```elixir
 defmodule MyApp.GraphQL.Queries.UserQueries do
-  use Absinthe.Object.Query
+  use GreenFairy.Query
 
   queries do
     field :user, :user do
@@ -106,7 +106,7 @@ Mutation modules group related mutation fields:
 
 ```elixir
 defmodule MyApp.GraphQL.Mutations.UserMutations do
-  use Absinthe.Object.Mutation
+  use GreenFairy.Mutation
 
   mutations do
     field :create_user, :user do
@@ -123,7 +123,7 @@ The schema module auto-discovers and assembles everything:
 
 ```elixir
 defmodule MyApp.GraphQL.Schema do
-  use Absinthe.Object.Schema,
+  use GreenFairy.Schema,
     discover: [MyApp.GraphQL]
 end
 ```

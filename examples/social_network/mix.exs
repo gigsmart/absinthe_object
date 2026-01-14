@@ -21,7 +21,7 @@ defmodule SocialNetwork.MixProject do
 
   defp deps do
     [
-      {:absinthe_object, path: "../.."},
+      {:green_fairy, path: "../.."},
       {:absinthe, "~> 1.7"},
       {:absinthe_plug, "~> 1.5"},
       {:absinthe_relay, "~> 1.5"},

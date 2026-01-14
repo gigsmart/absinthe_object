@@ -1,4 +1,4 @@
-# Claude Code Instructions for Absinthe.Object
+# Claude Code Instructions for GreenFairy
 
 ## Project Overview
 
@@ -21,16 +21,16 @@ lib/
   absinthe/
     object.ex                     # Main entry point
     object/
-      type.ex                     # use Absinthe.Object.Type
-      interface.ex                # use Absinthe.Object.Interface
-      input.ex                    # use Absinthe.Object.Input
-      enum.ex                     # use Absinthe.Object.Enum
-      union.ex                    # use Absinthe.Object.Union
-      scalar.ex                   # use Absinthe.Object.Scalar
-      query.ex                    # use Absinthe.Object.Query
-      mutation.ex                 # use Absinthe.Object.Mutation
-      subscription.ex             # use Absinthe.Object.Subscription
-      schema.ex                   # use Absinthe.Object.Schema
+      type.ex                     # use GreenFairy.Type
+      interface.ex                # use GreenFairy.Interface
+      input.ex                    # use GreenFairy.Input
+      enum.ex                     # use GreenFairy.Enum
+      union.ex                    # use GreenFairy.Union
+      scalar.ex                   # use GreenFairy.Scalar
+      query.ex                    # use GreenFairy.Query
+      mutation.ex                 # use GreenFairy.Mutation
+      subscription.ex             # use GreenFairy.Subscription
+      schema.ex                   # use GreenFairy.Schema
       discovery.ex                # Auto-discovery of type modules
       field/                      # Field helpers
       built_ins/                  # Built-in types (Node, PageInfo)
@@ -47,7 +47,7 @@ mix deps.get
 mix test
 
 # Run specific test file
-mix test test/absinthe/object/type_test.exs
+mix test test/green_fairy/type_test.exs
 
 # Generate docs
 mix docs
@@ -101,5 +101,5 @@ Use conventional commits:
 ## Notes
 
 - This library generates Absinthe Blueprint AST, it doesn't replace Absinthe's runtime
-- Types are auto-discovered via `__absinthe_object_definition__/0` callback
+- Types are auto-discovered via `__green_fairy_definition__/0` callback
 - The `resolve_type` for interfaces is auto-generated from `implements` calls

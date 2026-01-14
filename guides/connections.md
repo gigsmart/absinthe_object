@@ -16,7 +16,7 @@ Use the `connection` macro inside a type:
 
 ```elixir
 defmodule MyApp.GraphQL.Types.User do
-  use Absinthe.Object.Type
+  use GreenFairy.Type
 
   type "User", struct: MyApp.User do
     field :id, non_null(:id)
@@ -55,7 +55,7 @@ Connections automatically receive these arguments:
 
 ### From a List
 
-Use `Absinthe.Object.Field.Connection.from_list/3`:
+Use `GreenFairy.Field.Connection.from_list/3`:
 
 ```elixir
 field :friends, :friends_connection do
@@ -66,20 +66,20 @@ field :friends, :friends_connection do
 
   resolve fn user, args, _ ->
     friends = MyApp.Accounts.list_friends(user)
-    Absinthe.Object.Field.Connection.from_list(friends, args)
+    GreenFairy.Field.Connection.from_list(friends, args)
   end
 end
 ```
 
 ### From an Ecto Query
 
-Use `Absinthe.Object.Field.Connection.from_query/4`:
+Use `GreenFairy.Field.Connection.from_query/4`:
 
 ```elixir
 field :friends, :friends_connection do
   resolve fn user, args, _ ->
     query = MyApp.Accounts.friends_query(user)
-    Absinthe.Object.Field.Connection.from_query(query, MyApp.Repo, args)
+    GreenFairy.Field.Connection.from_query(query, MyApp.Repo, args)
   end
 end
 ```
@@ -89,7 +89,7 @@ end
 By default, cursors are Base64-encoded indices. You can provide a custom cursor function:
 
 ```elixir
-Absinthe.Object.Field.Connection.from_list(items, args,
+GreenFairy.Field.Connection.from_list(items, args,
   cursor_fn: fn item, _index -> Base.encode64("item:#{item.id}") end
 )
 ```
@@ -137,7 +137,7 @@ You can also define connections at the query level:
 
 ```elixir
 defmodule MyApp.GraphQL.Queries.UserQueries do
-  use Absinthe.Object.Query
+  use GreenFairy.Query
 
   queries do
     connection :users, MyApp.GraphQL.Types.User do
@@ -145,7 +145,7 @@ defmodule MyApp.GraphQL.Queries.UserQueries do
 
       resolve fn _, args, _ ->
         users = MyApp.Accounts.list_users(args[:filter])
-        Absinthe.Object.Field.Connection.from_list(users, args)
+        GreenFairy.Field.Connection.from_list(users, args)
       end
     end
   end
