@@ -249,4 +249,79 @@ defmodule Absinthe.Object.Adapter do
       capability in [:cql, :dataloader]
     end
   end
+
+  # ===========================================================================
+  # Filter Adapter Resolution
+  # ===========================================================================
+
+  @doc """
+  Returns the filter adapter struct for the given struct module.
+
+  This auto-detects the appropriate filter adapter based on the backing
+  data source (Ecto repo, Elasticsearch, etc.).
+
+  ## Options
+
+  - `:repo` - Ecto repo module (auto-detected from struct if not provided)
+  - `:extensions` - Database extensions (e.g., `[:postgis]`)
+  - `:filter_adapter` - Explicit filter adapter struct to use
+
+  ## Examples
+
+      # Auto-detect from Ecto schema
+      filter_adapter = Adapter.filter_adapter_for(MyApp.User)
+      #=> %Absinthe.Object.Adapters.Ecto.Postgres{repo: MyApp.Repo}
+
+      # With PostGIS extension
+      filter_adapter = Adapter.filter_adapter_for(MyApp.User, extensions: [:postgis])
+      #=> %Absinthe.Object.Adapters.Ecto.Postgres{repo: MyApp.Repo, extensions: [:postgis]}
+
+      # Explicit adapter
+      filter_adapter = Adapter.filter_adapter_for(MyApp.User,
+        filter_adapter: %Adapters.Elasticsearch{index: "users"}
+      )
+
+  """
+  def filter_adapter_for(struct_module, opts \\ []) do
+    cond do
+      # Explicit filter adapter provided
+      opts[:filter_adapter] ->
+        opts[:filter_adapter]
+
+      # Ecto schema - auto-detect from repo
+      ecto_schema?(struct_module) ->
+        repo = opts[:repo] || infer_repo(struct_module)
+        if repo do
+          Absinthe.Object.Adapters.Ecto.Detector.adapter_for!(repo, opts)
+        else
+          {:error, :repo_not_found}
+        end
+
+      true ->
+        {:error, :unknown_struct_type}
+    end
+  end
+
+  defp ecto_schema?(module) do
+    Code.ensure_loaded?(module) and function_exported?(module, :__schema__, 1)
+  end
+
+  defp infer_repo(struct_module) do
+    # Try to find repo from module prefix
+    # e.g., MyApp.Accounts.User -> MyApp.Repo
+    parts = Module.split(struct_module)
+
+    if length(parts) >= 2 do
+      app_module = parts |> Enum.take(1) |> Module.concat()
+      repo_module = Module.concat(app_module, Repo)
+
+      if Code.ensure_loaded?(repo_module) and function_exported?(repo_module, :__adapter__, 0) do
+        repo_module
+      else
+        nil
+      end
+    else
+      nil
+    end
+  end
 end
