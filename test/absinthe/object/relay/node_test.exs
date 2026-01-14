@@ -1,16 +1,7 @@
 defmodule Absinthe.Object.Relay.NodeTest do
   use ExUnit.Case, async: true
 
-  alias Absinthe.Object.Relay.Node
-
-  describe "type_name_to_identifier conversion" do
-    # We test this indirectly through resolve_node behavior
-    # The private function converts "UserProfile" -> :user_profile
-  end
-
-  describe "wrap_result/1" do
-    # Testing through fetch_node behavior
-  end
+  alias Absinthe.Object.Relay.{GlobalId, Node}
 
   describe "resolve_node/3" do
     test "returns error for invalid global ID" do
@@ -26,12 +17,26 @@ defmodule Absinthe.Object.Relay.NodeTest do
       assert {:error, "Invalid global ID format"} =
                Node.resolve_node("!!!invalid!!!", resolution, [])
     end
+
+    test "returns error for unknown type" do
+      # Create a valid global ID for an unknown type
+      global_id = GlobalId.encode("UnknownType", "123")
+      resolution = %{schema: __MODULE__.NodeTestSchema, context: %{}}
+
+      assert {:error, "Unknown type in global ID"} =
+               Node.resolve_node(global_id, resolution, [])
+    end
+
   end
 
-  # Define a minimal test schema module
-  defmodule TestSchema do
-    def __absinthe_types__ do
-      []
+  # Define test schema module
+  defmodule NodeTestSchema do
+    use Absinthe.Schema
+
+    query do
+      field :placeholder, :string do
+        resolve fn _, _, _ -> {:ok, "ok"} end
+      end
     end
   end
 end

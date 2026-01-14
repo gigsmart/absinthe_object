@@ -22,6 +22,40 @@ defmodule Absinthe.Object.Relay.MutationTest do
   describe "ClientMutationId middleware" do
     alias Mutation.ClientMutationId
 
+    test "call extracts client_mutation_id from input and stores in private" do
+      resolution = %Absinthe.Resolution{
+        arguments: %{input: %{client_mutation_id: "abc-123", name: "test"}},
+        private: %{}
+      }
+
+      result = ClientMutationId.call(resolution, [])
+
+      assert result.private[:client_mutation_id] == "abc-123"
+    end
+
+    test "call handles missing client_mutation_id in input" do
+      resolution = %Absinthe.Resolution{
+        arguments: %{input: %{name: "test"}},
+        private: %{}
+      }
+
+      result = ClientMutationId.call(resolution, [])
+
+      assert result.private[:client_mutation_id] == nil
+    end
+
+    test "call handles missing input argument" do
+      resolution = %Absinthe.Resolution{
+        arguments: %{other_arg: "value"},
+        private: %{}
+      }
+
+      result = ClientMutationId.call(resolution, [])
+
+      # Should pass through unchanged
+      assert result == resolution
+    end
+
     test "add_to_result adds client_mutation_id to result map" do
       resolution = %{private: %{client_mutation_id: "abc-123"}}
       result = %{user: %{id: 1}}
