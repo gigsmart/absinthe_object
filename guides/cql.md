@@ -8,8 +8,51 @@ Instead of manually defining filter input types and writing filter logic, CQL:
 
 - Detects your Ecto schema fields and their types
 - Generates appropriate operators for each field type
-- Creates a `TypeFilter` input automatically
+- Creates `CqlFilter{Type}Input` types with logical combinators (`_and`, `_or`, `_not`)
+- Creates `CqlOp{Type}Input` types for each field type's operators
 - Integrates with your authorization rules
+
+## Generated Schema Pattern
+
+CQL follows the GigSmart schema pattern where each type gets:
+
+1. **Filter Input Type** - `CqlFilter{Type}Input` with:
+   - `_and: [CqlFilter{Type}Input]` - Logical AND combinator
+   - `_or: [CqlFilter{Type}Input]` - Logical OR combinator
+   - `_not: CqlFilter{Type}Input` - Logical NOT combinator
+   - Field-specific operator references (e.g., `name: CqlOpStringInput`)
+
+2. **Operator Input Types** - Shared types like:
+   - `CqlOpIdInput` - ID field operators (eq, neq, in, is_nil)
+   - `CqlOpStringInput` - String operators (eq, neq, contains, starts_with, ends_with, in, is_nil)
+   - `CqlOpIntegerInput` - Integer operators (eq, neq, gt, gte, lt, lte, in, is_nil)
+   - `CqlOpBooleanInput` - Boolean operators (eq, is_nil)
+   - `CqlOpDatetimeInput` - DateTime operators
+   - And more...
+
+Example generated schema for a User type:
+
+```graphql
+input CqlFilterUserInput {
+  _and: [CqlFilterUserInput]
+  _or: [CqlFilterUserInput]
+  _not: CqlFilterUserInput
+  id: CqlOpIdInput
+  name: CqlOpStringInput
+  email: CqlOpStringInput
+  age: CqlOpIntegerInput
+}
+
+input CqlOpStringInput {
+  eq: String
+  neq: String
+  contains: String
+  starts_with: String
+  ends_with: String
+  in: [String]
+  is_nil: Boolean
+}
+```
 
 ## Basic Usage
 
@@ -275,6 +318,55 @@ type "Custom", struct: MyApp.Custom do
   # ...
 end
 ```
+
+## Schema Integration
+
+Include CQL types in your schema using the CQL.Schema module:
+
+```elixir
+defmodule MyApp.Schema do
+  use Absinthe.Schema
+  use Absinthe.Object.Extensions.CQL.Schema
+
+  # Import your types that use CQL
+  import_types MyApp.GraphQL.Types.User
+  import_types MyApp.GraphQL.Types.Post
+
+  query do
+    field :users, list_of(:user) do
+      # Reference the generated filter type
+      arg :filter, :cql_filter_user_input
+      resolve &MyApp.Resolvers.list_users/3
+    end
+  end
+end
+```
+
+The `CQL.Schema` module automatically generates:
+
+- All operator input types (`CqlOpStringInput`, `CqlOpIntegerInput`, etc.)
+- You can generate filter inputs for specific types using `cql_filter_input/1`
+
+```elixir
+# Generate filter input for a specific type
+cql_filter_input MyApp.GraphQL.Types.User
+
+# Or for multiple types
+cql_filter_inputs [
+  MyApp.GraphQL.Types.User,
+  MyApp.GraphQL.Types.Post
+]
+```
+
+## Programmatic Access
+
+Each CQL-enabled type exposes functions for programmatic access:
+
+| Function | Description |
+|----------|-------------|
+| `__cql_filter_input_identifier__/0` | Returns the filter input type identifier |
+| `__cql_filter_fields__/0` | Returns fields with their types for filter generation |
+| `__cql_generate_filter_input__/0` | Generates the filter input AST |
 
 ## Best Practices
 

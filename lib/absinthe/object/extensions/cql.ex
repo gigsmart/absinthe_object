@@ -21,6 +21,24 @@ defmodule Absinthe.Object.Extensions.CQL do
         end
       end
 
+  ## Generated Filter Types
+
+  CQL generates filter input types following the GigSmart schema pattern:
+
+  - `CqlFilter{Type}Input` - Main filter with `_and`, `_or`, `_not` combinators
+  - `CqlOp{Type}Input` - Operator inputs for each field type (string, integer, etc.)
+
+  For example, a User type generates:
+
+      input CqlFilterUserInput {
+        _and: [CqlFilterUserInput]
+        _or: [CqlFilterUserInput]
+        _not: CqlFilterUserInput
+        id: CqlOpIdInput
+        name: CqlOpStringInput
+        email: CqlOpStringInput
+      }
+
   ## How It Works
 
   1. CQL uses `Absinthe.Object.Adapter.find_adapter/2` to find an adapter for the struct
@@ -88,11 +106,24 @@ defmodule Absinthe.Object.Extensions.CQL do
         # Gets all integer operators automatically
       end
 
+  ## Schema Integration
+
+  Include CQL types in your schema:
+
+      defmodule MyApp.Schema do
+        use Absinthe.Schema
+        use Absinthe.Object.Extensions.CQL.Schema
+
+        # This imports all CQL operator types and generates filter types
+        # for all registered CQL-enabled types
+      end
+
   """
 
   use Absinthe.Object.Extension
 
   alias Absinthe.Object.Adapter
+  alias Absinthe.Object.Extensions.CQL.FilterInput
 
   @impl true
   def using(opts) do
@@ -112,6 +143,8 @@ defmodule Absinthe.Object.Extensions.CQL do
   @impl true
   def before_compile(env, config) do
     struct_module = config.struct
+    type_name = config.type_name
+    type_identifier = config.type_identifier
     custom_filters = Module.get_attribute(env.module, :cql_custom_filters) || []
     adapter_override = Module.get_attribute(env.module, :cql_adapter_override)
     adapter = Adapter.find_adapter(struct_module, adapter_override)
@@ -127,7 +160,9 @@ defmodule Absinthe.Object.Extensions.CQL do
       adapter_fields,
       adapter_field_types,
       custom_filter_meta,
-      custom_filter_fields
+      custom_filter_fields,
+      type_name,
+      type_identifier
     )
   end
 
@@ -168,8 +203,26 @@ defmodule Absinthe.Object.Extensions.CQL do
          adapter_fields,
          adapter_field_types,
          custom_filter_meta,
-         custom_filter_fields
+         custom_filter_fields,
+         type_name,
+         type_identifier
        ) do
+    # Build field types for filter input generation
+    # Include both adapter fields and custom filter fields
+    adapter_filter_fields =
+      adapter_fields
+      |> Enum.map(fn field -> {field, Map.get(adapter_field_types, field)} end)
+
+    custom_fields =
+      custom_filter_fields
+      |> Enum.map(fn field -> {field, nil} end)
+
+    # Combine adapter and custom fields (adapter fields first, custom override if present)
+    all_filter_fields = adapter_filter_fields ++ custom_fields
+    filter_fields = Enum.uniq_by(all_filter_fields, fn {name, _type} -> name end)
+
+    filter_input_identifier = FilterInput.filter_type_identifier(type_name)
+
     quote do
       unquote_splicing(filter_clauses)
 
@@ -182,7 +235,10 @@ defmodule Absinthe.Object.Extensions.CQL do
           adapter_fields: unquote(adapter_fields),
           adapter_field_types: unquote(Macro.escape(adapter_field_types)),
           custom_filters: unquote(Macro.escape(custom_filter_meta)),
-          custom_filter_fields: unquote(custom_filter_fields)
+          custom_filter_fields: unquote(custom_filter_fields),
+          type_name: unquote(type_name),
+          type_identifier: unquote(type_identifier),
+          filter_input_identifier: unquote(filter_input_identifier)
         }
       end
 
@@ -190,6 +246,22 @@ defmodule Absinthe.Object.Extensions.CQL do
 
       def __cql_filterable_fields__ do
         Enum.uniq(unquote(adapter_fields) ++ unquote(custom_filter_fields))
+      end
+
+      @doc """
+      Returns the filter input type identifier for this type.
+
+      This is the GigSmart-style `CqlFilter{Type}Input` identifier.
+      """
+      def __cql_filter_input_identifier__ do
+        unquote(filter_input_identifier)
+      end
+
+      @doc """
+      Returns fields with their types for filter input generation.
+      """
+      def __cql_filter_fields__ do
+        unquote(Macro.escape(filter_fields))
       end
 
       @doc """
@@ -265,23 +337,21 @@ defmodule Absinthe.Object.Extensions.CQL do
             []
         end
       end
-    end
-  end
 
-  # ============================================================================
-  # Filter Input Helpers
-  # ============================================================================
+      @doc """
+      Generates the filter input AST for this type.
 
-  defmodule FilterInput do
-    @moduledoc """
-    Helpers for generating filter input types.
-    """
+      This is used by the schema compiler to generate the CqlFilter{Type}Input type.
+      """
+      def __cql_generate_filter_input__ do
+        config = __cql_config__()
 
-    def input_name(type_name) when is_binary(type_name), do: :"#{type_name}Filter"
-
-    def input_name(type_identifier) when is_atom(type_identifier) do
-      name = type_identifier |> to_string() |> Macro.camelize()
-      :"#{name}Filter"
+        Absinthe.Object.Extensions.CQL.FilterInput.generate(
+          config.type_name,
+          __cql_filter_fields__(),
+          config.custom_filters
+        )
+      end
     end
   end
 

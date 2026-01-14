@@ -538,4 +538,72 @@ defmodule Absinthe.Object.Extensions.CQLTest do
       assert FilterInput.input_name(:blog_post) == :BlogPostFilter
     end
   end
+
+  # ============================================================================
+  # GigSmart-style CQL Filter Type Tests
+  # ============================================================================
+
+  describe "GigSmart-style filter input generation" do
+    # Use the module defined earlier in this test file
+    alias Absinthe.Object.Extensions.CQLTest.EctoCQLType
+
+    test "__cql_filter_input_identifier__ returns CqlFilter{Type}Input identifier" do
+      identifier = EctoCQLType.__cql_filter_input_identifier__()
+      assert identifier == :cql_filter_ecto_user_input
+    end
+
+    test "__cql_filter_fields__ returns field with types" do
+      fields = EctoCQLType.__cql_filter_fields__()
+
+      # Should return list of {field_name, field_type} tuples
+      assert is_list(fields)
+      assert {:id, :id} in fields
+      assert {:name, :string} in fields
+      assert {:email, :string} in fields
+      assert {:age, :integer} in fields
+    end
+
+    test "__cql_config__ includes filter input identifier" do
+      config = EctoCQLType.__cql_config__()
+
+      assert config.type_name == "EctoUser"
+      assert config.type_identifier == :ecto_user
+      assert config.filter_input_identifier == :cql_filter_ecto_user_input
+    end
+
+    test "__cql_generate_filter_input__ returns valid AST" do
+      ast = EctoCQLType.__cql_generate_filter_input__()
+
+      assert is_tuple(ast)
+      ast_string = Macro.to_string(ast)
+
+      # Should contain the filter input identifier
+      assert ast_string =~ "cql_filter_ecto_user_input"
+
+      # Should contain combinator fields
+      assert ast_string =~ "_and"
+      assert ast_string =~ "_or"
+      assert ast_string =~ "_not"
+
+      # Should contain field-specific operator types
+      assert ast_string =~ "cql_op_id_input"
+      assert ast_string =~ "cql_op_string_input"
+      assert ast_string =~ "cql_op_integer_input"
+    end
+  end
+
+  describe "Custom filter with GigSmart-style generation" do
+    alias Absinthe.Object.Extensions.CQLTest.CustomFilterType
+
+    test "__cql_generate_filter_input__ includes custom filter fields" do
+      ast = CustomFilterType.__cql_generate_filter_input__()
+      ast_string = Macro.to_string(ast)
+
+      # Should contain the full_name field (custom filter)
+      assert ast_string =~ "full_name"
+
+      # Custom filter with :contains should use string operator type
+      assert ast_string =~ "cql_op_string_input"
+    end
+  end
 end
