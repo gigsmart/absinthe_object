@@ -110,13 +110,13 @@ defmodule GreenFairy.Field.Connection do
       # Dynamically determine filter/order input types from the node type
       # These will be generated when the schema compiles
       if Code.ensure_loaded?(unquote(type_module)) and
-         function_exported?(unquote(type_module), :__cql_filter_input_identifier__, 0) do
+           function_exported?(unquote(type_module), :__cql_filter_input_identifier__, 0) do
         filter_type = unquote(type_module).__cql_filter_input_identifier__()
         arg :where, filter_type
       end
 
       if Code.ensure_loaded?(unquote(type_module)) and
-         function_exported?(unquote(type_module), :__cql_order_input_identifier__, 0) do
+           function_exported?(unquote(type_module), :__cql_order_input_identifier__, 0) do
         order_type = unquote(type_module).__cql_order_input_identifier__()
         arg :order_by, list_of(order_type)
       end
@@ -176,11 +176,12 @@ defmodule GreenFairy.Field.Connection do
                 ]
 
                 # Add aggregates if present
-                opts = if unquote(aggregates_escaped) do
-                  Keyword.put(opts, :aggregates, unquote(aggregates_escaped))
-                else
-                  opts
-                end
+                opts =
+                  if unquote(aggregates_escaped) do
+                    Keyword.put(opts, :aggregates, unquote(aggregates_escaped))
+                  else
+                    opts
+                  end
 
                 GreenFairy.Field.ConnectionResolver.resolve_association_connection(
                   parent,
@@ -216,20 +217,22 @@ defmodule GreenFairy.Field.Connection do
       connection_type = generate_connection_type(conn)
 
       # Generate aggregate types if aggregates are defined
-      aggregate_types = if conn.aggregates do
-        # Extract type name from connection name
-        # e.g., :engagements_connection -> "engagement"
-        type_name = conn.field_name |> Atom.to_string() |> String.trim_trailing("s")
+      aggregate_types =
+        if conn.aggregates do
+          # Extract type name from connection name
+          # e.g., :engagements_connection -> "engagement"
+          type_name = conn.field_name |> Atom.to_string() |> String.trim_trailing("s")
 
-        alias GreenFairy.Field.ConnectionAggregate
-        ConnectionAggregate.generate_aggregate_types(
-          conn.connection_name,
-          type_name,
-          conn.aggregates
-        )
-      else
-        []
-      end
+          alias GreenFairy.Field.ConnectionAggregate
+
+          ConnectionAggregate.generate_aggregate_types(
+            conn.connection_name,
+            type_name,
+            conn.aggregates
+          )
+        else
+          []
+        end
 
       [edge_type, connection_type | aggregate_types]
     end)
@@ -257,62 +260,67 @@ defmodule GreenFairy.Field.Connection do
     aggregates = conn.aggregates
 
     # Generate aggregate field if aggregates are defined
-    aggregate_field = if aggregates do
-      type_name = conn.field_name |> Atom.to_string() |> String.trim_trailing("s")
-      aggregate_type = :"#{type_name}_aggregate"
+    aggregate_field =
+      if aggregates do
+        type_name = conn.field_name |> Atom.to_string() |> String.trim_trailing("s")
+        aggregate_type = :"#{type_name}_aggregate"
 
-      quote do
-        # Aggregate field with deferred loading support
-        @desc "Aggregate values across all items (ignoring pagination)"
-        field :aggregate, unquote(aggregate_type) do
-          resolve(fn parent, _, _ ->
-            alias GreenFairy.Field.ConnectionAggregate
+        quote do
+          # Aggregate field with deferred loading support
+          @desc "Aggregate values across all items (ignoring pagination)"
+          field :aggregate, unquote(aggregate_type) do
+            resolve(fn parent, _, _ ->
+              alias GreenFairy.Field.ConnectionAggregate
 
-            sum_result = if parent[:_sum_fns] do
-              Map.new(parent._sum_fns, fn {field, fn_value} ->
-                {field, if(is_function(fn_value, 0), do: fn_value.(), else: fn_value)}
-              end)
-            else
-              parent[:sum]
-            end
+              sum_result =
+                if parent[:_sum_fns] do
+                  Map.new(parent._sum_fns, fn {field, fn_value} ->
+                    {field, if(is_function(fn_value, 0), do: fn_value.(), else: fn_value)}
+                  end)
+                else
+                  parent[:sum]
+                end
 
-            avg_result = if parent[:_avg_fns] do
-              Map.new(parent._avg_fns, fn {field, fn_value} ->
-                {field, if(is_function(fn_value, 0), do: fn_value.(), else: fn_value)}
-              end)
-            else
-              parent[:avg]
-            end
+              avg_result =
+                if parent[:_avg_fns] do
+                  Map.new(parent._avg_fns, fn {field, fn_value} ->
+                    {field, if(is_function(fn_value, 0), do: fn_value.(), else: fn_value)}
+                  end)
+                else
+                  parent[:avg]
+                end
 
-            min_result = if parent[:_min_fns] do
-              Map.new(parent._min_fns, fn {field, fn_value} ->
-                {field, if(is_function(fn_value, 0), do: fn_value.(), else: fn_value)}
-              end)
-            else
-              parent[:min]
-            end
+              min_result =
+                if parent[:_min_fns] do
+                  Map.new(parent._min_fns, fn {field, fn_value} ->
+                    {field, if(is_function(fn_value, 0), do: fn_value.(), else: fn_value)}
+                  end)
+                else
+                  parent[:min]
+                end
 
-            max_result = if parent[:_max_fns] do
-              Map.new(parent._max_fns, fn {field, fn_value} ->
-                {field, if(is_function(fn_value, 0), do: fn_value.(), else: fn_value)}
-              end)
-            else
-              parent[:max]
-            end
+              max_result =
+                if parent[:_max_fns] do
+                  Map.new(parent._max_fns, fn {field, fn_value} ->
+                    {field, if(is_function(fn_value, 0), do: fn_value.(), else: fn_value)}
+                  end)
+                else
+                  parent[:max]
+                end
 
-            result = %{}
-            result = if sum_result && map_size(sum_result) > 0, do: Map.put(result, :sum, sum_result), else: result
-            result = if avg_result && map_size(avg_result) > 0, do: Map.put(result, :avg, avg_result), else: result
-            result = if min_result && map_size(min_result) > 0, do: Map.put(result, :min, min_result), else: result
-            result = if max_result && map_size(max_result) > 0, do: Map.put(result, :max, max_result), else: result
+              result = %{}
+              result = if sum_result && map_size(sum_result) > 0, do: Map.put(result, :sum, sum_result), else: result
+              result = if avg_result && map_size(avg_result) > 0, do: Map.put(result, :avg, avg_result), else: result
+              result = if min_result && map_size(min_result) > 0, do: Map.put(result, :min, min_result), else: result
+              result = if max_result && map_size(max_result) > 0, do: Map.put(result, :max, max_result), else: result
 
-            {:ok, if(map_size(result) > 0, do: result, else: nil)}
-          end)
+              {:ok, if(map_size(result) > 0, do: result, else: nil)}
+            end)
+          end
         end
+      else
+        nil
       end
-    else
-      nil
-    end
 
     quote do
       Absinthe.Schema.Notation.object unquote(connection_name) do
@@ -416,7 +424,9 @@ defmodule GreenFairy.Field.Connection do
         [{:aggregate, _, [[do: block]]} | _] ->
           alias GreenFairy.Field.ConnectionAggregate
           ConnectionAggregate.parse_aggregate_block(block)
-        _ -> nil
+
+        _ ->
+          nil
       end
 
     connection_fields =
@@ -551,11 +561,12 @@ defmodule GreenFairy.Field.Connection do
       end
 
     # Add aggregates if present
-    result = if aggregates = Keyword.get(opts, :aggregates) do
-      Map.merge(result, aggregates)
-    else
-      result
-    end
+    result =
+      if aggregates = Keyword.get(opts, :aggregates) do
+        Map.merge(result, aggregates)
+      else
+        result
+      end
 
     {:ok, result}
   end
@@ -618,19 +629,21 @@ defmodule GreenFairy.Field.Connection do
       end
 
     # Compute aggregates if specified
-    from_list_opts = if aggregates do
-      alias GreenFairy.Field.ConnectionAggregate
+    from_list_opts =
+      if aggregates do
+        alias GreenFairy.Field.ConnectionAggregate
 
-      aggregate_results = ConnectionAggregate.compute_aggregates(count_query,
-        repo: repo,
-        aggregates: aggregates,
-        deferred: deferred
-      )
+        aggregate_results =
+          ConnectionAggregate.compute_aggregates(count_query,
+            repo: repo,
+            aggregates: aggregates,
+            deferred: deferred
+          )
 
-      Keyword.put(from_list_opts, :aggregates, aggregate_results)
-    else
-      from_list_opts
-    end
+        Keyword.put(from_list_opts, :aggregates, aggregate_results)
+      else
+        from_list_opts
+      end
 
     from_list(items, args, from_list_opts)
   end

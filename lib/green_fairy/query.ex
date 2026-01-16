@@ -50,8 +50,11 @@ defmodule GreenFairy.Query do
 
   """
   defmacro queries(do: block) do
-    # Extract type references from field definitions
+    # Extract type references from field definitions (for discovery)
     type_refs = extract_field_type_refs(block)
+
+    # Transform the block: replace module references with type identifiers
+    transformed_block = transform_type_refs(block, __CALLER__)
 
     quote do
       @green_fairy_queries true
@@ -75,11 +78,81 @@ defmodule GreenFairy.Query do
       end
 
       # Define queries object that can be imported
+      # Use transformed block with type identifiers instead of module references
       object :green_fairy_queries do
-        unquote(block)
+        unquote(transformed_block)
       end
     end
   end
+
+  # Transform module references to type identifiers in the AST
+  defp transform_type_refs({:__block__, meta, statements}, env) do
+    {:__block__, meta, Enum.map(statements, &transform_type_refs(&1, env))}
+  end
+
+  defp transform_type_refs({:field, meta, [name, type | rest]}, env) do
+    transformed_type = transform_type_ref(type, env)
+    # Transform any do block contents (for args, resolvers, etc.)
+    transformed_rest = Enum.map(rest, &transform_field_opts(&1, env))
+    {:field, meta, [name, transformed_type | transformed_rest]}
+  end
+
+  defp transform_type_refs(other, _env), do: other
+
+  # Transform options within field (including do blocks with args)
+  defp transform_field_opts([{:do, block}], env) do
+    [{:do, transform_block_contents(block, env)}]
+  end
+
+  defp transform_field_opts(opts, _env), do: opts
+
+  # Transform contents inside a do block (args, middleware, etc.)
+  defp transform_block_contents({:__block__, meta, statements}, env) do
+    {:__block__, meta, Enum.map(statements, &transform_statement(&1, env))}
+  end
+
+  defp transform_block_contents(single_statement, env) do
+    transform_statement(single_statement, env)
+  end
+
+  # Transform individual statements inside field blocks
+  defp transform_statement({:arg, meta, [name, type | rest]}, env) do
+    transformed_type = transform_type_ref(type, env)
+    {:arg, meta, [name, transformed_type | rest]}
+  end
+
+  defp transform_statement(other, _env), do: other
+
+  # Transform a type reference from module to identifier
+  defp transform_type_ref({:non_null, meta, [inner]}, env) do
+    {:non_null, meta, [transform_type_ref(inner, env)]}
+  end
+
+  defp transform_type_ref({:list_of, meta, [inner]}, env) do
+    {:list_of, meta, [transform_type_ref(inner, env)]}
+  end
+
+  defp transform_type_ref({:__aliases__, _, _} = module_ast, env) do
+    # Expand the module alias to get the full module name
+    module = Macro.expand(module_ast, env)
+
+    # Ensure the module is compiled so we can call its functions
+    case Code.ensure_compiled(module) do
+      {:module, ^module} ->
+        if function_exported?(module, :__green_fairy_identifier__, 0) do
+          module.__green_fairy_identifier__()
+        else
+          # Not a GreenFairy module, return as-is
+          module
+        end
+
+      _ ->
+        # Module not compiled yet, return as-is (will cause an error later)
+        module
+    end
+  end
+
+  defp transform_type_ref(type, _env), do: type
 
   # Extract type references from field statements in the block
   defp extract_field_type_refs({:__block__, _, statements}) do
@@ -88,11 +161,44 @@ defmodule GreenFairy.Query do
 
   defp extract_field_type_refs({:field, _, args}) do
     # Field can be: [name, type] or [name, type, do: block]
-    type_ref = extract_type_from_args(args)
-    if type_ref, do: [type_ref], else: []
+    # Extract return type
+    return_type_refs = case extract_type_from_args(args) do
+      nil -> []
+      ref -> [ref]
+    end
+
+    # Extract arg types from do block
+    arg_type_refs = extract_arg_types_from_field(args)
+
+    return_type_refs ++ arg_type_refs
   end
 
   defp extract_field_type_refs(_), do: []
+
+  # Extract arg type references from field args (looking for do block)
+  defp extract_arg_types_from_field([_name, _type, [{:do, block}]]) do
+    extract_arg_types_from_block(block)
+  end
+
+  defp extract_arg_types_from_field(_), do: []
+
+  # Extract type refs from arg statements in a do block
+  defp extract_arg_types_from_block({:__block__, _, statements}) do
+    Enum.flat_map(statements, &extract_arg_type_ref/1)
+  end
+
+  defp extract_arg_types_from_block(single_statement) do
+    extract_arg_type_ref(single_statement)
+  end
+
+  defp extract_arg_type_ref({:arg, _, [_name, type | _rest]}) do
+    case unwrap_type_ref(type) do
+      nil -> []
+      ref -> [ref]
+    end
+  end
+
+  defp extract_arg_type_ref(_), do: []
 
   defp extract_type_from_args([_name]), do: nil
   defp extract_type_from_args([_name, type]) when not is_list(type), do: unwrap_type_ref(type)
@@ -112,6 +218,16 @@ defmodule GreenFairy.Query do
   defmacro __before_compile__(env) do
     has_queries = Module.get_attribute(env.module, :green_fairy_queries)
 
+    # Get type references and expand any module aliases to actual module atoms
+    type_refs = Module.get_attribute(env.module, :green_fairy_referenced_types) || []
+
+    expanded_refs =
+      Enum.map(type_refs, fn
+        {:__aliases__, _, _} = ast -> Macro.expand(ast, env)
+        other -> other
+      end)
+      |> Enum.reject(&is_nil/1)
+
     quote do
       @doc false
       def __green_fairy_definition__ do
@@ -128,7 +244,7 @@ defmodule GreenFairy.Query do
 
       @doc false
       def __green_fairy_referenced_types__ do
-        unquote(Macro.escape(Module.get_attribute(env.module, :green_fairy_referenced_types) || []))
+        unquote(expanded_refs)
       end
     end
   end

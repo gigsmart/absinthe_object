@@ -21,7 +21,9 @@ defmodule GreenFairy.CQL.FilterInputTest do
       fields = [{:id, :id}, {:name, :string}]
       ast = FilterInput.generate("User", fields)
 
-      assert {:__block__, _, _} = ast
+      # The AST is a single input_object call, not a block
+      ast_string = Macro.to_string(ast)
+      assert ast_string =~ "input_object"
     end
 
     test "generates filter input with correct identifier" do

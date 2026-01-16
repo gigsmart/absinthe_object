@@ -43,31 +43,36 @@ defmodule GreenFairy.CQL.Scalars.DateTime do
   @behaviour GreenFairy.CQL.Scalar
 
   @base_operators [:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null]
-  @period_operators [:_between, :_period, :_current_period]
+  # Period operators require auxiliary types that haven't been implemented yet:
+  # :_between requires a between input type
+  # :_period requires :cql_period_input
+  # :_current_period requires :cql_current_period_input
+  # These will be added when the period operators feature is implemented
+  @period_operators [:_between]
 
   @impl true
   def operator_input(:postgres) do
-    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields with period support"}
+    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields"}
   end
 
   def operator_input(:mysql) do
-    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields with period support"}
+    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields"}
   end
 
   def operator_input(:sqlite) do
-    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields with period support"}
+    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields"}
   end
 
   def operator_input(:mssql) do
-    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields with period support"}
+    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields"}
   end
 
   def operator_input(:elasticsearch) do
-    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields with period support"}
+    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields"}
   end
 
   def operator_input(_adapter) do
-    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields with period support"}
+    {@base_operators ++ @period_operators, :datetime, "Operators for datetime fields"}
   end
 
   @impl true

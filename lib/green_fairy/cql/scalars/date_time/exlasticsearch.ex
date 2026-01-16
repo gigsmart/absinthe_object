@@ -137,7 +137,8 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Exlasticsearch do
   defp es_unit_char(:day), do: "d"
   defp es_unit_char(:week), do: "w"
   defp es_unit_char(:month), do: "M"
-  defp es_unit_char(:quarter), do: "M"  # Quarters use months
+  # Quarters use months
+  defp es_unit_char(:quarter), do: "M"
   defp es_unit_char(:year), do: "y"
 
   # For quarters, multiply count by 3

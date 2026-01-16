@@ -71,104 +71,104 @@ defmodule GreenFairy.CQL.Adapters.PostgresTest do
 
   describe "scalar operators" do
     test "_eq operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_eq, "John", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_eq, "John", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_neq operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_neq, "John", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_neq, "John", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_gt operator with integer", %{query: query} do
-      result = Postgres.apply_operator(query, :age, :_gt, 18, [field_type: :integer])
+      result = Postgres.apply_operator(query, :age, :_gt, 18, field_type: :integer)
       assert Helper.has_where?(result)
     end
 
     test "_gte operator", %{query: query} do
-      result = Postgres.apply_operator(query, :age, :_gte, 18, [field_type: :string])
+      result = Postgres.apply_operator(query, :age, :_gte, 18, field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_lt operator", %{query: query} do
-      result = Postgres.apply_operator(query, :age, :_lt, 65, [field_type: :string])
+      result = Postgres.apply_operator(query, :age, :_lt, 65, field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_lte operator", %{query: query} do
-      result = Postgres.apply_operator(query, :age, :_lte, 65, [field_type: :string])
+      result = Postgres.apply_operator(query, :age, :_lte, 65, field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_in operator with list", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_in, ["John", "Jane"], [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_in, ["John", "Jane"], field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_nin operator with list", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_nin, ["Spam", "Bot"], [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_nin, ["Spam", "Bot"], field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_is_null with true", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_is_null, true, [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_is_null, true, field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_is_null with false", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_is_null, false, [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_is_null, false, field_type: :string)
       assert Helper.has_where?(result)
     end
   end
 
   describe "string pattern operators" do
     test "_like operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_like, "%john%", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_like, "%john%", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_nlike operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_nlike, "%spam%", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_nlike, "%spam%", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_ilike operator for case-insensitive search", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_ilike, "%JOHN%", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_ilike, "%JOHN%", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_nilike operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_nilike, "%SPAM%", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_nilike, "%SPAM%", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_starts_with operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_starts_with, "Jo", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_starts_with, "Jo", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_istarts_with operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_istarts_with, "JO", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_istarts_with, "JO", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_ends_with operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_ends_with, "hn", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_ends_with, "hn", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_iends_with operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_iends_with, "HN", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_iends_with, "HN", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_contains operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_contains, "oh", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_contains, "oh", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_icontains operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_icontains, "OH", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_icontains, "OH", field_type: :string)
       assert Helper.has_where?(result)
     end
   end
@@ -187,21 +187,36 @@ defmodule GreenFairy.CQL.Adapters.PostgresTest do
     end
 
     test "_includes_all operator with string array", %{query: query} do
-      result = Postgres.apply_operator(query, :tags, :_includes_all, ["premium", "verified"], binding: nil, field_type: {:array, :string})
+      result =
+        Postgres.apply_operator(query, :tags, :_includes_all, ["premium", "verified"],
+          binding: nil,
+          field_type: {:array, :string}
+        )
+
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "@>")
       assert Helper.has_fragment?(result, "text[]")
     end
 
     test "_includes_all operator with integer array", %{query: query} do
-      result = Postgres.apply_operator(query, :role_ids, :_includes_all, [1, 2, 3], binding: nil, field_type: {:array, :integer})
+      result =
+        Postgres.apply_operator(query, :role_ids, :_includes_all, [1, 2, 3],
+          binding: nil,
+          field_type: {:array, :integer}
+        )
+
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "@>")
       assert Helper.has_fragment?(result, "integer[]")
     end
 
     test "_includes_any operator", %{query: query} do
-      result = Postgres.apply_operator(query, :tags, :_includes_any, ["premium", "verified"], binding: nil, field_type: {:array, :string})
+      result =
+        Postgres.apply_operator(query, :tags, :_includes_any, ["premium", "verified"],
+          binding: nil,
+          field_type: {:array, :string}
+        )
+
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "&&")
     end
@@ -229,29 +244,32 @@ defmodule GreenFairy.CQL.Adapters.PostgresTest do
     test "applies array operator with binding" do
       # Create a query with a named binding
       query = from(u in Helper.User, as: :post)
-      result = Postgres.apply_operator(query, :tags, :_includes, "premium", binding: :post, field_type: {:array, :string})
+
+      result =
+        Postgres.apply_operator(query, :tags, :_includes, "premium", binding: :post, field_type: {:array, :string})
+
       assert Helper.has_where?(result)
     end
   end
 
   describe "edge cases" do
     test "handles nil values appropriately", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_eq, nil, [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_eq, nil, field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "handles empty array for _in operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_in, [], [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_in, [], field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "handles empty string pattern", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_like, "", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_like, "", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "returns unmodified query for unsupported operator", %{query: query} do
-      result = Postgres.apply_operator(query, :name, :_unsupported_op, "value", [field_type: :string])
+      result = Postgres.apply_operator(query, :name, :_unsupported_op, "value", field_type: :string)
       assert result == query
     end
   end
@@ -260,8 +278,8 @@ defmodule GreenFairy.CQL.Adapters.PostgresTest do
     test "can chain multiple operators on same field", %{query: query} do
       result =
         query
-        |> Postgres.apply_operator(:age, :_gte, 18, [field_type: :integer])
-        |> Postgres.apply_operator(:age, :_lte, 65, [field_type: :integer])
+        |> Postgres.apply_operator(:age, :_gte, 18, field_type: :integer)
+        |> Postgres.apply_operator(:age, :_lte, 65, field_type: :integer)
 
       assert length(result.wheres) == 2
     end
@@ -269,9 +287,9 @@ defmodule GreenFairy.CQL.Adapters.PostgresTest do
     test "can apply operators on different fields", %{query: query} do
       result =
         query
-        |> Postgres.apply_operator(:name, :_like, "%john%", [field_type: :string])
-        |> Postgres.apply_operator(:age, :_gte, 18, [field_type: :integer])
-        |> Postgres.apply_operator(:active, :_eq, true, [field_type: :boolean])
+        |> Postgres.apply_operator(:name, :_like, "%john%", field_type: :string)
+        |> Postgres.apply_operator(:age, :_gte, 18, field_type: :integer)
+        |> Postgres.apply_operator(:active, :_eq, true, field_type: :boolean)
 
       assert length(result.wheres) == 3
     end

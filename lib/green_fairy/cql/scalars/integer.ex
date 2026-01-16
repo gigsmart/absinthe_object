@@ -21,8 +21,7 @@ defmodule GreenFairy.CQL.Scalars.Integer do
 
   @impl true
   def operator_input(_adapter) do
-    {[:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null], :integer,
-     "Operators for integer fields"}
+    {[:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null], :integer, "Operators for integer fields"}
   end
 
   @impl true

@@ -33,7 +33,6 @@ defmodule GreenFairy.CQLIntegrationTest do
   end
 
   describe "CQL as core feature" do
-
     test "types with struct automatically get CQL functions" do
       assert function_exported?(TestUserType, :__cql_filter_input_identifier__, 0)
       assert function_exported?(TestUserType, :__cql_order_input_identifier__, 0)
@@ -89,7 +88,7 @@ defmodule GreenFairy.CQLIntegrationTest do
         field :title, :string
 
         # Custom filter for computed field
-        custom_filter :full_name, [:_eq, :_ilike], fn query, op, value ->
+        custom_filter(:full_name, [:_eq, :_ilike], fn query, op, value ->
           case op do
             :_eq ->
               from(p in query,
@@ -101,7 +100,7 @@ defmodule GreenFairy.CQLIntegrationTest do
                 where: ilike(fragment("concat(?, ' ', ?)", p.first_name, p.last_name), ^"%#{value}%")
               )
           end
-        end
+        end)
       end
     end
 
@@ -327,7 +326,7 @@ defmodule GreenFairy.CQLIntegrationTest do
       use GreenFairy.Type
 
       type "SecureUser", struct: TestSecureUser do
-        authorize fn user, ctx ->
+        authorize(fn user, ctx ->
           current_user = ctx[:current_user]
 
           cond do
@@ -335,7 +334,7 @@ defmodule GreenFairy.CQLIntegrationTest do
             current_user && current_user.id == user.id -> [:id, :name, :email]
             true -> [:id, :name]
           end
-        end
+        end)
 
         field :id, non_null(:id)
         field :name, :string

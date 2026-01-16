@@ -123,7 +123,7 @@ defmodule GreenFairy.Deferred.TypeTest do
 
       object "UserWithPosts" do
         field :id, non_null(:id)
-        has_many :posts, GreenFairy.Deferred.TypeTest.PostType
+        has_many(:posts, GreenFairy.Deferred.TypeTest.PostType)
       end
     end
 
@@ -157,7 +157,7 @@ defmodule GreenFairy.Deferred.TypeTest do
 
       object "UserWithProfile" do
         field :id, non_null(:id)
-        has_one :profile, GreenFairy.Deferred.TypeTest.ProfileType
+        has_one(:profile, GreenFairy.Deferred.TypeTest.ProfileType)
       end
     end
 
@@ -191,7 +191,7 @@ defmodule GreenFairy.Deferred.TypeTest do
 
       object "UserWithOrg" do
         field :id, non_null(:id)
-        belongs_to :organization, GreenFairy.Deferred.TypeTest.OrgType
+        belongs_to(:organization, GreenFairy.Deferred.TypeTest.OrgType)
       end
     end
 
@@ -223,7 +223,7 @@ defmodule GreenFairy.Deferred.TypeTest do
       use GreenFairy.Deferred.Type
 
       object "TypeWithInterface" do
-        implements GreenFairy.Deferred.TypeTest.TestInterface
+        implements(GreenFairy.Deferred.TypeTest.TestInterface)
         field :id, non_null(:id)
         field :name, :string
       end
@@ -250,7 +250,7 @@ defmodule GreenFairy.Deferred.TypeTest do
 
       object "TypeWithConnection" do
         field :id, non_null(:id)
-        connection :items, GreenFairy.Deferred.TypeTest.ItemType
+        connection(:items, GreenFairy.Deferred.TypeTest.ItemType)
       end
     end
 
@@ -271,9 +271,10 @@ defmodule GreenFairy.Deferred.TypeTest do
       object "TypeWithConnectionOpts" do
         field :id, non_null(:id)
 
-        connection :items, GreenFairy.Deferred.TypeTest.ItemType,
+        connection(:items, GreenFairy.Deferred.TypeTest.ItemType,
           edge_fields: [extra: :string],
           connection_fields: [total_count: :integer]
+        )
       end
     end
 

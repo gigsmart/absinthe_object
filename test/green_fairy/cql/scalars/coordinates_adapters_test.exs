@@ -134,6 +134,7 @@ defmodule GreenFairy.CQL.Scalars.CoordinatesAdaptersTest do
 
     test "_st_within_bounding_box operator" do
       query = from(l in TestSchema)
+
       value = %{
         sw: %{lat: 37.0, lng: -123.0},
         ne: %{lat: 38.0, lng: -122.0}
@@ -146,12 +147,14 @@ defmodule GreenFairy.CQL.Scalars.CoordinatesAdaptersTest do
 
     test "_st_within_bounding_box operator with binding" do
       query = from(l in TestSchema, as: :location)
+
       value = %{
         sw: %{lat: 37.0, lng: -123.0},
         ne: %{lat: 38.0, lng: -122.0}
       }
 
-      result = CoordinatesPostgres.apply_operator(query, :coordinates, :_st_within_bounding_box, value, binding: :location)
+      result =
+        CoordinatesPostgres.apply_operator(query, :coordinates, :_st_within_bounding_box, value, binding: :location)
 
       assert %Ecto.Query{wheres: [%{}]} = result
     end

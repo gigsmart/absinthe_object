@@ -21,7 +21,8 @@ defmodule GreenFairy.CQL.Adapters.SQLiteTest do
 
       assert capabilities.array_operators_require_type_cast == false
       assert capabilities.supports_json_operators == true
-      assert capabilities.supports_full_text_search == true  # Via FTS5
+      # Via FTS5
+      assert capabilities.supports_full_text_search == true
       assert capabilities.max_in_clause_items == 500
       assert capabilities.native_arrays == false
       assert capabilities.emulated_ilike == true
@@ -62,54 +63,54 @@ defmodule GreenFairy.CQL.Adapters.SQLiteTest do
 
   describe "scalar operators" do
     test "_eq operator", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_eq, "John", [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_eq, "John", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_neq operator", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_neq, "John", [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_neq, "John", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_in operator", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_in, ["John", "Jane"], [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_in, ["John", "Jane"], field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_is_null operator", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_is_null, true, [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_is_null, true, field_type: :string)
       assert Helper.has_where?(result)
     end
   end
 
   describe "ILIKE emulation with COLLATE NOCASE" do
     test "_ilike uses COLLATE NOCASE", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_ilike, "%JOHN%", [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_ilike, "%JOHN%", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE NOCASE")
     end
 
     test "_nilike uses NOT LIKE with COLLATE NOCASE", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_nilike, "%SPAM%", [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_nilike, "%SPAM%", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE NOCASE")
       assert Helper.has_fragment?(result, "NOT LIKE")
     end
 
     test "_istarts_with uses COLLATE NOCASE", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_istarts_with, "JO", [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_istarts_with, "JO", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE NOCASE")
     end
 
     test "_iends_with uses COLLATE NOCASE", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_iends_with, "HN", [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_iends_with, "HN", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE NOCASE")
     end
 
     test "_icontains uses COLLATE NOCASE", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_icontains, "OH", [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_icontains, "OH", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE NOCASE")
     end
@@ -119,28 +120,28 @@ defmodule GreenFairy.CQL.Adapters.SQLiteTest do
     @describetag :pending
 
     test "_includes uses json_each with EXISTS", %{query: query} do
-      result = SQLite.apply_operator(query, :tags, :_includes, "premium", [field_type: {:array, :string}])
+      result = SQLite.apply_operator(query, :tags, :_includes, "premium", field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "EXISTS")
       assert Helper.has_fragment?(result, "json_each")
     end
 
     test "_excludes uses json_each with NOT EXISTS", %{query: query} do
-      result = SQLite.apply_operator(query, :tags, :_excludes, "spam", [field_type: {:array, :string}])
+      result = SQLite.apply_operator(query, :tags, :_excludes, "spam", field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "NOT EXISTS")
       assert Helper.has_fragment?(result, "json_each")
     end
 
     test "_is_empty with true uses json_array_length", %{query: query} do
-      result = SQLite.apply_operator(query, :tags, :_is_empty, true, [field_type: {:array, :string}])
+      result = SQLite.apply_operator(query, :tags, :_is_empty, true, field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "json_array_length")
       assert Helper.has_fragment?(result, "IS NULL")
     end
 
     test "_is_empty with false checks length > 0", %{query: query} do
-      result = SQLite.apply_operator(query, :tags, :_is_empty, false, [field_type: {:array, :string}])
+      result = SQLite.apply_operator(query, :tags, :_is_empty, false, field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "json_array_length")
       assert Helper.has_fragment?(result, "> 0")
@@ -164,17 +165,17 @@ defmodule GreenFairy.CQL.Adapters.SQLiteTest do
 
   describe "edge cases" do
     test "handles NULL values", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_eq, nil, [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_eq, nil, field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "returns unmodified query for unsupported operator", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_unsupported_op, "value", [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_unsupported_op, "value", field_type: :string)
       assert result == query
     end
 
     test "handles special characters in LIKE patterns", %{query: query} do
-      result = SQLite.apply_operator(query, :name, :_like, "%'test'%", [field_type: :string])
+      result = SQLite.apply_operator(query, :name, :_like, "%'test'%", field_type: :string)
       assert Helper.has_where?(result)
     end
   end
@@ -183,8 +184,8 @@ defmodule GreenFairy.CQL.Adapters.SQLiteTest do
     test "can chain multiple operators", %{query: query} do
       result =
         query
-        |> SQLite.apply_operator(:name, :_ilike, "%john%", [field_type: :string])
-        |> SQLite.apply_operator(:age, :_gte, 18, [field_type: :integer])
+        |> SQLite.apply_operator(:name, :_ilike, "%john%", field_type: :string)
+        |> SQLite.apply_operator(:age, :_gte, 18, field_type: :integer)
 
       assert length(result.wheres) == 2
     end
@@ -192,8 +193,8 @@ defmodule GreenFairy.CQL.Adapters.SQLiteTest do
     test "can mix scalar and JSON array operators", %{query: query} do
       result =
         query
-        |> SQLite.apply_operator(:name, :_like, "%john%", [field_type: :string])
-        |> SQLite.apply_operator(:tags, :_includes, "premium", [field_type: {:array, :string}])
+        |> SQLite.apply_operator(:name, :_like, "%john%", field_type: :string)
+        |> SQLite.apply_operator(:tags, :_includes, "premium", field_type: {:array, :string})
 
       assert length(result.wheres) == 2
     end
@@ -208,7 +209,7 @@ defmodule GreenFairy.CQL.Adapters.SQLiteTest do
 
     test "no native JSON_CONTAINS - uses json_each subquery" do
       query = Helper.base_query()
-      result = SQLite.apply_operator(query, :tags, :_includes, "test", [field_type: {:array, :string}])
+      result = SQLite.apply_operator(query, :tags, :_includes, "test", field_type: {:array, :string})
 
       # Should use json_each, not JSON_CONTAINS
       assert Helper.has_fragment?(result, "json_each")
@@ -218,7 +219,7 @@ defmodule GreenFairy.CQL.Adapters.SQLiteTest do
     @tag :pending
     test "json_array_length works for empty check" do
       query = Helper.base_query()
-      result = SQLite.apply_operator(query, :tags, :_is_empty, true, [field_type: {:array, :string}])
+      result = SQLite.apply_operator(query, :tags, :_is_empty, true, field_type: {:array, :string})
 
       # Should use json_array_length
       assert Helper.has_fragment?(result, "json_array_length")

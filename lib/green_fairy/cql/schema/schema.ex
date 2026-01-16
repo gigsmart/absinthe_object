@@ -1,4 +1,4 @@
-defmodule GreenFairy.CQL.Schema.Helpers do
+defmodule GreenFairy.CQL.Schema do
   @moduledoc """
   Schema integration for CQL filter types.
 
@@ -61,7 +61,9 @@ defmodule GreenFairy.CQL.Schema.Helpers do
   @doc false
   defmacro __using__(_opts) do
     quote do
-      use Absinthe.Schema.Notation
+      # Note: We don't call `use Absinthe.Schema.Notation` here because the schema
+      # should already have it via `use GreenFairy.Schema` or `use Absinthe.Schema`.
+      # Calling it again can corrupt module attribute state.
 
       import GreenFairy.CQL.Schema,
         only: [
@@ -73,8 +75,9 @@ defmodule GreenFairy.CQL.Schema.Helpers do
           cql_order_inputs: 1
         ]
 
-      # Include base types by default (operators and order types)
-      cql_base_types()
+      # Generate CQL base types module and import it
+      # This ensures types are defined via Absinthe's standard import_types mechanism
+      GreenFairy.CQL.Schema.__define_cql_types_module__()
 
       # Register before_compile to auto-discover CQL types
       @before_compile GreenFairy.CQL.Schema
@@ -83,48 +86,49 @@ defmodule GreenFairy.CQL.Schema.Helpers do
 
   @doc false
   defmacro __before_compile__(env) do
-    # Discover all CQL-enabled types in the schema's namespace
+    # Get CQL-enabled types from imported types
+    # This is more reliable than namespace discovery at compile time
     schema_module = env.module
-    schema_namespace = get_schema_namespace(schema_module)
 
-    # Discover CQL types under the schema's namespace
-    cql_types = GreenFairy.Discovery.discover_cql_types_in_namespaces([schema_namespace])
+    # Get all imported types from Absinthe's import_types calls
+    imported_types = Module.get_attribute(schema_module, :__absinthe_type_imports__) || []
+
+    # Filter to only CQL-enabled types (modules that export __cql_config__/0)
+    cql_types =
+      imported_types
+      |> Enum.map(fn {module, _opts} -> module end)
+      |> Enum.filter(&cql_enabled?/1)
 
     # Collect all enums used by CQL types (for type-specific enum operator inputs)
     used_enums = collect_used_enums(cql_types)
 
-    # Generate enum-specific operator inputs FIRST (before filter inputs reference them)
-    enum_operator_statements = generate_enum_operator_statements(used_enums)
+    # Generate enum-specific operator inputs - directly generate AST
+    enum_operator_asts = generate_enum_operator_asts(used_enums)
 
-    # Generate filter and order inputs for all discovered CQL types
-    filter_statements =
-      Enum.map(cql_types, fn type_module ->
-        quote do
-          if function_exported?(unquote(type_module), :__cql_generate_filter_input__, 0) do
-            filter_ast = unquote(type_module).__cql_generate_filter_input__()
-            Code.eval_quoted(filter_ast, [], __ENV__)
-          end
-        end
-      end)
+    # Generate filter and order input ASTs directly for all discovered CQL types
+    # These need to be generated at compile time so Absinthe can see them
+    filter_asts =
+      cql_types
+      |> Enum.filter(&function_exported?(&1, :__cql_generate_filter_input__, 0))
+      |> Enum.map(& &1.__cql_generate_filter_input__())
 
-    order_statements =
-      Enum.map(cql_types, fn type_module ->
-        quote do
-          if function_exported?(unquote(type_module), :__cql_generate_order_input__, 0) do
-            order_ast = unquote(type_module).__cql_generate_order_input__()
-            Code.eval_quoted(order_ast, [], __ENV__)
-          end
-        end
-      end)
+    order_asts =
+      cql_types
+      |> Enum.filter(&function_exported?(&1, :__cql_generate_order_input__, 0))
+      |> Enum.map(& &1.__cql_generate_order_input__())
+
+    # Combine all type ASTs
+    all_type_asts = enum_operator_asts ++ filter_asts ++ order_asts
 
     quote do
-      # Generate enum-specific operator inputs first
-      unquote_splicing(enum_operator_statements)
-      # Generate all filter inputs
-      unquote_splicing(filter_statements)
-      # Generate all order inputs
-      unquote_splicing(order_statements)
+      # Inject all type definitions directly
+      (unquote_splicing(all_type_asts))
     end
+  end
+
+  # Check if a module has CQL enabled (exports __cql_config__/0)
+  defp cql_enabled?(module) do
+    Code.ensure_loaded?(module) and function_exported?(module, :__cql_config__, 0)
   end
 
   # Collect all unique enum identifiers used by CQL-enabled types
@@ -140,27 +144,79 @@ defmodule GreenFairy.CQL.Schema.Helpers do
     |> Enum.uniq()
   end
 
-  # Generate AST statements for enum-specific operator inputs
-  defp generate_enum_operator_statements(enum_identifiers) do
+  # Generate ASTs for enum-specific operator inputs directly
+  defp generate_enum_operator_asts(enum_identifiers) do
     Enum.flat_map(enum_identifiers, fn enum_id ->
       # Generate both scalar and array operator inputs for each enum
       scalar_ast = GreenFairy.CQL.Schema.EnumOperatorInput.generate(enum_id)
       array_ast = GreenFairy.CQL.Schema.EnumOperatorInput.generate_array(enum_id)
+
       [scalar_ast, array_ast]
     end)
   end
 
-  # Extract the namespace from a schema module
-  # e.g., MyApp.GraphQL.Schema -> MyApp.GraphQL
-  defp get_schema_namespace(schema_module) do
-    module_parts =
-      schema_module
-      |> Module.split()
-      |> Enum.reverse()
-      |> tl()
-      |> Enum.reverse()
+  @doc """
+  Defines a module containing all CQL base types and imports it into the schema.
 
-    Module.concat(module_parts)
+  This is called automatically by `use GreenFairy.CQL.Schema` and uses Absinthe's
+  standard `import_types` mechanism to ensure proper type registration.
+
+  The generated module is named `{SchemaModule}.CqlTypes` and contains all
+  operator input types and order input types for the detected adapter.
+  """
+  defmacro __define_cql_types_module__ do
+    # Get caller's environment
+    env = __CALLER__
+    schema_module = env.module
+
+    # Detect adapter from the schema's configuration
+    adapter = detect_cql_adapter_from_env(env)
+
+    # Generate the CQL types module name
+    cql_types_module = Module.concat(schema_module, CqlTypes)
+
+    # Generate all the type definition AST
+    order_base_types_ast = GreenFairy.CQL.Schema.OrderInput.generate_base_types()
+    operator_types_ast = GreenFairy.CQL.Schema.OperatorInput.generate_all(adapter: adapter)
+    all_types_ast = operator_types_ast ++ order_base_types_ast
+
+    quote do
+      # Define the CQL types module inline
+      defmodule unquote(cql_types_module) do
+        @moduledoc false
+        use Absinthe.Schema.Notation
+
+        # Use unquote_splicing to insert each type definition separately
+        # This ensures proper macro expansion for each type
+        unquote_splicing(all_types_ast)
+      end
+
+      # Import the types from the generated module
+      import_types(unquote(cql_types_module))
+    end
+  end
+
+  # Detect adapter from the macro environment (for __define_cql_types_module__)
+  defp detect_cql_adapter_from_env(env) do
+    schema_module = env.module
+
+    cond do
+      # Check for explicit @green_fairy_cql_adapter attribute
+      adapter_attr = Module.get_attribute(schema_module, :green_fairy_cql_adapter) ->
+        adapter_attr
+
+      # Check for @green_fairy_repo attribute and detect from repo
+      repo_attr = Module.get_attribute(schema_module, :green_fairy_repo) ->
+        if repo_attr do
+          GreenFairy.CQL.Adapter.detect_adapter(repo_attr)
+        else
+          detect_from_config()
+        end
+
+      # Fallback to config or default
+      true ->
+        detect_from_config()
+    end
   end
 
   @doc """
@@ -205,10 +261,22 @@ defmodule GreenFairy.CQL.Schema.Helpers do
     # This ensures only ONE adapter's operators are in the schema
     operator_types_ast = GreenFairy.CQL.Schema.OperatorInput.generate_all(adapter: adapter)
 
-    quote do
-      (unquote_splicing(operator_types_ast))
-      (unquote_splicing(order_base_types_ast))
-    end
+    # Combine all type definitions into a single block
+    all_types = operator_types_ast ++ order_base_types_ast
+
+    # Use Code.eval_quoted to evaluate each type definition in the caller's context
+    # This ensures Absinthe's notation macros (input_object, field, enum) expand properly
+    # with correct scope tracking for nested definitions
+    eval_statements =
+      Enum.map(all_types, fn type_ast ->
+        escaped_ast = Macro.escape(type_ast)
+
+        quote do
+          Code.eval_quoted(unquote(escaped_ast), [], __ENV__)
+        end
+      end)
+
+    {:__block__, [], eval_statements}
   end
 
   @doc """
@@ -293,9 +361,17 @@ defmodule GreenFairy.CQL.Schema.Helpers do
     adapter = detect_cql_adapter_at_compile(__CALLER__)
     operator_types_ast = GreenFairy.CQL.Schema.OperatorInput.generate_all(adapter: adapter)
 
-    quote do
-      (unquote_splicing(operator_types_ast))
-    end
+    # Use Code.eval_quoted to evaluate each type definition in the caller's context
+    eval_statements =
+      Enum.map(operator_types_ast, fn type_ast ->
+        escaped_ast = Macro.escape(type_ast)
+
+        quote do
+          Code.eval_quoted(unquote(escaped_ast), [], __ENV__)
+        end
+      end)
+
+    {:__block__, [], eval_statements}
   end
 
   @doc """

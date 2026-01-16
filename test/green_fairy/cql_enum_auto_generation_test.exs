@@ -50,7 +50,10 @@ defmodule GreenFairy.CQL.EnumAutoGenerationTest do
     def __schema__(:fields), do: [:id, :status, :user_role, :tags]
     def __schema__(:primary_key), do: [:id]
     def __schema__(:type, :id), do: :id
-    def __schema__(:type, :status), do: {:parameterized, Ecto.Enum, %{values: [:pending, :shipped, :delivered, :cancelled]}}
+
+    def __schema__(:type, :status),
+      do: {:parameterized, Ecto.Enum, %{values: [:pending, :shipped, :delivered, :cancelled]}}
+
     def __schema__(:type, :user_role), do: {:parameterized, Ecto.Enum, %{values: [:admin, :member, :guest]}}
     def __schema__(:type, :tags), do: {:array, {:parameterized, Ecto.Enum, %{values: [:urgent, :normal]}}}
     def __schema__(:associations), do: []
@@ -109,7 +112,7 @@ defmodule GreenFairy.CQL.EnumAutoGenerationTest do
       ast_string = Macro.to_string(ast)
 
       # Should define an input_object with the correct identifier
-      assert ast_string =~ "input_object(:cql_enum_order_status_input)"
+      assert ast_string =~ "input_object(:cql_enum_order_status_input,"
 
       # Should have enum-specific fields with the actual enum type
       assert ast_string =~ "field(:_eq, :order_status)"
@@ -124,7 +127,7 @@ defmodule GreenFairy.CQL.EnumAutoGenerationTest do
       ast_string = Macro.to_string(ast)
 
       # Should define an input_object with the correct identifier
-      assert ast_string =~ "input_object(:cql_enum_order_status_array_input)"
+      assert ast_string =~ "input_object(:cql_enum_order_status_array_input,"
 
       # Should have array-specific operators
       assert ast_string =~ "field(:_includes, :order_status)"
@@ -144,7 +147,8 @@ defmodule GreenFairy.CQL.EnumAutoGenerationTest do
     test "detects enum types in filter fields" do
       fields = [
         {:id, :id},
-        {:status, :order_status},  # GreenFairy enum
+        # GreenFairy enum
+        {:status, :order_status},
         {:name, :string}
       ]
 
@@ -157,7 +161,8 @@ defmodule GreenFairy.CQL.EnumAutoGenerationTest do
     test "detects array enum types in filter fields" do
       fields = [
         {:id, :id},
-        {:tags, {:array, :order_status}}  # Array of GreenFairy enum
+        # Array of GreenFairy enum
+        {:tags, {:array, :order_status}}
       ]
 
       enum_types = FilterInput.extract_enum_types(fields)

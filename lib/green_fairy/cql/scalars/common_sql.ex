@@ -67,7 +67,9 @@ defmodule GreenFairy.CQL.Scalars.CommonSQL do
 
   @doc "Applies NOT LIKE pattern matching."
   def apply_nlike(query, field, pattern, nil), do: where(query, [q], not like(field(q, ^field), ^pattern))
-  def apply_nlike(query, field, pattern, binding), do: where(query, [{^binding, a}], not like(field(a, ^field), ^pattern))
+
+  def apply_nlike(query, field, pattern, binding),
+    do: where(query, [{^binding, a}], not like(field(a, ^field), ^pattern))
 
   @doc "Applies STARTS WITH pattern (case-sensitive)."
   def apply_starts_with(query, field, prefix, nil) do

@@ -10,7 +10,8 @@ defmodule GreenFairy.CQL.Scalars.String.MSSQL do
 
     case operator do
       :_eq -> apply_eq(query, field, value, binding)
-      :_ne -> apply_neq(query, field, value, binding)  # Alias for _neq
+      # Alias for _neq
+      :_ne -> apply_neq(query, field, value, binding)
       :_neq -> apply_neq(query, field, value, binding)
       :_gt -> apply_gt(query, field, value, binding)
       :_gte -> apply_gte(query, field, value, binding)

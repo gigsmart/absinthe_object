@@ -88,10 +88,11 @@ defmodule GreenFairy.CQL.Schema.OrderInput do
 
     field_defs = build_field_definitions(fields)
 
+    # Use fully qualified macro call to ensure proper expansion
     quote do
-      @desc unquote(description)
-      input_object unquote(identifier) do
-        (unquote_splicing(field_defs))
+      Absinthe.Schema.Notation.input_object unquote(identifier) do
+        @desc unquote(description)
+        unquote_splicing(field_defs)
       end
     end
   end
@@ -102,7 +103,7 @@ defmodule GreenFairy.CQL.Schema.OrderInput do
       order_type = type_for(field_type)
 
       quote do
-        field(unquote(field_name), unquote(order_type))
+        Absinthe.Schema.Notation.field(unquote(field_name), unquote(order_type))
       end
     end)
   end
@@ -111,21 +112,16 @@ defmodule GreenFairy.CQL.Schema.OrderInput do
   Generates AST for the sort direction enum.
   """
   def generate_sort_direction_enum do
+    # Use quote with fully qualified macro calls to ensure proper expansion
     quote do
-      @desc "Sort direction for ordering results"
-      enum :cql_sort_direction do
-        @desc "Ascending order"
-        value(:asc)
-        @desc "Descending order"
-        value(:desc)
-        @desc "Ascending order with null values listed first"
-        value(:asc_nulls_first)
-        @desc "Ascending order with null values listed last"
-        value(:asc_nulls_last)
-        @desc "Descending order with null values listed first"
-        value(:desc_nulls_first)
-        @desc "Descending order with null values listed last"
-        value(:desc_nulls_last)
+      Absinthe.Schema.Notation.enum :cql_sort_direction do
+        @desc "Sort direction for ordering results"
+        Absinthe.Schema.Notation.value(:asc, description: "Ascending order")
+        Absinthe.Schema.Notation.value(:desc, description: "Descending order")
+        Absinthe.Schema.Notation.value(:asc_nulls_first, description: "Ascending order with null values listed first")
+        Absinthe.Schema.Notation.value(:asc_nulls_last, description: "Ascending order with null values listed last")
+        Absinthe.Schema.Notation.value(:desc_nulls_first, description: "Descending order with null values listed first")
+        Absinthe.Schema.Notation.value(:desc_nulls_last, description: "Descending order with null values listed last")
       end
     end
   end
@@ -134,11 +130,11 @@ defmodule GreenFairy.CQL.Schema.OrderInput do
   Generates AST for the standard order input type.
   """
   def generate_standard_order_input do
+    # Use quote with fully qualified macro calls to ensure proper expansion
     quote do
-      @desc "Standard order input with direction"
-      input_object :cql_order_standard_input do
-        @desc "The direction of the sort"
-        field(:direction, non_null(:cql_sort_direction))
+      Absinthe.Schema.Notation.input_object :cql_order_standard_input do
+        @desc "Standard order input with direction"
+        Absinthe.Schema.Notation.field(:direction, non_null(:cql_sort_direction), description: "The direction of the sort")
       end
     end
   end
@@ -147,13 +143,12 @@ defmodule GreenFairy.CQL.Schema.OrderInput do
   Generates AST for the geo order input type.
   """
   def generate_geo_order_input do
+    # Use quote with fully qualified macro calls to ensure proper expansion
     quote do
-      @desc "Geo-distance based order input"
-      input_object :cql_order_geo_input do
-        @desc "The direction of the sort"
-        field(:direction, non_null(:cql_sort_direction))
-        @desc "The center coordinates to calculate distance from"
-        field(:center, :coordinates)
+      Absinthe.Schema.Notation.input_object :cql_order_geo_input do
+        @desc "Geo-distance based order input"
+        Absinthe.Schema.Notation.field(:direction, non_null(:cql_sort_direction), description: "The direction of the sort")
+        Absinthe.Schema.Notation.field(:center, :coordinates, description: "The center coordinates to calculate distance from")
       end
     end
   end
@@ -178,25 +173,42 @@ defmodule GreenFairy.CQL.Schema.OrderInput do
   def generate_priority_order_input(enum_name, _values) do
     # credo:disable-for-next-line Credo.Check.Warning.UnsafeToAtom
     identifier = String.to_atom("cql_order_priority_#{enum_name}_input")
-    enum_type = enum_name
+    description = "Priority-based order input for #{enum_name} enum"
 
+    # Use quote with fully qualified macro calls to ensure proper expansion
     quote do
-      @desc "Priority-based order input for #{unquote(enum_name)} enum"
-      input_object unquote(identifier) do
-        @desc "The direction of the sort"
-        field(:direction, non_null(:cql_sort_direction))
-        @desc "The priority order of enum values"
-        field(:priority, list_of(unquote(enum_type)))
+      Absinthe.Schema.Notation.input_object unquote(identifier) do
+        @desc unquote(description)
+        Absinthe.Schema.Notation.field(:direction, non_null(:cql_sort_direction), description: "The direction of the sort")
+        Absinthe.Schema.Notation.field(:priority, list_of(unquote(enum_name)), description: "The priority order of enum values")
       end
     end
   end
 
   @doc """
-  Generates all base order input types (sort direction, standard, geo).
+  Generates all base order input types (sort direction, standard).
+
+  Geo order input is excluded by default since it requires a :coordinates type.
+  Use `generate_base_types_with_geo/0` if you have :coordinates defined.
 
   This should be called once in the schema to define all CQL order types.
   """
   def generate_base_types do
+    [
+      generate_sort_direction_enum(),
+      generate_standard_order_input()
+      # Note: Geo order input is excluded because it requires :coordinates type
+      # which isn't a built-in type. Use generate_geo_order_input() separately
+      # if your schema defines a :coordinates type.
+    ]
+  end
+
+  @doc """
+  Generates all base order input types including geo ordering.
+
+  Only use this if your schema defines a :coordinates type for geo points.
+  """
+  def generate_base_types_with_geo do
     [
       generate_sort_direction_enum(),
       generate_standard_order_input(),

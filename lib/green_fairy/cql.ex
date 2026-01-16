@@ -162,7 +162,24 @@ defmodule GreenFairy.CQL do
     {custom_filter_meta, custom_filter_fields} = get_custom_filter_info(custom_filters)
     filter_function_clauses = generate_filter_clauses(custom_filters)
 
-    generate_cql_functions(
+    # Build filter fields for input generation
+    adapter_filter_fields =
+      adapter_fields
+      |> Enum.map(fn field -> {field, Map.get(merged_field_types, field)} end)
+
+    custom_fields =
+      custom_filter_fields
+      |> Enum.map(fn field -> {field, nil} end)
+
+    all_filter_fields = adapter_filter_fields ++ custom_fields
+    filter_fields = Enum.uniq_by(all_filter_fields, fn {name, _type} -> name end)
+
+    # Generate filter and order input types directly in this module
+    # This ensures they exist before Absinthe's @before_compile validates type references
+    filter_input_ast = FilterInput.generate(type_name, filter_fields, custom_filter_meta)
+    order_input_ast = OrderInput.generate(type_name, filter_fields)
+
+    generate_cql_functions_and_types(
       filter_function_clauses,
       struct_module,
       adapter,
@@ -171,7 +188,10 @@ defmodule GreenFairy.CQL do
       custom_filter_meta,
       custom_filter_fields,
       type_name,
-      type_identifier
+      type_identifier,
+      filter_fields,
+      filter_input_ast,
+      order_input_ast
     )
   end
 
@@ -195,6 +215,7 @@ defmodule GreenFairy.CQL do
         case gf_type do
           {:array, inner} when is_atom(inner) ->
             if GreenFairy.TypeRegistry.is_enum?(inner), do: gf_type, else: adapter_type
+
           _ ->
             adapter_type
         end
@@ -233,7 +254,7 @@ defmodule GreenFairy.CQL do
     end)
   end
 
-  defp generate_cql_functions(
+  defp generate_cql_functions_and_types(
          filter_clauses,
          struct_module,
          adapter,
@@ -242,25 +263,20 @@ defmodule GreenFairy.CQL do
          custom_filter_meta,
          custom_filter_fields,
          type_name,
-         type_identifier
+         type_identifier,
+         filter_fields,
+         filter_input_ast,
+         order_input_ast
        ) do
-    # Build field types for filter input generation
-    # Include both adapter fields and custom filter fields
-    adapter_filter_fields =
-      adapter_fields
-      |> Enum.map(fn field -> {field, Map.get(adapter_field_types, field)} end)
-
-    custom_fields =
-      custom_filter_fields
-      |> Enum.map(fn field -> {field, nil} end)
-
-    # Combine adapter and custom fields (adapter fields first, custom override if present)
-    all_filter_fields = adapter_filter_fields ++ custom_fields
-    filter_fields = Enum.uniq_by(all_filter_fields, fn {name, _type} -> name end)
-
     filter_input_identifier = FilterInput.filter_type_identifier(type_name)
 
     quote do
+      # Generate filter input type directly in this module
+      # This ensures it exists before Absinthe's schema validation runs
+      unquote(filter_input_ast)
+
+      # Generate order input type directly in this module
+      unquote(order_input_ast)
       unquote_splicing(filter_clauses)
 
       def __cql_apply_custom_filter__(_field, query, _op, _value), do: query

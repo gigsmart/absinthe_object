@@ -238,6 +238,7 @@ defmodule GreenFairy.CQL.AdapterIntegrationTest do
 
       for adapter <- adapters do
         Code.ensure_loaded!(adapter)
+
         assert function_exported?(adapter, :supported_operators, 2),
                "#{inspect(adapter)} missing supported_operators/2"
 
@@ -326,12 +327,14 @@ defmodule GreenFairy.CQL.AdapterIntegrationTest do
   describe "edge cases and error handling" do
     test "detect_adapter handles nil repo gracefully" do
       adapter = Adapter.detect_adapter(nil)
-      assert adapter == EctoAdapter  # Falls back to generic Ecto adapter
+      # Falls back to generic Ecto adapter
+      assert adapter == EctoAdapter
     end
 
     test "detect_adapter handles repo without __adapter__ function" do
       adapter = Adapter.detect_adapter(__MODULE__.InvalidRepo)
-      assert adapter == EctoAdapter  # Falls back to generic Ecto adapter
+      # Falls back to generic Ecto adapter
+      assert adapter == EctoAdapter
     end
   end
 end

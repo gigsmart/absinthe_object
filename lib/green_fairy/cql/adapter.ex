@@ -365,8 +365,8 @@ defmodule GreenFairy.CQL.Adapter do
 
       # ClickHouse adapters (ecto_ch uses Ecto.Adapters.ClickHouse or Ch)
       String.contains?(adapter_name, "ClickHouse") or
-      String.contains?(adapter_name, "Ch.") or
-      adapter_module == Ch ->
+        String.contains?(adapter_name, "Ch.") or
+          adapter_module == Ch ->
         GreenFairy.CQL.Adapters.ClickHouse
 
       # Unknown adapter - use generic Ecto fallback

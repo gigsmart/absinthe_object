@@ -165,7 +165,8 @@ defmodule GreenFairy.Field.ConnectionResolver do
   defp apply_cql_where(query, where_input, type_module) when is_map(where_input) do
     # TODO: Implement QueryBuilder.apply_where/3
     # QueryBuilder.apply_where(query, where_input, type_module)
-    _ = {where_input, type_module}  # Silence unused warning
+    # Silence unused warning
+    _ = {where_input, type_module}
     query
   end
 
@@ -175,7 +176,8 @@ defmodule GreenFairy.Field.ConnectionResolver do
   defp apply_cql_order_by(query, order_inputs, type_module) when is_list(order_inputs) do
     # TODO: Implement QueryBuilder.apply_order_by/3
     # QueryBuilder.apply_order_by(query, order_inputs, type_module)
-    _ = {order_inputs, type_module}  # Silence unused warning
+    # Silence unused warning
+    _ = {order_inputs, type_module}
     query
   end
 

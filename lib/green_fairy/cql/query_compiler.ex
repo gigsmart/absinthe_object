@@ -310,5 +310,4 @@ defmodule GreenFairy.CQL.QueryCompiler do
       _ -> true
     end
   end
-
 end

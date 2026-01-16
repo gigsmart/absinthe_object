@@ -8,7 +8,8 @@ defmodule GreenFairy.CQL.Scalars.ID.Ecto do
 
     case operator do
       :_eq -> apply_eq(query, field, value, binding)
-      :_ne -> apply_neq(query, field, value, binding)  # Alias for _neq
+      # Alias for _neq
+      :_ne -> apply_neq(query, field, value, binding)
       :_neq -> apply_neq(query, field, value, binding)
       :_in -> apply_in(query, field, value, binding)
       :_nin -> apply_nin(query, field, value, binding)

@@ -103,7 +103,11 @@ defmodule GreenFairy.Schema do
       # Now use Absinthe.Schema (which registers its own @before_compile that runs after ours)
       use Absinthe.Schema
 
-      # Import built-in types
+      # Import Absinthe's built-in custom scalars (naive_datetime, datetime, date, time)
+      # TODO: Replace with GreenFairy's own enhanced scalar definitions
+      import_types Absinthe.Type.Custom
+
+      # Import GreenFairy built-in types
       import_types GreenFairy.BuiltIns.PageInfo
       import_types GreenFairy.BuiltIns.UnauthorizedBehavior
       import_types GreenFairy.BuiltIns.OnUnauthorizedDirective
@@ -230,10 +234,25 @@ defmodule GreenFairy.Schema do
     inline_subscription = Module.get_attribute(env.module, :green_fairy_inline_subscription)
 
     # Graph-based discovery from explicit roots
-    root_modules = [query_module, mutation_module, subscription_module]
+    root_modules =
+      [query_module, mutation_module, subscription_module]
       |> Enum.reject(&is_nil/1)
 
+    # Ensure all root modules are compiled first
+    Enum.each(root_modules, &Code.ensure_compiled!/1)
+
     discovered = discover_via_graph(root_modules)
+
+    # Ensure all discovered modules are compiled
+    # This is necessary because type modules might not be compiled yet
+    discovered =
+      Enum.filter(discovered, fn module ->
+        case Code.ensure_compiled(module) do
+          {:module, _} -> true
+          _ -> false
+        end
+      end)
+
     grouped = GreenFairy.Discovery.group_by_kind(discovered)
 
     # Generate import_types for all discovered modules
@@ -453,13 +472,32 @@ defmodule GreenFairy.Schema do
     end)
   end
 
-  defp generate_dataloader_context([]), do: nil
+  defp generate_dataloader_context([]) do
+    # Always generate default context, plugins, and node_name for GreenFairy schemas
+    # Users can override these by defining their own functions
+    quote do
+      # Default context that sets up an empty dataloader
+      def context(ctx) do
+        loader = Dataloader.new()
+        Map.put(ctx, :loader, loader)
+      end
+
+      def plugins do
+        [Absinthe.Middleware.Dataloader | Absinthe.Plugin.defaults()]
+      end
+
+      # Required for Absinthe.Subscription in distributed environments
+      def node_name do
+        node()
+      end
+    end
+  end
 
   defp generate_dataloader_context(opts) do
     sources = Keyword.get(opts, :sources, [])
 
     if sources == [] do
-      nil
+      generate_dataloader_context([])
     else
       quote do
         def context(ctx) do
@@ -472,6 +510,11 @@ defmodule GreenFairy.Schema do
 
         def plugins do
           [Absinthe.Middleware.Dataloader | Absinthe.Plugin.defaults()]
+        end
+
+        # Required for Absinthe.Subscription in distributed environments
+        def node_name do
+          node()
         end
       end
     end

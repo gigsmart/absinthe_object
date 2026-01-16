@@ -27,7 +27,8 @@ defmodule GreenFairy.CQL.Adapters.SQLite do
     %{
       array_operators_require_type_cast: false,
       native_arrays: false,
-      supports_json_operators: true,  # JSON1 extension
+      # JSON1 extension
+      supports_json_operators: true,
       supports_full_text_search: true,
       max_in_clause_items: 500,
       emulated_ilike: true,
@@ -44,9 +45,27 @@ defmodule GreenFairy.CQL.Adapters.SQLite do
   def supported_operators(category, _field_type) do
     case category do
       :scalar ->
-        [:_eq, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null, :_like, :_nlike,
-         :_ilike, :_nilike, :_starts_with, :_istarts_with, :_ends_with, :_iends_with,
-         :_contains, :_icontains]
+        [
+          :_eq,
+          :_neq,
+          :_gt,
+          :_gte,
+          :_lt,
+          :_lte,
+          :_in,
+          :_nin,
+          :_is_null,
+          :_like,
+          :_nlike,
+          :_ilike,
+          :_nilike,
+          :_starts_with,
+          :_istarts_with,
+          :_ends_with,
+          :_iends_with,
+          :_contains,
+          :_icontains
+        ]
 
       :array ->
         [:_includes, :_excludes, :_is_empty, :_is_null]
@@ -89,7 +108,14 @@ defmodule GreenFairy.CQL.Adapters.SQLite do
 
   @impl true
   # Accept both 5-arg (direct call) and 6-arg (via primary adapter) forms
-  def apply_operator(schema_or_query, field_or_query, operator_or_field, value_or_operator, opts_or_value, maybe_opts \\ [])
+  def apply_operator(
+        schema_or_query,
+        field_or_query,
+        operator_or_field,
+        value_or_operator,
+        opts_or_value,
+        maybe_opts \\ []
+      )
 
   # 5-arg form: (query, field, operator, value, opts) - direct call (tests)
   # When called with 5 args, maybe_opts defaults to []

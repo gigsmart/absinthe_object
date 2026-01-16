@@ -347,13 +347,13 @@ defmodule GreenFairy.TypeTest do
     use GreenFairy.Type
 
     type "TypeWithAuth", struct: TestUser do
-      authorize fn object, ctx ->
+      authorize(fn object, ctx ->
         if ctx[:admin] do
           :all
         else
           [:id, :email]
         end
-      end
+      end)
 
       field :id, non_null(:id)
       field :email, :string
@@ -363,7 +363,7 @@ defmodule GreenFairy.TypeTest do
 
   describe "function-based authorization" do
     test "__has_authorization__ returns true for types with authorize fn" do
-      assert TypeWithAuthFn.__has_authorization__ == true
+      assert TypeWithAuthFn.__has_authorization__() == true
     end
 
     test "__authorize__ returns :all for admin context" do
@@ -382,13 +382,13 @@ defmodule GreenFairy.TypeTest do
     use GreenFairy.Type
 
     type "TypeWith3ArityAuth" do
-      authorize fn object, ctx, info ->
+      authorize(fn object, ctx, info ->
         if info[:path] == [:query, :user] do
           :all
         else
           [:id]
         end
-      end
+      end)
 
       field :id, non_null(:id)
       field :secret, :string
@@ -418,7 +418,7 @@ defmodule GreenFairy.TypeTest do
 
   describe "type without authorization" do
     test "__has_authorization__ returns false" do
-      assert TypeWithoutAuth.__has_authorization__ == false
+      assert TypeWithoutAuth.__has_authorization__() == false
     end
 
     test "__authorize__ returns :all" do
@@ -438,7 +438,7 @@ defmodule GreenFairy.TypeTest do
     use GreenFairy.Type
 
     type "TypeWithPolicy" do
-      authorize with: GreenFairy.TypeTest.TestPolicy
+      authorize(with: GreenFairy.TypeTest.TestPolicy)
 
       field :id, :id
       field :name, :string
@@ -447,7 +447,7 @@ defmodule GreenFairy.TypeTest do
 
   describe "policy-based authorization" do
     test "__has_authorization__ returns true" do
-      assert TypeWithPolicy.__has_authorization__ == true
+      assert TypeWithPolicy.__has_authorization__() == true
     end
 
     test "__authorize__ returns :all when policy allows" do

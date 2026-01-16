@@ -274,26 +274,66 @@ defmodule GreenFairy.BuiltIns.Scalars.JSON do
 
     defp apply_eq(query, field, value, nil) do
       json = encode(value)
-      where(query, [q], fragment("JSON_CONTAINS(?, ?, '$') AND JSON_CONTAINS(?, ?, '$')",
-        field(q, ^field), ^json, ^json, field(q, ^field)))
+
+      where(
+        query,
+        [q],
+        fragment(
+          "JSON_CONTAINS(?, ?, '$') AND JSON_CONTAINS(?, ?, '$')",
+          field(q, ^field),
+          ^json,
+          ^json,
+          field(q, ^field)
+        )
+      )
     end
 
     defp apply_eq(query, field, value, binding) do
       json = encode(value)
-      where(query, [{^binding, a}], fragment("JSON_CONTAINS(?, ?, '$') AND JSON_CONTAINS(?, ?, '$')",
-        field(a, ^field), ^json, ^json, field(a, ^field)))
+
+      where(
+        query,
+        [{^binding, a}],
+        fragment(
+          "JSON_CONTAINS(?, ?, '$') AND JSON_CONTAINS(?, ?, '$')",
+          field(a, ^field),
+          ^json,
+          ^json,
+          field(a, ^field)
+        )
+      )
     end
 
     defp apply_neq(query, field, value, nil) do
       json = encode(value)
-      where(query, [q], fragment("NOT (JSON_CONTAINS(?, ?, '$') AND JSON_CONTAINS(?, ?, '$'))",
-        field(q, ^field), ^json, ^json, field(q, ^field)))
+
+      where(
+        query,
+        [q],
+        fragment(
+          "NOT (JSON_CONTAINS(?, ?, '$') AND JSON_CONTAINS(?, ?, '$'))",
+          field(q, ^field),
+          ^json,
+          ^json,
+          field(q, ^field)
+        )
+      )
     end
 
     defp apply_neq(query, field, value, binding) do
       json = encode(value)
-      where(query, [{^binding, a}], fragment("NOT (JSON_CONTAINS(?, ?, '$') AND JSON_CONTAINS(?, ?, '$'))",
-        field(a, ^field), ^json, ^json, field(a, ^field)))
+
+      where(
+        query,
+        [{^binding, a}],
+        fragment(
+          "NOT (JSON_CONTAINS(?, ?, '$') AND JSON_CONTAINS(?, ?, '$'))",
+          field(a, ^field),
+          ^json,
+          ^json,
+          field(a, ^field)
+        )
+      )
     end
 
     defp apply_contains(query, field, value, nil) do
@@ -444,14 +484,34 @@ defmodule GreenFairy.BuiltIns.Scalars.JSON do
 
     defp apply_has_key(query, field, key, nil) do
       path = "$." <> key
-      where(query, [q], fragment("JSON_VALUE(?, ?) IS NOT NULL OR JSON_QUERY(?, ?) IS NOT NULL",
-        field(q, ^field), ^path, field(q, ^field), ^path))
+
+      where(
+        query,
+        [q],
+        fragment(
+          "JSON_VALUE(?, ?) IS NOT NULL OR JSON_QUERY(?, ?) IS NOT NULL",
+          field(q, ^field),
+          ^path,
+          field(q, ^field),
+          ^path
+        )
+      )
     end
 
     defp apply_has_key(query, field, key, binding) do
       path = "$." <> key
-      where(query, [{^binding, a}], fragment("JSON_VALUE(?, ?) IS NOT NULL OR JSON_QUERY(?, ?) IS NOT NULL",
-        field(a, ^field), ^path, field(a, ^field), ^path))
+
+      where(
+        query,
+        [{^binding, a}],
+        fragment(
+          "JSON_VALUE(?, ?) IS NOT NULL OR JSON_QUERY(?, ?) IS NOT NULL",
+          field(a, ^field),
+          ^path,
+          field(a, ^field),
+          ^path
+        )
+      )
     end
 
     defp apply_is_null(query, field, true, nil), do: where(query, [q], is_nil(field(q, ^field)))
@@ -496,9 +556,10 @@ defmodule GreenFairy.BuiltIns.Scalars.JSON do
     end
 
     defp apply_contains(query, field_path, value) when is_map(value) do
-      conditions = Enum.map(value, fn {k, v} ->
-        %{term: %{"#{field_path}.#{k}" => v}}
-      end)
+      conditions =
+        Enum.map(value, fn {k, v} ->
+          %{term: %{"#{field_path}.#{k}" => v}}
+        end)
 
       add_filter(query, %{bool: %{must: conditions}})
     end

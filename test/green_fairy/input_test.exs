@@ -30,17 +30,18 @@ defmodule GreenFairy.InputTest do
     use GreenFairy.Input
 
     input "AuthorizedInput" do
-      authorize fn input, ctx ->
+      authorize(fn input, ctx ->
         cond do
           ctx[:admin] == true -> :all
           ctx[:user] == true -> [:email, :name]
           true -> :none
         end
-      end
+      end)
 
       field :email, non_null(:string)
       field :name, :string
-      field :role, :string  # Admin only
+      # Admin only
+      field :role, :string
     end
   end
 
@@ -152,11 +153,11 @@ defmodule GreenFairy.InputTest do
     end
 
     test "input without authorization has __has_authorization__ as false" do
-      assert CreateUserInput.__has_authorization__ == false
+      assert CreateUserInput.__has_authorization__() == false
     end
 
     test "input with authorization has __has_authorization__ as true" do
-      assert AuthorizedInput.__has_authorization__ == true
+      assert AuthorizedInput.__has_authorization__() == true
     end
 
     test "__authorize__ returns :all for admin" do

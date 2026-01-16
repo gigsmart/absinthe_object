@@ -53,8 +53,8 @@ defmodule GreenFairy.CQL.AdapterCapabilitiesTest do
     end
 
     def query!("SELECT json('{}')"), do: %{rows: [["{}"]]}
-    def query!("SELECT fts5()"), do: raise "fts5 not available"
-    def query!("SELECT rtreenode(0, null)"), do: raise "rtree not available"
+    def query!("SELECT fts5()"), do: raise("fts5 not available")
+    def query!("SELECT rtreenode(0, null)"), do: raise("rtree not available")
   end
 
   defmodule SQLiteFullRepo do
@@ -112,8 +112,10 @@ defmodule GreenFairy.CQL.AdapterCapabilitiesTest do
       assert caps.full_text_search == true
       assert caps.pg_trgm == false
       assert caps.postgis == false
-      assert caps.jsonb_support == false  # 9.4+
-      assert caps.jsonb_path_queries == false  # 12+
+      # 9.4+
+      assert caps.jsonb_support == false
+      # 12+
+      assert caps.jsonb_path_queries == false
     end
 
     test "detects MySQL 8.0 capabilities" do
@@ -182,7 +184,8 @@ defmodule GreenFairy.CQL.AdapterCapabilitiesTest do
 
       assert caps.adapter == :mssql
       assert caps.version == {12, 0}
-      assert caps.json_support == false  # SQL Server 2016 (13.x)+
+      # SQL Server 2016 (13.x)+
+      assert caps.json_support == false
       assert caps.openjson == false
     end
 
@@ -318,9 +321,10 @@ defmodule GreenFairy.CQL.AdapterCapabilitiesTest do
         full_text_search: true
       }
 
-      log = capture_log(fn ->
-        AdapterCapabilities.log_report(caps)
-      end)
+      log =
+        capture_log(fn ->
+          AdapterCapabilities.log_report(caps)
+        end)
 
       assert log =~ "GreenFairy CQL Capabilities"
       assert log =~ "PostgreSQL"
@@ -399,81 +403,89 @@ defmodule GreenFairy.CQL.AdapterCapabilitiesTest do
     import ExUnit.CaptureLog
 
     test "handles PostgreSQL version parse failure" do
-      log = capture_log(fn ->
-        caps = AdapterCapabilities.detect(PostgresUnparsableVersion)
-        assert caps.adapter == :postgres
-        assert caps.version == {0, 0}
-      end)
+      log =
+        capture_log(fn ->
+          caps = AdapterCapabilities.detect(PostgresUnparsableVersion)
+          assert caps.adapter == :postgres
+          assert caps.version == {0, 0}
+        end)
 
       assert log =~ "Could not parse PostgreSQL version"
     end
 
     test "handles PostgreSQL connection failure" do
-      log = capture_log(fn ->
-        caps = AdapterCapabilities.detect(BrokenPostgresRepo)
-        assert caps.adapter == :postgres
-        assert caps.version == {0, 0}
-      end)
+      log =
+        capture_log(fn ->
+          caps = AdapterCapabilities.detect(BrokenPostgresRepo)
+          assert caps.adapter == :postgres
+          assert caps.version == {0, 0}
+        end)
 
       assert log =~ "Failed to detect"
     end
 
     test "handles MySQL connection failure" do
-      log = capture_log(fn ->
-        caps = AdapterCapabilities.detect(BrokenMySQLRepo)
-        assert caps.adapter == :mysql
-        assert caps.version == {0, 0, 0}
-      end)
+      log =
+        capture_log(fn ->
+          caps = AdapterCapabilities.detect(BrokenMySQLRepo)
+          assert caps.adapter == :mysql
+          assert caps.version == {0, 0, 0}
+        end)
 
       assert log =~ "Failed to detect"
     end
 
     test "handles SQLite connection failure" do
-      log = capture_log(fn ->
-        caps = AdapterCapabilities.detect(BrokenSQLiteRepo)
-        assert caps.adapter == :sqlite
-        assert caps.version == {0, 0, 0}
-      end)
+      log =
+        capture_log(fn ->
+          caps = AdapterCapabilities.detect(BrokenSQLiteRepo)
+          assert caps.adapter == :sqlite
+          assert caps.version == {0, 0, 0}
+        end)
 
       assert log =~ "Failed to detect"
     end
 
     test "handles MSSQL connection failure" do
-      log = capture_log(fn ->
-        caps = AdapterCapabilities.detect(BrokenMSSQLRepo)
-        assert caps.adapter == :mssql
-        assert caps.version == {0, 0}
-      end)
+      log =
+        capture_log(fn ->
+          caps = AdapterCapabilities.detect(BrokenMSSQLRepo)
+          assert caps.adapter == :mssql
+          assert caps.version == {0, 0}
+        end)
 
       assert log =~ "Failed to detect"
     end
 
     test "handles MySQL unparsable version" do
-      log = capture_log(fn ->
-        caps = AdapterCapabilities.detect(MySQLUnparsableVersion)
-        assert caps.adapter == :mysql
-        assert caps.version == {0, 0, 0}
-      end)
+      log =
+        capture_log(fn ->
+          caps = AdapterCapabilities.detect(MySQLUnparsableVersion)
+          assert caps.adapter == :mysql
+          assert caps.version == {0, 0, 0}
+        end)
 
       assert log =~ "Could not parse MySQL version"
     end
 
     test "handles SQLite unparsable version" do
-      log = capture_log(fn ->
-        caps = AdapterCapabilities.detect(SQLiteUnparsableVersion)
-        assert caps.adapter == :sqlite
-        assert caps.version == {0, 0, 0}
-      end)
+      log =
+        capture_log(fn ->
+          caps = AdapterCapabilities.detect(SQLiteUnparsableVersion)
+          assert caps.adapter == :sqlite
+          assert caps.version == {0, 0, 0}
+        end)
 
       assert log =~ "Could not parse SQLite version"
     end
 
     test "handles MSSQL unparsable version" do
-      log = capture_log(fn ->
-        caps = AdapterCapabilities.detect(MSSQLUnparsableVersion)
-        assert caps.adapter == :mssql
-        assert caps.version == {0, 0}
-      end)
+      log =
+        capture_log(fn ->
+          caps = AdapterCapabilities.detect(MSSQLUnparsableVersion)
+          assert caps.adapter == :mssql
+          assert caps.version == {0, 0}
+        end)
 
       assert log =~ "Could not parse MSSQL version"
     end

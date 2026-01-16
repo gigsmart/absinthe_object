@@ -132,6 +132,12 @@ defmodule GreenFairy.Interface do
     resolve_type_def = Module.get_attribute(env.module, :green_fairy_resolve_type)
 
     quote do
+      # Register this interface in the TypeRegistry for graph-based discovery
+      GreenFairy.TypeRegistry.register(
+        unquote(interface_def[:identifier]),
+        __MODULE__
+      )
+
       @doc false
       def __green_fairy_definition__ do
         %{

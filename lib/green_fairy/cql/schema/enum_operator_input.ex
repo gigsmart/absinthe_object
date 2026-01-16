@@ -83,17 +83,22 @@ defmodule GreenFairy.CQL.Schema.EnumOperatorInput do
     input_identifier = operator_type_identifier(enum_identifier)
     desc = description || "CQL operators for #{enum_identifier} enum"
 
-    quote do
-      @desc unquote(desc)
-      input_object unquote(input_identifier) do
-        field :_eq, unquote(enum_identifier)
-        field :_ne, unquote(enum_identifier)
-        field :_neq, unquote(enum_identifier)
-        field :_in, list_of(non_null(unquote(enum_identifier)))
-        field :_nin, list_of(non_null(unquote(enum_identifier)))
-        field :_is_null, :boolean
-      end
-    end
+    # Build the AST manually to avoid unquote issues
+    fields = [
+      {:field, [], [:_eq, enum_identifier]},
+      {:field, [], [:_ne, enum_identifier]},
+      {:field, [], [:_neq, enum_identifier]},
+      {:field, [], [:_in, {:list_of, [], [{:non_null, [], [enum_identifier]}]}]},
+      {:field, [], [:_nin, {:list_of, [], [{:non_null, [], [enum_identifier]}]}]},
+      {:field, [], [:_is_null, :boolean]}
+    ]
+
+    {:input_object, [],
+     [
+       input_identifier,
+       [description: desc],
+       [do: {:__block__, [], fields}]
+     ]}
   end
 
   @doc """
@@ -112,19 +117,24 @@ defmodule GreenFairy.CQL.Schema.EnumOperatorInput do
     input_identifier = array_operator_type_identifier(enum_identifier)
     desc = description || "CQL array operators for #{enum_identifier} enum"
 
-    quote do
-      @desc unquote(desc)
-      input_object unquote(input_identifier) do
-        field :_includes, unquote(enum_identifier)
-        field :_excludes, unquote(enum_identifier)
-        field :_includes_all, list_of(non_null(unquote(enum_identifier)))
-        field :_excludes_all, list_of(non_null(unquote(enum_identifier)))
-        field :_includes_any, list_of(non_null(unquote(enum_identifier)))
-        field :_excludes_any, list_of(non_null(unquote(enum_identifier)))
-        field :_is_empty, :boolean
-        field :_is_null, :boolean
-      end
-    end
+    # Build the AST manually to avoid unquote issues
+    fields = [
+      {:field, [], [:_includes, enum_identifier]},
+      {:field, [], [:_excludes, enum_identifier]},
+      {:field, [], [:_includes_all, {:list_of, [], [{:non_null, [], [enum_identifier]}]}]},
+      {:field, [], [:_excludes_all, {:list_of, [], [{:non_null, [], [enum_identifier]}]}]},
+      {:field, [], [:_includes_any, {:list_of, [], [{:non_null, [], [enum_identifier]}]}]},
+      {:field, [], [:_excludes_any, {:list_of, [], [{:non_null, [], [enum_identifier]}]}]},
+      {:field, [], [:_is_empty, :boolean]},
+      {:field, [], [:_is_null, :boolean]}
+    ]
+
+    {:input_object, [],
+     [
+       input_identifier,
+       [description: desc],
+       [do: {:__block__, [], fields}]
+     ]}
   end
 
   @doc """

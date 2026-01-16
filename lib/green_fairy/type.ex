@@ -163,14 +163,25 @@ defmodule GreenFairy.Type do
     # Expand the struct module reference to the actual module
     struct_module = if struct_module_ast, do: Macro.expand(struct_module_ast, env), else: nil
 
+    # Check if CQL is disabled via opts[:cql] == false
+    cql_enabled = opts[:cql] != false && struct_module != nil
+
+    # If CQL is enabled and not already in the block, prepend `use GreenFairy.CQL`
+    block_with_cql =
+      if cql_enabled && !has_cql_use?(block) do
+        prepend_cql_use(block)
+      else
+        block
+      end
+
     # Extract connection definitions from the block FIRST
-    connection_defs = extract_connections(block, env)
+    connection_defs = extract_connections(block_with_cql, env)
 
     # Generate connection types (these need to be defined before the main object)
     connection_types = generate_connection_types_ast(connection_defs)
 
     # Transform the block - this removes connection definitions and leaves field references
-    transformed_block = transform_block(block, env, struct_module)
+    transformed_block = transform_block(block_with_cql, env, struct_module)
 
     quote do
       @green_fairy_type %{
@@ -199,6 +210,28 @@ defmodule GreenFairy.Type do
         unquote(transformed_block)
       end
     end
+  end
+
+  # Check if the block already has `use GreenFairy.CQL`
+  defp has_cql_use?({:__block__, _, statements}) do
+    Enum.any?(statements, &is_cql_use?/1)
+  end
+
+  defp has_cql_use?(statement), do: is_cql_use?(statement)
+
+  defp is_cql_use?({:use, _, [{:__aliases__, _, [:GreenFairy, :CQL]} | _]}), do: true
+  defp is_cql_use?({:use, _, [GreenFairy.CQL | _]}), do: true
+  defp is_cql_use?(_), do: false
+
+  # Prepend `use GreenFairy.CQL` to the block
+  defp prepend_cql_use({:__block__, meta, statements}) do
+    cql_use = quote do: use(GreenFairy.CQL)
+    {:__block__, meta, [cql_use | statements]}
+  end
+
+  defp prepend_cql_use(single_statement) do
+    cql_use = quote do: use(GreenFairy.CQL)
+    {:__block__, [], [cql_use, single_statement]}
   end
 
   # Extract connection definitions from the block
@@ -231,7 +264,8 @@ defmodule GreenFairy.Type do
     connection_name = :"#{field_name}_connection"
     edge_name = :"#{field_name}_edge"
 
-    {edge_block, connection_fields, _custom_resolver, _aggregates} = GreenFairy.Field.Connection.parse_connection_block(block)
+    {edge_block, connection_fields, _custom_resolver, _aggregates} =
+      GreenFairy.Field.Connection.parse_connection_block(block)
 
     [
       %{
@@ -432,6 +466,9 @@ defmodule GreenFairy.Type do
       resolver: has_resolver || false
     }
 
+    # Transform the field args to convert module references to type identifiers
+    transformed_args = transform_field_type_refs(args, env)
+
     quote do
       @green_fairy_fields unquote(Macro.escape(field_info))
 
@@ -440,12 +477,47 @@ defmodule GreenFairy.Type do
         @green_fairy_referenced_types unquote(type_ref)
       end
 
-      unquote({:field, meta, args})
+      unquote({:field, meta, transformed_args})
     end
   end
 
   # Pass through everything else unchanged - let Absinthe handle it
   defp transform_statement(other, _env, _struct_module), do: other
+
+  # Transform field args to convert module references to type identifiers
+  defp transform_field_type_refs([name, type | rest], env) do
+    [name, transform_field_type(type, env) | rest]
+  end
+
+  defp transform_field_type_refs(args, _env), do: args
+
+  # Transform a type reference (possibly wrapped in non_null/list_of)
+  defp transform_field_type({:non_null, meta, [inner]}, env) do
+    {:non_null, meta, [transform_field_type(inner, env)]}
+  end
+
+  defp transform_field_type({:list_of, meta, [inner]}, env) do
+    {:list_of, meta, [transform_field_type(inner, env)]}
+  end
+
+  defp transform_field_type({:__aliases__, _, _} = module_ast, env) do
+    # Expand module alias and get type identifier
+    module = Macro.expand(module_ast, env)
+
+    case Code.ensure_compiled(module) do
+      {:module, ^module} ->
+        if function_exported?(module, :__green_fairy_identifier__, 0) do
+          module.__green_fairy_identifier__()
+        else
+          module
+        end
+
+      _ ->
+        module
+    end
+  end
+
+  defp transform_field_type(type, _env), do: type
 
   # Extract type reference from field arguments for graph-based discovery
   # Returns the base type identifier (atom) or nil for built-in scalars

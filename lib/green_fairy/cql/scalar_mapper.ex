@@ -146,7 +146,8 @@ defmodule GreenFairy.CQL.ScalarMapper do
   defp built_in_scalar_for({:array, :id}), do: Scalars.ArrayID
   defp built_in_scalar_for({:array, :binary_id}), do: Scalars.ArrayID
   defp built_in_scalar_for({:array, {:parameterized, Ecto.Enum, _}}), do: Scalars.ArrayEnum
-  defp built_in_scalar_for({:array, _}), do: nil  # Unknown array types
+  # Unknown array types
+  defp built_in_scalar_for({:array, _}), do: nil
 
   # Ecto.Enum (built-in parameterized enum type)
   defp built_in_scalar_for({:parameterized, Ecto.Enum, _}), do: Scalars.Enum
@@ -226,6 +227,7 @@ defmodule GreenFairy.CQL.ScalarMapper do
               {:array, _inner_type} -> :cql_op_generic_array_input
               _ -> nil
             end
+
           scalar_module ->
             scalar_module.operator_type_identifier(adapter)
         end
@@ -236,6 +238,7 @@ defmodule GreenFairy.CQL.ScalarMapper do
   defp is_gf_enum_array?({:array, inner}) when is_atom(inner) do
     GreenFairy.TypeRegistry.is_enum?(inner)
   end
+
   defp is_gf_enum_array?(_), do: false
 
   @doc """

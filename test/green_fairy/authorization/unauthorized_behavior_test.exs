@@ -185,10 +185,11 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorTest do
       field_meta = %{on_unauthorized: :return_nil}
       resolution = create_resolution(auth_obj, :email, field_meta, %{})
 
-      result = GreenFairy.Authorization.FieldMiddleware.call(resolution, %{
-        on_unauthorized: :error,
-        type_on_unauthorized: :error
-      })
+      result =
+        GreenFairy.Authorization.FieldMiddleware.call(resolution, %{
+          on_unauthorized: :error,
+          type_on_unauthorized: :error
+        })
 
       assert result.value == nil
       assert result.errors == []
@@ -196,10 +197,11 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorTest do
       # Scenario 2: Field config wins (no directive)
       resolution2 = create_resolution(auth_obj, :email, %{}, %{})
 
-      result2 = GreenFairy.Authorization.FieldMiddleware.call(resolution2, %{
-        on_unauthorized: :return_nil,
-        type_on_unauthorized: :error
-      })
+      result2 =
+        GreenFairy.Authorization.FieldMiddleware.call(resolution2, %{
+          on_unauthorized: :return_nil,
+          type_on_unauthorized: :error
+        })
 
       assert result2.value == nil
       assert result2.errors == []
@@ -207,9 +209,10 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorTest do
       # Scenario 3: Type config wins (no directive or field config)
       resolution3 = create_resolution(auth_obj, :email, %{}, %{})
 
-      result3 = GreenFairy.Authorization.FieldMiddleware.call(resolution3, %{
-        type_on_unauthorized: :return_nil
-      })
+      result3 =
+        GreenFairy.Authorization.FieldMiddleware.call(resolution3, %{
+          type_on_unauthorized: :return_nil
+        })
 
       assert result3.value == nil
       assert result3.errors == []

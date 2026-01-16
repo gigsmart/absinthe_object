@@ -166,6 +166,12 @@ defmodule GreenFairy.Enum do
       end
 
     quote do
+      # Register this enum in the TypeRegistry for graph-based discovery
+      GreenFairy.TypeRegistry.register(
+        unquote(enum_def[:identifier]),
+        __MODULE__
+      )
+
       @doc false
       def __green_fairy_definition__ do
         %{

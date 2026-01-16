@@ -76,18 +76,30 @@ defmodule GreenFairy.CQL.Schema.FilterInput do
 
     all_fields = combinator_fields ++ field_defs
 
+    # Use fully qualified macro call to ensure proper expansion
     quote do
-      @desc unquote(description)
-      input_object unquote(identifier) do
-        (unquote_splicing(all_fields))
+      Absinthe.Schema.Notation.input_object unquote(identifier) do
+        @desc unquote(description)
+        unquote_splicing(all_fields)
       end
     end
   end
 
   defp build_combinator_fields(self_identifier) do
-    and_field = quote do: field(:_and, list_of(unquote(self_identifier)))
-    or_field = quote do: field(:_or, list_of(unquote(self_identifier)))
-    not_field = quote do: field(:_not, unquote(self_identifier))
+    and_field =
+      quote do
+        Absinthe.Schema.Notation.field(:_and, list_of(unquote(self_identifier)))
+      end
+
+    or_field =
+      quote do
+        Absinthe.Schema.Notation.field(:_or, list_of(unquote(self_identifier)))
+      end
+
+    not_field =
+      quote do
+        Absinthe.Schema.Notation.field(:_not, unquote(self_identifier))
+      end
 
     [and_field, or_field, not_field]
   end
@@ -99,7 +111,7 @@ defmodule GreenFairy.CQL.Schema.FilterInput do
 
       if op_type do
         quote do
-          field(unquote(field_name), unquote(op_type))
+          Absinthe.Schema.Notation.field(unquote(field_name), unquote(op_type))
         end
       else
         nil
@@ -135,6 +147,7 @@ defmodule GreenFairy.CQL.Schema.FilterInput do
   defp is_enum_array?({:array, inner_type}) when is_atom(inner_type) do
     TypeRegistry.is_enum?(inner_type)
   end
+
   defp is_enum_array?(_), do: false
 
   # Extract enum identifier from array type

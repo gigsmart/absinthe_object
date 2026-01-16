@@ -57,10 +57,12 @@ defmodule GreenFairy.CQL.Adapters.ClickHouse do
     %{
       array_operators_require_type_cast: false,
       native_arrays: true,
-      supports_json_operators: false,  # Use JSONExtract* functions manually
+      # Use JSONExtract* functions manually
+      supports_json_operators: false,
       supports_full_text_search: false,
       max_in_clause_items: 10000,
-      emulated_ilike: false,  # Native ilike() function
+      # Native ilike() function
+      emulated_ilike: false,
       column_oriented: true
     }
   end
@@ -98,13 +100,20 @@ defmodule GreenFairy.CQL.Adapters.ClickHouse do
 
       :array ->
         [
-          :_includes,       # has(array, element)
-          :_excludes,       # NOT has(array, element)
-          :_includes_all,   # hasAll(array, elements)
-          :_excludes_all,   # NOT hasAll(...)
-          :_includes_any,   # hasAny(array, elements)
-          :_excludes_any,   # NOT hasAny(...)
-          :_is_empty,       # empty(array)
+          # has(array, element)
+          :_includes,
+          # NOT has(array, element)
+          :_excludes,
+          # hasAll(array, elements)
+          :_includes_all,
+          # NOT hasAll(...)
+          :_excludes_all,
+          # hasAny(array, elements)
+          :_includes_any,
+          # NOT hasAny(...)
+          :_excludes_any,
+          # empty(array)
+          :_is_empty,
           :_is_null
         ]
 
@@ -147,7 +156,14 @@ defmodule GreenFairy.CQL.Adapters.ClickHouse do
   end
 
   @impl true
-  def apply_operator(schema_or_query, field_or_query, operator_or_field, value_or_operator, opts_or_value, maybe_opts \\ [])
+  def apply_operator(
+        schema_or_query,
+        field_or_query,
+        operator_or_field,
+        value_or_operator,
+        opts_or_value,
+        maybe_opts \\ []
+      )
 
   def apply_operator(query, field, operator, value, opts, []) when is_list(opts) do
     apply_operator_impl(query, field, operator, value, opts)

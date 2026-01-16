@@ -10,8 +10,7 @@ defmodule GreenFairy.CQL.Scalars.ArrayString.Ecto do
   import Ecto.Query, only: [where: 3]
 
   def operator_input do
-    {[:_is_null], :string,
-     "Operators for string array fields (generic - limited support)"}
+    {[:_is_null], :string, "Operators for string array fields (generic - limited support)"}
   end
 
   def apply_operator(query, field, operator, value, opts) do

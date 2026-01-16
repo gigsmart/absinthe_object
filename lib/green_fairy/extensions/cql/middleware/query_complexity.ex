@@ -237,7 +237,6 @@ defmodule GreenFairy.Middleware.QueryComplexity do
   end
 
   defp do_check_complexity(resolution, repo, opts) do
-
     # Get the query from resolution context
     # The query would be built by the CQL resolver
     case extract_query(resolution) do
@@ -261,12 +260,19 @@ defmodule GreenFairy.Middleware.QueryComplexity do
 
     case adapter do
       # Supported adapters with EXPLAIN
-      Ecto.Adapters.Postgres -> true
-      Ecto.Adapters.MyXQL -> true
+      Ecto.Adapters.Postgres ->
+        true
+
+      Ecto.Adapters.MyXQL ->
+        true
 
       # Unsupported adapters
-      Ecto.Adapters.SQLite3 -> false
-      Ecto.Adapters.Tds -> false  # MSSQL
+      Ecto.Adapters.SQLite3 ->
+        false
+
+      # MSSQL
+      Ecto.Adapters.Tds ->
+        false
 
       # Unknown adapter
       _ ->
@@ -275,29 +281,36 @@ defmodule GreenFairy.Middleware.QueryComplexity do
     end
   end
 
+  # Dialyzer warning suppressed: the `other` clause is defensive programming
+  @dialyzer {:nowarn_function, analyze_and_check: 4}
   defp analyze_and_check(resolution, query, repo, opts) do
-    result = case QueryComplexityAnalyzer.check_complexity(query, repo, opts) do
-      {:ok, analysis} ->
-        # Query accepted
-        log_accepted(resolution, analysis)
-        resolution
+    result =
+      case QueryComplexityAnalyzer.check_complexity(query, repo, opts) do
+        {:ok, analysis} ->
+          # Query accepted
+          log_accepted(resolution, analysis)
+          resolution
 
-      {:warning, analysis} ->
-        # Query accepted but with warning
-        log_warning(resolution, analysis)
-        resolution
+        {:warning, analysis} ->
+          # Query accepted but with warning
+          log_warning(resolution, analysis)
+          resolution
 
-      {:error, :too_complex, analysis} ->
-        # Query rejected
-        log_rejected(resolution, analysis)
-        rejected_resolution = reject_query(resolution, analysis, opts)
-        Logger.debug("After reject_query - state: #{rejected_resolution.state}, value: #{inspect(rejected_resolution.value)}")
-        rejected_resolution
+        {:error, :too_complex, analysis} ->
+          # Query rejected
+          log_rejected(resolution, analysis)
+          rejected_resolution = reject_query(resolution, analysis, opts)
 
-      other ->
-        Logger.error("Unexpected check_complexity result: #{inspect(other)}")
-        resolution
-    end
+          Logger.debug(
+            "After reject_query - state: #{rejected_resolution.state}, value: #{inspect(rejected_resolution.value)}"
+          )
+
+          rejected_resolution
+
+        other ->
+          Logger.error("Unexpected check_complexity result: #{inspect(other)}")
+          resolution
+      end
 
     Logger.debug("analyze_and_check returning - state: #{result.state}, value: #{inspect(result.value)}")
     result

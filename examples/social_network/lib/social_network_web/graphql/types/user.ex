@@ -9,7 +9,9 @@ defmodule SocialNetworkWeb.GraphQL.Types.User do
     # CQL is automatically enabled for types with structs!
     # Authorization: admins see all fields, others see limited fields
     authorize fn _user, ctx ->
-      if ctx[:current_user]?.is_admin do
+      current_user = ctx[:current_user]
+
+      if current_user && current_user.is_admin do
         :all
       else
         [:id, :username, :display_name, :bio, :avatar_url, :inserted_at, :updated_at]

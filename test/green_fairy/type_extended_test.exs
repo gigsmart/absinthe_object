@@ -206,13 +206,13 @@ defmodule GreenFairy.TypeExtendedTest do
       use GreenFairy.Type
 
       type "AuthType", struct: AuthStruct do
-        authorize fn object, ctx ->
+        authorize(fn object, ctx ->
           cond do
             ctx[:admin] == true -> :all
             ctx[:user_id] == object.id -> :all
             true -> [:id, :name]
           end
-        end
+        end)
 
         field :id, non_null(:id)
         field :name, :string
@@ -221,7 +221,7 @@ defmodule GreenFairy.TypeExtendedTest do
     end
 
     test "__has_authorization__ returns true" do
-      assert AuthType.__has_authorization__ == true
+      assert AuthType.__has_authorization__() == true
     end
 
     test "__authorize__ returns :all for admin" do
@@ -258,13 +258,13 @@ defmodule GreenFairy.TypeExtendedTest do
       use GreenFairy.Type
 
       type "Auth3Type", struct: Auth3Struct do
-        authorize fn _object, ctx, info ->
+        authorize(fn _object, ctx, info ->
           if ctx[:admin] || info[:path] == [:admin_query] do
             :all
           else
             :none
           end
-        end
+        end)
 
         field :id, non_null(:id)
         field :data, :string
@@ -272,7 +272,7 @@ defmodule GreenFairy.TypeExtendedTest do
     end
 
     test "__has_authorization__ returns true" do
-      assert Auth3Type.__has_authorization__ == true
+      assert Auth3Type.__has_authorization__() == true
     end
 
     test "__authorize__ receives info parameter" do
@@ -308,7 +308,7 @@ defmodule GreenFairy.TypeExtendedTest do
     end
 
     test "__has_authorization__ returns false" do
-      assert NoAuthType.__has_authorization__ == false
+      assert NoAuthType.__has_authorization__() == false
     end
 
     test "__authorize__ returns :all" do

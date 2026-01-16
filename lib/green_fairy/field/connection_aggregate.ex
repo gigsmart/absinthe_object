@@ -141,42 +141,47 @@ defmodule GreenFairy.Field.ConnectionAggregate do
     types = []
 
     # Generate sum aggregates type if sum fields present
-    types = if Enum.any?(aggregates.sum) do
-      [generate_sum_type(sum_type, aggregates.sum) | types]
-    else
-      types
-    end
+    types =
+      if Enum.any?(aggregates.sum) do
+        [generate_sum_type(sum_type, aggregates.sum) | types]
+      else
+        types
+      end
 
     # Generate avg aggregates type if avg fields present
-    types = if Enum.any?(aggregates.avg) do
-      [generate_avg_type(avg_type, aggregates.avg) | types]
-    else
-      types
-    end
+    types =
+      if Enum.any?(aggregates.avg) do
+        [generate_avg_type(avg_type, aggregates.avg) | types]
+      else
+        types
+      end
 
     # Generate min aggregates type if min fields present
-    types = if Enum.any?(aggregates.min) do
-      [generate_min_type(min_type, aggregates.min) | types]
-    else
-      types
-    end
+    types =
+      if Enum.any?(aggregates.min) do
+        [generate_min_type(min_type, aggregates.min) | types]
+      else
+        types
+      end
 
     # Generate max aggregates type if max fields present
-    types = if Enum.any?(aggregates.max) do
-      [generate_max_type(max_type, aggregates.max) | types]
-    else
-      types
-    end
+    types =
+      if Enum.any?(aggregates.max) do
+        [generate_max_type(max_type, aggregates.max) | types]
+      else
+        types
+      end
 
     # Generate main aggregate type
-    main_type = generate_main_aggregate_type(
-      return_type,
-      aggregates,
-      sum_type,
-      avg_type,
-      min_type,
-      max_type
-    )
+    main_type =
+      generate_main_aggregate_type(
+        return_type,
+        aggregates,
+        sum_type,
+        avg_type,
+        min_type,
+        max_type
+      )
 
     [main_type | types]
   end
@@ -231,29 +236,33 @@ defmodule GreenFairy.Field.ConnectionAggregate do
   defp generate_main_aggregate_type(type_name, aggregates, sum_type, avg_type, min_type, max_type) do
     fields = []
 
-    fields = if Enum.any?(aggregates.sum) do
-      [quote(do: field(:sum, unquote(sum_type))) | fields]
-    else
-      fields
-    end
+    fields =
+      if Enum.any?(aggregates.sum) do
+        [quote(do: field(:sum, unquote(sum_type))) | fields]
+      else
+        fields
+      end
 
-    fields = if Enum.any?(aggregates.avg) do
-      [quote(do: field(:avg, unquote(avg_type))) | fields]
-    else
-      fields
-    end
+    fields =
+      if Enum.any?(aggregates.avg) do
+        [quote(do: field(:avg, unquote(avg_type))) | fields]
+      else
+        fields
+      end
 
-    fields = if Enum.any?(aggregates.min) do
-      [quote(do: field(:min, unquote(min_type))) | fields]
-    else
-      fields
-    end
+    fields =
+      if Enum.any?(aggregates.min) do
+        [quote(do: field(:min, unquote(min_type))) | fields]
+      else
+        fields
+      end
 
-    fields = if Enum.any?(aggregates.max) do
-      [quote(do: field(:max, unquote(max_type))) | fields]
-    else
-      fields
-    end
+    fields =
+      if Enum.any?(aggregates.max) do
+        [quote(do: field(:max, unquote(max_type))) | fields]
+      else
+        fields
+      end
 
     quote do
       Absinthe.Schema.Notation.object unquote(type_name) do
@@ -300,68 +309,84 @@ defmodule GreenFairy.Field.ConnectionAggregate do
     result = %{}
 
     # Sum aggregates
-    result = if Enum.any?(aggregates.sum) do
-      sum_map = Map.new(aggregates.sum, fn field ->
-        sum_fn = fn ->
-          query
-          |> exclude(:preload)
-          |> exclude(:order_by)
-          |> repo.aggregate(:sum, field)
-        end
-        {field, sum_fn}
-      end)
-      Map.put(result, :_sum_fns, sum_map)
-    else
-      result
-    end
+    result =
+      if Enum.any?(aggregates.sum) do
+        sum_map =
+          Map.new(aggregates.sum, fn field ->
+            sum_fn = fn ->
+              query
+              |> exclude(:preload)
+              |> exclude(:order_by)
+              |> repo.aggregate(:sum, field)
+            end
+
+            {field, sum_fn}
+          end)
+
+        Map.put(result, :_sum_fns, sum_map)
+      else
+        result
+      end
 
     # Avg aggregates
-    result = if Enum.any?(aggregates.avg) do
-      avg_map = Map.new(aggregates.avg, fn field ->
-        avg_fn = fn ->
-          query
-          |> exclude(:preload)
-          |> exclude(:order_by)
-          |> repo.aggregate(:avg, field)
-        end
-        {field, avg_fn}
-      end)
-      Map.put(result, :_avg_fns, avg_map)
-    else
-      result
-    end
+    result =
+      if Enum.any?(aggregates.avg) do
+        avg_map =
+          Map.new(aggregates.avg, fn field ->
+            avg_fn = fn ->
+              query
+              |> exclude(:preload)
+              |> exclude(:order_by)
+              |> repo.aggregate(:avg, field)
+            end
+
+            {field, avg_fn}
+          end)
+
+        Map.put(result, :_avg_fns, avg_map)
+      else
+        result
+      end
 
     # Min aggregates
-    result = if Enum.any?(aggregates.min) do
-      min_map = Map.new(aggregates.min, fn field ->
-        min_fn = fn ->
-          query
-          |> exclude(:preload)
-          |> exclude(:order_by)
-          |> repo.aggregate(:min, field)
-        end
-        {field, min_fn}
-      end)
-      Map.put(result, :_min_fns, min_map)
-    else
-      result
-    end
+    result =
+      if Enum.any?(aggregates.min) do
+        min_map =
+          Map.new(aggregates.min, fn field ->
+            min_fn = fn ->
+              query
+              |> exclude(:preload)
+              |> exclude(:order_by)
+              |> repo.aggregate(:min, field)
+            end
+
+            {field, min_fn}
+          end)
+
+        Map.put(result, :_min_fns, min_map)
+      else
+        result
+      end
 
     # Max aggregates
-    result = if Enum.any?(aggregates.max) do
-      max_map = Map.new(aggregates.max, fn field ->
-        max_fn = fn ->
-          query
-          |> exclude(:preload)
-          |> exclude(:order_by)
-          |> repo.aggregate(:max, field)
-        end
-        {field, max_fn}
-      end)
-      Map.put(result, :_max_fns, max_map)
-    else
-      result
-    end
+    result =
+      if Enum.any?(aggregates.max) do
+        max_map =
+          Map.new(aggregates.max, fn field ->
+            max_fn = fn ->
+              query
+              |> exclude(:preload)
+              |> exclude(:order_by)
+              |> repo.aggregate(:max, field)
+            end
+
+            {field, max_fn}
+          end)
+
+        Map.put(result, :_max_fns, max_map)
+      else
+        result
+      end
 
     result
   end
@@ -374,44 +399,56 @@ defmodule GreenFairy.Field.ConnectionAggregate do
     result = %{}
 
     # Compute sum
-    result = if Enum.any?(aggregates.sum) do
-      sum_map = Map.new(aggregates.sum, fn field ->
-        {field, repo.aggregate(base_query, :sum, field)}
-      end)
-      Map.put(result, :sum, sum_map)
-    else
-      result
-    end
+    result =
+      if Enum.any?(aggregates.sum) do
+        sum_map =
+          Map.new(aggregates.sum, fn field ->
+            {field, repo.aggregate(base_query, :sum, field)}
+          end)
+
+        Map.put(result, :sum, sum_map)
+      else
+        result
+      end
 
     # Compute avg
-    result = if Enum.any?(aggregates.avg) do
-      avg_map = Map.new(aggregates.avg, fn field ->
-        {field, repo.aggregate(base_query, :avg, field)}
-      end)
-      Map.put(result, :avg, avg_map)
-    else
-      result
-    end
+    result =
+      if Enum.any?(aggregates.avg) do
+        avg_map =
+          Map.new(aggregates.avg, fn field ->
+            {field, repo.aggregate(base_query, :avg, field)}
+          end)
+
+        Map.put(result, :avg, avg_map)
+      else
+        result
+      end
 
     # Compute min
-    result = if Enum.any?(aggregates.min) do
-      min_map = Map.new(aggregates.min, fn field ->
-        {field, repo.aggregate(base_query, :min, field)}
-      end)
-      Map.put(result, :min, min_map)
-    else
-      result
-    end
+    result =
+      if Enum.any?(aggregates.min) do
+        min_map =
+          Map.new(aggregates.min, fn field ->
+            {field, repo.aggregate(base_query, :min, field)}
+          end)
+
+        Map.put(result, :min, min_map)
+      else
+        result
+      end
 
     # Compute max
-    result = if Enum.any?(aggregates.max) do
-      max_map = Map.new(aggregates.max, fn field ->
-        {field, repo.aggregate(base_query, :max, field)}
-      end)
-      Map.put(result, :max, max_map)
-    else
-      result
-    end
+    result =
+      if Enum.any?(aggregates.max) do
+        max_map =
+          Map.new(aggregates.max, fn field ->
+            {field, repo.aggregate(base_query, :max, field)}
+          end)
+
+        Map.put(result, :max, max_map)
+      else
+        result
+      end
 
     result
   end

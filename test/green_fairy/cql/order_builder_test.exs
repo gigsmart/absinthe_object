@@ -51,6 +51,7 @@ defmodule GreenFairy.CQL.OrderBuilderTest do
 
     test "applies multiple field ordering" do
       query = from(u in TestUser)
+
       order = [
         %{name: %{direction: :asc}},
         %{age: %{direction: :desc}}
@@ -74,6 +75,7 @@ defmodule GreenFairy.CQL.OrderBuilderTest do
 
     test "skips logical operators like _and, _or, _not" do
       query = from(u in TestUser)
+
       order = [
         %{_and: [%{name: %{direction: :asc}}]},
         %{name: %{direction: :asc}}

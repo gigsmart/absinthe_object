@@ -98,7 +98,8 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
   require Logger
 
   @cache_table :query_complexity_cache
-  @cache_ttl :timer.minutes(5)  # Cache results for 5 minutes
+  # Cache results for 5 minutes
+  @cache_ttl :timer.minutes(5)
 
   # Initialize ETS cache on module load
   def __on_definition__(_env, _kind, _name, _args, _guards, _body), do: :ok
@@ -114,23 +115,24 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
   end
 
   @type analysis :: %{
-    cost: float(),
-    rows: integer(),
-    width: integer(),
-    execution_time_estimate: float(),
-    index_usage: [String.t()],
-    seq_scans: integer(),
-    suggestions: [String.t()],
-    complexity_score: float()
-  }
+          cost: float(),
+          rows: integer(),
+          width: integer(),
+          execution_time_estimate: float(),
+          index_usage: [String.t()],
+          seq_scans: integer(),
+          suggestions: [String.t()],
+          complexity_score: float()
+        }
 
   @type load_metrics :: %{
-    active_connections: integer(),
-    cpu_usage: float(),
-    cache_hit_ratio: float(),
-    transaction_rate: float(),
-    load_factor: float()  # 0.0 - 1.0
-  }
+          active_connections: integer(),
+          cpu_usage: float(),
+          cache_hit_ratio: float(),
+          transaction_rate: float(),
+          # 0.0 - 1.0
+          load_factor: float()
+        }
 
   @doc """
   Analyze query complexity using database EXPLAIN.
@@ -178,6 +180,8 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
       analyze_uncached(query, repo, opts)
   end
 
+  # Dialyzer warning suppressed: error clause is defensive programming
+  @dialyzer {:nowarn_function, analyze_and_cache: 4}
   defp analyze_and_cache(query, repo, opts, cache_key) do
     Logger.debug("Query complexity cache miss: #{cache_key}")
 
@@ -235,7 +239,6 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
     with {:ok, analysis} <- analyze(query, repo, opts),
          {:ok, load} <- get_load_metrics(repo),
          {:ok, limit} <- calculate_adaptive_limit(load, opts) do
-
       cond do
         analysis.complexity_score > limit ->
           emit_telemetry(:query_rejected, analysis, load)
@@ -287,12 +290,14 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
     nodes = collect_plan_nodes(plan)
 
     # Count sequential scans (expensive without indexes)
-    seq_scans = Enum.count(nodes, fn node ->
-      node["Node Type"] == "Seq Scan"
-    end)
+    seq_scans =
+      Enum.count(nodes, fn node ->
+        node["Node Type"] == "Seq Scan"
+      end)
 
     # Extract index usage
-    index_usage = nodes
+    index_usage =
+      nodes
       |> Enum.filter(fn node -> node["Node Type"] == "Index Scan" end)
       |> Enum.map(fn node -> node["Index Name"] end)
       |> Enum.reject(&is_nil/1)
@@ -323,11 +328,14 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
     acc = [node | acc]
 
     # Recursively collect child nodes
-    acc = case node["Plans"] do
-      nil -> acc
-      plans when is_list(plans) ->
-        Enum.reduce(plans, acc, fn child, a -> collect_plan_nodes(child, a) end)
-    end
+    acc =
+      case node["Plans"] do
+        nil ->
+          acc
+
+        plans when is_list(plans) ->
+          Enum.reduce(plans, acc, fn child, a -> collect_plan_nodes(child, a) end)
+      end
 
     acc
   end
@@ -336,38 +344,44 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
     suggestions = []
 
     # Suggest indexes for sequential scans
-    seq_scan_nodes = Enum.filter(nodes, fn node ->
-      node["Node Type"] == "Seq Scan"
-    end)
+    seq_scan_nodes =
+      Enum.filter(nodes, fn node ->
+        node["Node Type"] == "Seq Scan"
+      end)
 
-    suggestions = if length(seq_scan_nodes) > 0 do
-      table_names = seq_scan_nodes
-        |> Enum.map(fn node -> node["Relation Name"] end)
-        |> Enum.uniq()
-        |> Enum.join(", ")
+    suggestions =
+      if length(seq_scan_nodes) > 0 do
+        table_names =
+          seq_scan_nodes
+          |> Enum.map(fn node -> node["Relation Name"] end)
+          |> Enum.uniq()
+          |> Enum.join(", ")
 
-      ["Consider adding indexes to: #{table_names}" | suggestions]
-    else
-      suggestions
-    end
+        ["Consider adding indexes to: #{table_names}" | suggestions]
+      else
+        suggestions
+      end
 
     # Suggest query optimization if very expensive
-    suggestions = if cost > 10_000 do
-      ["Query cost is very high (#{Float.round(cost, 2)}). Consider adding filters or limits." | suggestions]
-    else
-      suggestions
-    end
+    suggestions =
+      if cost > 10_000 do
+        ["Query cost is very high (#{Float.round(cost, 2)}). Consider adding filters or limits." | suggestions]
+      else
+        suggestions
+      end
 
     # Suggest materialized views for complex joins
-    join_nodes = Enum.filter(nodes, fn node ->
-      node["Node Type"] in ["Nested Loop", "Hash Join", "Merge Join"]
-    end)
+    join_nodes =
+      Enum.filter(nodes, fn node ->
+        node["Node Type"] in ["Nested Loop", "Hash Join", "Merge Join"]
+      end)
 
-    suggestions = if length(join_nodes) > 3 do
-      ["Consider using a materialized view for this complex join query" | suggestions]
-    else
-      suggestions
-    end
+    suggestions =
+      if length(join_nodes) > 3 do
+        ["Consider using a materialized view for this complex join query" | suggestions]
+      else
+        suggestions
+      end
 
     suggestions
   end
@@ -375,17 +389,23 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
   defp estimate_execution_time(cost, rows) do
     # Very rough estimate: cost units roughly correlate to milliseconds
     # This is database and hardware dependent
-    base_time = cost * 0.1  # 1 cost unit ≈ 0.1ms
-    row_penalty = rows * 0.001  # Each row adds small overhead
+    # 1 cost unit ≈ 0.1ms
+    base_time = cost * 0.1
+    # Each row adds small overhead
+    row_penalty = rows * 0.001
     base_time + row_penalty
   end
 
   defp calculate_complexity_score(cost, rows, seq_scans, nodes) do
     # Normalize different factors to 0-100 scale
-    cost_score = min(cost / 1000, 100)  # 10,000 cost = 100
-    row_score = min(rows / 100, 50)     # 10,000 rows = 50
-    seq_scan_score = seq_scans * 15    # Each seq scan adds 15
-    node_score = length(nodes) * 2      # Complexity from plan depth
+    # 10,000 cost = 100
+    cost_score = min(cost / 1000, 100)
+    # 10,000 rows = 50
+    row_score = min(rows / 100, 50)
+    # Each seq scan adds 15
+    seq_scan_score = seq_scans * 15
+    # Complexity from plan depth
+    node_score = length(nodes) * 2
 
     total = cost_score + row_score + seq_scan_score + node_score
     min(total, 100)
@@ -430,17 +450,19 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
 
     suggestions = []
 
-    suggestions = if using_filesort do
-      ["Query uses filesort - consider adding index for ORDER BY" | suggestions]
-    else
-      suggestions
-    end
+    suggestions =
+      if using_filesort do
+        ["Query uses filesort - consider adding index for ORDER BY" | suggestions]
+      else
+        suggestions
+      end
 
-    suggestions = if using_temporary do
-      ["Query uses temporary table - consider optimizing GROUP BY" | suggestions]
-    else
-      suggestions
-    end
+    suggestions =
+      if using_temporary do
+        ["Query uses temporary table - consider optimizing GROUP BY" | suggestions]
+      else
+        suggestions
+      end
 
     complexity_score = min(cost / 100, 100)
 
@@ -581,11 +603,16 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
   # Analyze expression complexity (recursive)
   defp analyze_expr_complexity(expr) when is_tuple(expr) do
     case expr do
-      {:or, _, _} -> 5  # OR is expensive
-      {:and, _, _} -> 2  # AND is moderate
-      {:in, _, _} -> 3   # IN is moderate
-      {:fragment, _, _} -> 10  # Fragments are expensive (unknown complexity)
-      {:subquery, _} -> 15  # Subqueries are very expensive
+      # OR is expensive
+      {:or, _, _} -> 5
+      # AND is moderate
+      {:and, _, _} -> 2
+      # IN is moderate
+      {:in, _, _} -> 3
+      # Fragments are expensive (unknown complexity)
+      {:fragment, _, _} -> 10
+      # Subqueries are very expensive
+      {:subquery, _} -> 15
       _ -> 1
     end
   end
@@ -600,9 +627,10 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
 
   # Calculate score for ORDER BY
   defp calculate_order_score(order_bys, limit) do
-    order_count = Enum.reduce(order_bys, 0, fn order, acc ->
-      acc + length(order.expr)
-    end)
+    order_count =
+      Enum.reduce(order_bys, 0, fn order, acc ->
+        acc + length(order.expr)
+      end)
 
     base_score = order_count * 5
 
@@ -639,9 +667,12 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
   defp calculate_select_score(select) do
     # SELECT * or many fields adds some overhead
     case select do
-      nil -> 5  # SELECT *
-      %{expr: {:&, _, _}} -> 5  # SELECT all fields
-      _ -> 2  # Specific fields
+      # SELECT *
+      nil -> 5
+      # SELECT all fields
+      %{expr: {:&, _, _}} -> 5
+      # Specific fields
+      _ -> 2
     end
   end
 
@@ -701,60 +732,71 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
         get_mysql_load_metrics(repo)
 
       _ ->
-        {:ok, %{load_factor: 0.5}}  # Default moderate load
+        # Default moderate load
+        {:ok, %{load_factor: 0.5}}
     end
   end
 
   defp get_postgres_load_metrics(repo) do
     try do
       # Get connection count
-      conn_result = repo.query!("""
-        SELECT count(*) as active_connections
-        FROM pg_stat_activity
-        WHERE state = 'active'
-      """)
+      conn_result =
+        repo.query!("""
+          SELECT count(*) as active_connections
+          FROM pg_stat_activity
+          WHERE state = 'active'
+        """)
+
       active_connections = conn_result.rows |> List.first() |> List.first()
 
       # Get cache hit ratio
-      cache_result = repo.query!("""
-        SELECT
-          sum(blks_hit) / NULLIF(sum(blks_hit + blks_read), 0) as cache_hit_ratio
-        FROM pg_stat_database
-      """)
+      cache_result =
+        repo.query!("""
+          SELECT
+            sum(blks_hit) / NULLIF(sum(blks_hit + blks_read), 0) as cache_hit_ratio
+          FROM pg_stat_database
+        """)
+
       cache_hit_ratio = cache_result.rows |> List.first() |> List.first() || 1.0
 
       # Get transaction rate
-      tx_result = repo.query!("""
-        SELECT
-          xact_commit + xact_rollback as total_transactions
-        FROM pg_stat_database
-        WHERE datname = current_database()
-      """)
+      tx_result =
+        repo.query!("""
+          SELECT
+            xact_commit + xact_rollback as total_transactions
+          FROM pg_stat_database
+          WHERE datname = current_database()
+        """)
+
       total_transactions = tx_result.rows |> List.first() |> List.first()
 
       # Calculate load factor (0.0 - 1.0)
       # Higher values = higher load
-      connection_load = min(active_connections / 100, 1.0)  # 100 connections = max
-      cache_load = 1.0 - (cache_hit_ratio || 0.95)  # Lower cache hit = higher load
+      # 100 connections = max
+      connection_load = min(active_connections / 100, 1.0)
+      # Lower cache hit = higher load
+      cache_load = 1.0 - (cache_hit_ratio || 0.95)
 
       load_factor = (connection_load + cache_load) / 2
 
-      {:ok, %{
-        active_connections: active_connections,
-        cache_hit_ratio: cache_hit_ratio,
-        transaction_rate: total_transactions,
-        load_factor: load_factor
-      }}
+      {:ok,
+       %{
+         active_connections: active_connections,
+         cache_hit_ratio: cache_hit_ratio,
+         transaction_rate: total_transactions,
+         load_factor: load_factor
+       }}
     rescue
       e ->
         Logger.error("Failed to get load metrics: #{inspect(e)}")
         # Return default metrics with all expected fields
-        {:ok, %{
-          active_connections: 10,
-          cache_hit_ratio: 0.95,
-          transaction_rate: 100,
-          load_factor: 0.5
-        }}
+        {:ok,
+         %{
+           active_connections: 10,
+           cache_hit_ratio: 0.95,
+           transaction_rate: 100,
+           load_factor: 0.5
+         }}
     end
   end
 
@@ -767,18 +809,20 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
       # Calculate load factor
       connection_load = min(active_connections / 100, 1.0)
 
-      {:ok, %{
-        active_connections: active_connections,
-        load_factor: connection_load
-      }}
+      {:ok,
+       %{
+         active_connections: active_connections,
+         load_factor: connection_load
+       }}
     rescue
       e ->
         Logger.error("Failed to get MySQL load metrics: #{inspect(e)}")
         # Return default metrics with all expected fields
-        {:ok, %{
-          active_connections: 10,
-          load_factor: 0.5
-        }}
+        {:ok,
+         %{
+           active_connections: 10,
+           load_factor: 0.5
+         }}
     end
   end
 
@@ -788,15 +832,16 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
     base_limit = Keyword.get(opts, :max_complexity, get_config(:max_cost, 10_000))
     adaptive = Keyword.get(opts, :adaptive_limits, get_config(:adaptive_limits, true))
 
-    limit = if adaptive do
-      # Reduce limit under high load
-      # load_factor: 0.0 (low) -> 1.0 (high)
-      # Under high load, reduce limit by up to 70%
-      reduction_factor = 1.0 - (load.load_factor * 0.7)
-      base_limit * reduction_factor
-    else
-      base_limit
-    end
+    limit =
+      if adaptive do
+        # Reduce limit under high load
+        # load_factor: 0.0 (low) -> 1.0 (high)
+        # Under high load, reduce limit by up to 70%
+        reduction_factor = 1.0 - load.load_factor * 0.7
+        base_limit * reduction_factor
+      else
+        base_limit
+      end
 
     {:ok, limit}
   end
@@ -880,6 +925,7 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzer do
     entries_with_age =
       Enum.map(entries, fn {key, _analysis, cached_at} ->
         age_ms = now - cached_at
+
         %{
           key: key,
           age_ms: age_ms,

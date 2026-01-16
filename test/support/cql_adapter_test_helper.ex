@@ -77,6 +77,7 @@ defmodule GreenFairy.CQLAdapterTestHelper do
   """
   def assert_operator_supported(adapter, category, operator) do
     operators = adapter.supported_operators(category, :string)
+
     assert operator in operators,
            "Expected #{inspect(operator)} to be in #{inspect(operators)} for #{category}"
   end
@@ -86,6 +87,7 @@ defmodule GreenFairy.CQLAdapterTestHelper do
   """
   def refute_operator_supported(adapter, category, operator) do
     operators = adapter.supported_operators(category, :string)
+
     refute operator in operators,
            "Expected #{inspect(operator)} to NOT be in #{inspect(operators)} for #{category}"
   end
@@ -129,7 +131,7 @@ defmodule GreenFairy.CQLAdapterTestHelper do
       field :body, :string
       field :status, :string
       field :tags, {:array, :string}
-      belongs_to :user, GreenFairy.CQLAdapterTestHelper.User
+      belongs_to(:user, GreenFairy.CQLAdapterTestHelper.User)
     end
   end
 

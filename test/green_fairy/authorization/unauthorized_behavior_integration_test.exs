@@ -27,13 +27,13 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
     type "UserWithErrorBehavior", struct: TestUser, on_unauthorized: :error do
       use GreenFairy.CQL
 
-      authorize fn _user, ctx ->
+      authorize(fn _user, ctx ->
         if ctx[:is_admin] do
           :all
         else
           [:id, :name]
         end
-      end
+      end)
 
       field :id, non_null(:id)
       field :name, :string
@@ -49,13 +49,13 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
     type "UserWithNilBehavior", struct: TestUser, on_unauthorized: :return_nil do
       use GreenFairy.CQL
 
-      authorize fn _user, ctx ->
+      authorize(fn _user, ctx ->
         if ctx[:is_admin] do
           :all
         else
           [:id, :name]
         end
-      end
+      end)
 
       field :id, non_null(:id)
       field :name, :string
@@ -71,13 +71,13 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
     type "UserWithMixedBehavior", struct: TestUser, on_unauthorized: :return_nil do
       use GreenFairy.CQL
 
-      authorize fn _user, ctx ->
+      authorize(fn _user, ctx ->
         if ctx[:is_admin] do
           :all
         else
           [:id, :name, :email]
         end
-      end
+      end)
 
       field :id, non_null(:id)
       field :name, :string
@@ -93,11 +93,12 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
       user = %TestUser{id: 1, name: "Alice", email: "alice@example.com", ssn: "123-45-6789"}
 
       # Simulate admin context
-      authorized = GreenFairy.AuthorizedObject.new(
-        user,
-        Types.UserWithErrorBehavior.__authorize__(user, %{is_admin: true}, %{}),
-        on_unauthorized: :error
-      )
+      authorized =
+        GreenFairy.AuthorizedObject.new(
+          user,
+          Types.UserWithErrorBehavior.__authorize__(user, %{is_admin: true}, %{}),
+          on_unauthorized: :error
+        )
 
       assert authorized.all_visible == true
       assert authorized.on_unauthorized == :error
@@ -107,11 +108,12 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
       user = %TestUser{id: 1, name: "Alice", email: "alice@example.com", ssn: "123-45-6789"}
 
       # Non-admin sees only [:id, :name]
-      authorized = GreenFairy.AuthorizedObject.new(
-        user,
-        Types.UserWithErrorBehavior.__authorize__(user, %{is_admin: false}, %{}),
-        on_unauthorized: :error
-      )
+      authorized =
+        GreenFairy.AuthorizedObject.new(
+          user,
+          Types.UserWithErrorBehavior.__authorize__(user, %{is_admin: false}, %{}),
+          on_unauthorized: :error
+        )
 
       assert authorized.visible_fields == [:id, :name]
       assert authorized.on_unauthorized == :error
@@ -128,11 +130,12 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
     test "non-admin gets nil for unauthorized fields" do
       user = %TestUser{id: 1, name: "Alice", email: "alice@example.com"}
 
-      authorized = GreenFairy.AuthorizedObject.new(
-        user,
-        Types.UserWithNilBehavior.__authorize__(user, %{is_admin: false}, %{}),
-        on_unauthorized: :return_nil
-      )
+      authorized =
+        GreenFairy.AuthorizedObject.new(
+          user,
+          Types.UserWithNilBehavior.__authorize__(user, %{is_admin: false}, %{}),
+          on_unauthorized: :return_nil
+        )
 
       assert authorized.visible_fields == [:id, :name]
       assert authorized.on_unauthorized == :return_nil
@@ -145,11 +148,12 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
     test "field-level :error overrides type-level :nil" do
       user = %TestUser{id: 1, name: "Alice", email: "alice@example.com", ssn: "123-45-6789"}
 
-      authorized = GreenFairy.AuthorizedObject.new(
-        user,
-        Types.UserWithMixedBehavior.__authorize__(user, %{is_admin: false}, %{}),
-        on_unauthorized: :return_nil
-      )
+      authorized =
+        GreenFairy.AuthorizedObject.new(
+          user,
+          Types.UserWithMixedBehavior.__authorize__(user, %{is_admin: false}, %{}),
+          on_unauthorized: :return_nil
+        )
 
       # User can see [:id, :name, :email] but not :ssn or :phone
       assert authorized.visible_fields == [:id, :name, :email]
@@ -195,11 +199,12 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
       user = %TestUser{id: 1, name: "Alice"}
 
       # Try to filter on unauthorized field
-      result = Types.UserWithErrorBehavior.__cql_validate_filter__(
-        [:email],
-        user,
-        %{is_admin: false}
-      )
+      result =
+        Types.UserWithErrorBehavior.__cql_validate_filter__(
+          [:email],
+          user,
+          %{is_admin: false}
+        )
 
       assert {:error, {:unauthorized_fields, [:email]}} = result
     end
@@ -207,11 +212,12 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
     test "CQL validation passes for authorized fields" do
       user = %TestUser{id: 1, name: "Alice"}
 
-      result = Types.UserWithErrorBehavior.__cql_validate_filter__(
-        [:name],
-        user,
-        %{is_admin: false}
-      )
+      result =
+        Types.UserWithErrorBehavior.__cql_validate_filter__(
+          [:name],
+          user,
+          %{is_admin: false}
+        )
 
       assert result == :ok
     end
@@ -247,22 +253,24 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
       }
 
       # Public view - only basic info
-      public_view = GreenFairy.AuthorizedObject.new(
-        user,
-        [:id, :name],
-        on_unauthorized: :return_nil
-      )
+      public_view =
+        GreenFairy.AuthorizedObject.new(
+          user,
+          [:id, :name],
+          on_unauthorized: :return_nil
+        )
 
       assert {:ok, "Alice Smith"} = GreenFairy.AuthorizedObject.get_field(public_view, :name)
       assert :hidden = GreenFairy.AuthorizedObject.get_field(public_view, :email)
       assert :hidden = GreenFairy.AuthorizedObject.get_field(public_view, :ssn)
 
       # Owner view - all fields
-      owner_view = GreenFairy.AuthorizedObject.new(
-        user,
-        :all,
-        on_unauthorized: :error
-      )
+      owner_view =
+        GreenFairy.AuthorizedObject.new(
+          user,
+          :all,
+          on_unauthorized: :error
+        )
 
       assert {:ok, "alice@example.com"} = GreenFairy.AuthorizedObject.get_field(owner_view, :email)
       assert {:ok, "123-45-6789"} = GreenFairy.AuthorizedObject.get_field(owner_view, :ssn)
@@ -277,11 +285,12 @@ defmodule GreenFairy.Authorization.UnauthorizedBehaviorIntegrationTest do
       }
 
       # Non-admin gets partial data with nil for unauthorized fields
-      authorized = GreenFairy.AuthorizedObject.new(
-        user,
-        [:id, :name, :email],
-        on_unauthorized: :return_nil
-      )
+      authorized =
+        GreenFairy.AuthorizedObject.new(
+          user,
+          [:id, :name, :email],
+          on_unauthorized: :return_nil
+        )
 
       # These would be accessible
       assert {:ok, 1} = GreenFairy.AuthorizedObject.get_field(authorized, :id)

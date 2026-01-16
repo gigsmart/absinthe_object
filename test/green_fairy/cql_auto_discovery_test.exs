@@ -17,7 +17,7 @@ defmodule GreenFairy.CQLAutoDiscoveryTest do
         type "User" do
           use GreenFairy.CQL
 
-          authorize fn _user, _ctx -> :all end
+          authorize(fn _user, _ctx -> :all end)
 
           field :id, non_null(:id)
           field :name, :string
@@ -30,7 +30,7 @@ defmodule GreenFairy.CQLAutoDiscoveryTest do
         type "Post" do
           use GreenFairy.CQL
 
-          authorize fn _post, _ctx -> :all end
+          authorize(fn _post, _ctx -> :all end)
 
           field :id, non_null(:id)
           field :title, :string
@@ -54,7 +54,7 @@ defmodule GreenFairy.CQLAutoDiscoveryTest do
         type "Product" do
           use GreenFairy.CQL
 
-          authorize fn _product, _ctx -> :all end
+          authorize(fn _product, _ctx -> :all end)
 
           field :id, non_null(:id)
           field :name, :string
@@ -88,7 +88,7 @@ defmodule GreenFairy.CQLAutoDiscoveryTest do
         type "Comment" do
           use GreenFairy.CQL
 
-          authorize fn _comment, _ctx -> :all end
+          authorize(fn _comment, _ctx -> :all end)
 
           field :id, non_null(:id)
           field :body, :string
@@ -114,7 +114,7 @@ defmodule GreenFairy.CQLAutoDiscoveryTest do
         type "Article" do
           use GreenFairy.CQL
 
-          authorize fn _article, _ctx -> :all end
+          authorize(fn _article, _ctx -> :all end)
 
           field :id, non_null(:id)
           field :title, :string
@@ -142,7 +142,7 @@ defmodule GreenFairy.CQLAutoDiscoveryTest do
 
         type "WithCQL" do
           use GreenFairy.CQL
-          authorize fn _, _ -> :all end
+          authorize(fn _, _ -> :all end)
           field :id, :id
         end
       end
@@ -186,7 +186,7 @@ defmodule GreenFairy.CQLAutoDiscoveryTest do
 
         type "Order", struct: TestOrder do
           use GreenFairy.CQL
-          authorize fn _, _ -> :all end
+          authorize(fn _, _ -> :all end)
           field :id, :id
           field :status, :string
         end

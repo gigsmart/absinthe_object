@@ -19,15 +19,13 @@ defmodule GreenFairy.CQL.Scalars.Coordinates.Postgres do
     {lat, lng} = normalize_coordinates(value)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("ST_Equals(?, ST_SetSRID(ST_MakePoint(?, ?), 4326))",
-          field(q, ^field), ^lng, ^lat)
+      where(
+        query,
+        [{^binding, q}],
+        fragment("ST_Equals(?, ST_SetSRID(ST_MakePoint(?, ?), 4326))", field(q, ^field), ^lng, ^lat)
       )
     else
-      where(query, [q],
-        fragment("ST_Equals(?, ST_SetSRID(ST_MakePoint(?, ?), 4326))",
-          field(q, ^field), ^lng, ^lat)
-      )
+      where(query, [q], fragment("ST_Equals(?, ST_SetSRID(ST_MakePoint(?, ?), 4326))", field(q, ^field), ^lng, ^lat))
     end
   end
 
@@ -41,14 +39,16 @@ defmodule GreenFairy.CQL.Scalars.Coordinates.Postgres do
     {lat, lng} = normalize_coordinates(value)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("NOT ST_Equals(?, ST_SetSRID(ST_MakePoint(?, ?), 4326))",
-          field(q, ^field), ^lng, ^lat)
+      where(
+        query,
+        [{^binding, q}],
+        fragment("NOT ST_Equals(?, ST_SetSRID(ST_MakePoint(?, ?), 4326))", field(q, ^field), ^lng, ^lat)
       )
     else
-      where(query, [q],
-        fragment("NOT ST_Equals(?, ST_SetSRID(ST_MakePoint(?, ?), 4326))",
-          field(q, ^field), ^lng, ^lat)
+      where(
+        query,
+        [q],
+        fragment("NOT ST_Equals(?, ST_SetSRID(ST_MakePoint(?, ?), 4326))", field(q, ^field), ^lng, ^lat)
       )
     end
   end
@@ -79,14 +79,16 @@ defmodule GreenFairy.CQL.Scalars.Coordinates.Postgres do
 
     # ST_DWithin uses meters for geography type, distance should be in meters
     if binding do
-      where(query, [{^binding, q}],
-        fragment("ST_DWithin(?, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?)",
-          field(q, ^field), ^lng, ^lat, ^distance)
+      where(
+        query,
+        [{^binding, q}],
+        fragment("ST_DWithin(?, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?)", field(q, ^field), ^lng, ^lat, ^distance)
       )
     else
-      where(query, [q],
-        fragment("ST_DWithin(?, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?)",
-          field(q, ^field), ^lng, ^lat, ^distance)
+      where(
+        query,
+        [q],
+        fragment("ST_DWithin(?, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?)", field(q, ^field), ^lng, ^lat, ^distance)
       )
     end
   end
@@ -98,14 +100,16 @@ defmodule GreenFairy.CQL.Scalars.Coordinates.Postgres do
 
     # Check if point is within the bounding box using && operator (overlaps)
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? && ST_MakeEnvelope(?, ?, ?, ?, 4326)",
-          field(q, ^field), ^sw_lng, ^sw_lat, ^ne_lng, ^ne_lat)
+      where(
+        query,
+        [{^binding, q}],
+        fragment("? && ST_MakeEnvelope(?, ?, ?, ?, 4326)", field(q, ^field), ^sw_lng, ^sw_lat, ^ne_lng, ^ne_lat)
       )
     else
-      where(query, [q],
-        fragment("? && ST_MakeEnvelope(?, ?, ?, ?, 4326)",
-          field(q, ^field), ^sw_lng, ^sw_lat, ^ne_lng, ^ne_lat)
+      where(
+        query,
+        [q],
+        fragment("? && ST_MakeEnvelope(?, ?, ?, ?, 4326)", field(q, ^field), ^sw_lng, ^sw_lat, ^ne_lng, ^ne_lat)
       )
     end
   end

@@ -1,6 +1,7 @@
 defmodule SocialNetworkWeb.GraphQL.Types.Post do
   use GreenFairy.Type
 
+  alias SocialNetworkWeb.GraphQL.Enums
   alias SocialNetworkWeb.GraphQL.Interfaces
 
   type "Post", struct: SocialNetwork.Content.Post do
@@ -15,7 +16,7 @@ defmodule SocialNetworkWeb.GraphQL.Types.Post do
     field :id, non_null(:id)
     field :body, non_null(:string)
     field :media_url, :string
-    field :visibility, :post_visibility
+    field :visibility, Enums.PostVisibility
 
     # Association fields - automatically inferred from Ecto schema
     assoc :author

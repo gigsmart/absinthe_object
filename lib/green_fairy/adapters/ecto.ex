@@ -171,10 +171,12 @@ defmodule GreenFairy.Adapters.Ecto do
             Ecto.Adapters.MyXQL -> GreenFairy.CQL.Adapters.MySQL
             Ecto.Adapters.SQLite3 -> GreenFairy.CQL.Adapters.SQLite
             Ecto.Adapters.Tds -> GreenFairy.CQL.Adapters.MSSQL
-            _ -> GreenFairy.CQL.Adapters.Postgres  # Default fallback
+            # Default fallback
+            _ -> GreenFairy.CQL.Adapters.Postgres
           end
         else
-          GreenFairy.CQL.Adapters.Postgres  # Default fallback
+          # Default fallback
+          GreenFairy.CQL.Adapters.Postgres
         end
 
       # Fallback
@@ -198,6 +200,7 @@ defmodule GreenFairy.Adapters.Ecto do
       true ->
         try do
           module_parts = Module.split(module)
+
           if length(module_parts) >= 2 do
             [app | _] = module_parts
             Module.concat([app, "Repo"])
@@ -228,6 +231,7 @@ defmodule GreenFairy.Adapters.Ecto do
 
   def cql_capabilities(module) do
     subadapter = detect_cql_subadapter(module)
+
     if function_exported?(subadapter, :capabilities, 0) do
       subadapter.capabilities()
     else

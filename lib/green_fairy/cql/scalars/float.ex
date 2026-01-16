@@ -14,8 +14,7 @@ defmodule GreenFairy.CQL.Scalars.Float do
 
   @impl true
   def operator_input(_adapter) do
-    {[:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null], :float,
-     "Operators for float fields"}
+    {[:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null], :float, "Operators for float fields"}
   end
 
   @impl true

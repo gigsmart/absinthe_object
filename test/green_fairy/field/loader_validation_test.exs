@@ -71,6 +71,7 @@ defmodule GreenFairy.Field.LoaderValidationTest do
             type "Invalid" do
               field :problematic_field, :string do
                 resolve fn _, _, _ -> {:ok, "resolve"} end
+
                 loader items, _args, _ctx do
                   Map.new(items, fn item -> {item, "loader"} end)
                 end
@@ -142,9 +143,9 @@ defmodule GreenFairy.Field.LoaderValidationTest do
 
         type "ValidFunction" do
           field :good_field, :string do
-            loader fn items, _args, _context ->
+            loader(fn items, _args, _context ->
               Map.new(items, fn item -> {item, "loader"} end)
-            end
+            end)
           end
         end
       end
@@ -161,9 +162,9 @@ defmodule GreenFairy.Field.LoaderValidationTest do
             field :bad_field, :string do
               resolve fn _, _, _ -> {:ok, "resolve"} end
 
-              loader fn items, _args, _context ->
+              loader(fn items, _args, _context ->
                 Map.new(items, fn item -> {item, "loader"} end)
-              end
+              end)
             end
           end
         end

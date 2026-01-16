@@ -508,8 +508,9 @@ defmodule GreenFairy.Dataloader.DynamicJoinsTest do
       field :title, :string
       has_many(:post_categories, GreenFairy.Dataloader.DynamicJoinsTest.PostCategory)
 
-      has_many :categories,
-               through: [:post_categories, :category]
+      has_many(:categories,
+        through: [:post_categories, :category]
+      )
     end
   end
 
@@ -539,9 +540,10 @@ defmodule GreenFairy.Dataloader.DynamicJoinsTest do
     schema "tags" do
       field :name, :string
 
-      many_to_many :articles, GreenFairy.Dataloader.DynamicJoinsTest.Article,
+      many_to_many(:articles, GreenFairy.Dataloader.DynamicJoinsTest.Article,
         join_through: "article_tags",
         join_keys: [tag_id: :id, article_id: :id]
+      )
     end
   end
 
@@ -551,9 +553,10 @@ defmodule GreenFairy.Dataloader.DynamicJoinsTest do
     schema "articles" do
       field :title, :string
 
-      many_to_many :tags, GreenFairy.Dataloader.DynamicJoinsTest.Tag,
+      many_to_many(:tags, GreenFairy.Dataloader.DynamicJoinsTest.Tag,
         join_through: "article_tags",
         join_keys: [article_id: :id, tag_id: :id]
+      )
     end
   end
 
@@ -594,9 +597,10 @@ defmodule GreenFairy.Dataloader.DynamicJoinsTest do
     schema "organizations" do
       field :name, :string
 
-      has_many :active_users, GreenFairy.Dataloader.DynamicJoinsTest.ActiveUser,
+      has_many(:active_users, GreenFairy.Dataloader.DynamicJoinsTest.ActiveUser,
         foreign_key: :organization_id,
         where: [status: "active"]
+      )
     end
   end
 
@@ -638,9 +642,10 @@ defmodule GreenFairy.Dataloader.DynamicJoinsTest do
     schema "organizations" do
       field :name, :string
 
-      has_many :non_deleted_users, GreenFairy.Dataloader.DynamicJoinsTest.UserWithNullableOrg,
+      has_many(:non_deleted_users, GreenFairy.Dataloader.DynamicJoinsTest.UserWithNullableOrg,
         foreign_key: :organization_id,
         where: [deleted_at: nil]
+      )
     end
   end
 
@@ -672,9 +677,10 @@ defmodule GreenFairy.Dataloader.DynamicJoinsTest do
     schema "organizations" do
       field :name, :string
 
-      has_many :non_admin_users, GreenFairy.Dataloader.DynamicJoinsTest.User,
+      has_many(:non_admin_users, GreenFairy.Dataloader.DynamicJoinsTest.User,
         foreign_key: :organization_id,
         where: [name: {:not, "admin"}]
+      )
     end
   end
 

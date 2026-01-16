@@ -14,8 +14,7 @@ defmodule GreenFairy.CQL.Scalars.Decimal do
 
   @impl true
   def operator_input(_adapter) do
-    {[:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null], :decimal,
-     "Operators for decimal fields"}
+    {[:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null], :decimal, "Operators for decimal fields"}
   end
 
   @impl true

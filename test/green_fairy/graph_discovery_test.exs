@@ -1,5 +1,6 @@
 defmodule GreenFairy.GraphDiscoveryTest do
-  use ExUnit.Case, async: false  # Can't be async because TypeRegistry is shared
+  # Can't be async because TypeRegistry is shared
+  use ExUnit.Case, async: false
 
   alias GreenFairy.TypeRegistry
 

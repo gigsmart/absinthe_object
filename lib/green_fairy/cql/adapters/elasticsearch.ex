@@ -46,15 +46,38 @@ defmodule GreenFairy.CQL.Adapters.Elasticsearch do
   def supported_operators(category, _field_type) do
     case category do
       :scalar ->
-        [:_eq, :_neq, :_in, :_nin, :_is_null, :_like, :_nlike, :_ilike, :_nilike,
-         :_gt, :_gte, :_lt, :_lte,
-         :_starts_with, :_istarts_with, :_ends_with, :_iends_with, :_contains, :_icontains,
-         # Elasticsearch-specific
-         :_match, :_match_phrase, :_match_phrase_prefix, :_fuzzy, :_prefix, :_regexp, :_wildcard]
+        [
+          :_eq,
+          :_neq,
+          :_in,
+          :_nin,
+          :_is_null,
+          :_like,
+          :_nlike,
+          :_ilike,
+          :_nilike,
+          :_gt,
+          :_gte,
+          :_lt,
+          :_lte,
+          :_starts_with,
+          :_istarts_with,
+          :_ends_with,
+          :_iends_with,
+          :_contains,
+          :_icontains,
+          # Elasticsearch-specific
+          :_match,
+          :_match_phrase,
+          :_match_phrase_prefix,
+          :_fuzzy,
+          :_prefix,
+          :_regexp,
+          :_wildcard
+        ]
 
       :array ->
-        [:_includes, :_excludes, :_includes_all, :_excludes_all, :_includes_any,
-         :_excludes_any, :_is_empty, :_is_null]
+        [:_includes, :_excludes, :_includes_all, :_excludes_all, :_includes_any, :_excludes_any, :_is_empty, :_is_null]
 
       :json ->
         [:_contains, :_has_key, :_nested]
@@ -83,7 +106,17 @@ defmodule GreenFairy.CQL.Adapters.Elasticsearch do
       cql_op_integer_array_input: scalar_operator_input({:array, :integer}),
       cql_op_enum_array_input: scalar_operator_input({:array, {:parameterized, Ecto.Enum, %{}}}),
       # Generic array for unknown types
-      cql_op_generic_array_input: {[:_includes, :_excludes, :_includes_all, :_excludes_all, :_includes_any, :_excludes_any, :_is_empty, :_is_null], :string, "Operators for generic array fields"}
+      cql_op_generic_array_input:
+        {[
+           :_includes,
+           :_excludes,
+           :_includes_all,
+           :_excludes_all,
+           :_includes_any,
+           :_excludes_any,
+           :_is_empty,
+           :_is_null
+         ], :string, "Operators for generic array fields"}
     }
   end
 

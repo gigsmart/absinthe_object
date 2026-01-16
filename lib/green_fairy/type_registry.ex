@@ -34,7 +34,13 @@ defmodule GreenFairy.TypeRegistry do
   """
   def init do
     unless table_exists?() do
-      :ets.new(@table_name, [:set, :public, :named_table])
+      try do
+        :ets.new(@table_name, [:set, :public, :named_table])
+      rescue
+        ArgumentError ->
+          # Table was created by another process between our check and create
+          :ok
+      end
     end
 
     :ok

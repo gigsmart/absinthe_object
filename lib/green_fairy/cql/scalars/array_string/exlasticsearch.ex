@@ -24,20 +24,36 @@ defmodule GreenFairy.CQL.Scalars.ArrayString.Exlasticsearch do
     field_path = if binding, do: "#{binding}.#{field}", else: to_string(field)
 
     case operator do
-      :_includes -> add_term(query, field_path, value)
-      :_excludes -> add_must_not_term(query, field_path, value)
-      :_includes_all -> add_all_terms(query, field_path, value)
-      :_excludes_all -> add_must_not_any_terms(query, field_path, value)
-      :_includes_any -> add_terms(query, field_path, value)
-      :_excludes_any -> add_must_not_all_terms(query, field_path, value)
-      :_is_empty -> add_is_empty_script(query, field_path, value)
+      :_includes ->
+        add_term(query, field_path, value)
+
+      :_excludes ->
+        add_must_not_term(query, field_path, value)
+
+      :_includes_all ->
+        add_all_terms(query, field_path, value)
+
+      :_excludes_all ->
+        add_must_not_any_terms(query, field_path, value)
+
+      :_includes_any ->
+        add_terms(query, field_path, value)
+
+      :_excludes_any ->
+        add_must_not_all_terms(query, field_path, value)
+
+      :_is_empty ->
+        add_is_empty_script(query, field_path, value)
+
       :_is_null ->
         if value do
           add_must_not_exists(query, field_path)
         else
           add_exists(query, field_path)
         end
-      _ -> query
+
+      _ ->
+        query
     end
   end
 
@@ -58,9 +74,11 @@ defmodule GreenFairy.CQL.Scalars.ArrayString.Exlasticsearch do
   # All values must be in array - add multiple term queries to must
   defp add_all_terms(query, field, values) when is_list(values) do
     update_in(query, [:query, :bool, :must], fn must ->
-      term_queries = Enum.map(values, fn value ->
-        %{term: %{field => value}}
-      end)
+      term_queries =
+        Enum.map(values, fn value ->
+          %{term: %{field => value}}
+        end)
+
       term_queries ++ must
     end)
   end
@@ -75,9 +93,11 @@ defmodule GreenFairy.CQL.Scalars.ArrayString.Exlasticsearch do
   # None of the values should be in array - use must_not with terms
   defp add_must_not_any_terms(query, field, values) when is_list(values) do
     update_in(query, [:query, :bool, :must_not], fn must_not ->
-      term_queries = Enum.map(values, fn value ->
-        %{term: %{field => value}}
-      end)
+      term_queries =
+        Enum.map(values, fn value ->
+          %{term: %{field => value}}
+        end)
+
       term_queries ++ must_not
     end)
   end
@@ -87,40 +107,50 @@ defmodule GreenFairy.CQL.Scalars.ArrayString.Exlasticsearch do
     update_in(query, [:query, :bool, :must_not], fn must_not ->
       # For excludes_any, we want to exclude documents where ALL values are present
       # This is tricky - we use should with minimum_should_match
-      [%{
-        bool: %{
-          must: Enum.map(values, fn value ->
-            %{term: %{field => value}}
-          end)
+      [
+        %{
+          bool: %{
+            must:
+              Enum.map(values, fn value ->
+                %{term: %{field => value}}
+              end)
+          }
         }
-      } | must_not]
+        | must_not
+      ]
     end)
   end
 
   # Check if array is empty using script query
   defp add_is_empty_script(query, field, true) do
     update_in(query, [:query, :bool, :must], fn must ->
-      [%{
-        script: %{
+      [
+        %{
           script: %{
-            source: "doc['#{field}'].size() == 0",
-            lang: "painless"
+            script: %{
+              source: "doc['#{field}'].size() == 0",
+              lang: "painless"
+            }
           }
         }
-      } | must]
+        | must
+      ]
     end)
   end
 
   defp add_is_empty_script(query, field, false) do
     update_in(query, [:query, :bool, :must], fn must ->
-      [%{
-        script: %{
+      [
+        %{
           script: %{
-            source: "doc['#{field}'].size() > 0",
-            lang: "painless"
+            script: %{
+              source: "doc['#{field}'].size() > 0",
+              lang: "painless"
+            }
           }
         }
-      } | must]
+        | must
+      ]
     end)
   end
 

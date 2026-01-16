@@ -72,6 +72,7 @@ defmodule GreenFairy.Field.ConnectionResolverTest do
       parent = %{custom_id: 123, id: 1}
       args = %{first: 10}
       resolution = %{context: %{}}
+
       opts = [
         repo: MockRepo,
         related_key: :user_id,
@@ -137,6 +138,7 @@ defmodule GreenFairy.Field.ConnectionResolverTest do
       parents = [parent]
       args = %{first: 10}
       resolution = %{context: %{}}
+
       opts = [
         repo: MockRepo,
         related_key: :user_id,
@@ -170,6 +172,7 @@ defmodule GreenFairy.Field.ConnectionResolverTest do
       parent = %{id: 1}
       args = %{first: 10, where: %{title: %{_eq: "test"}}}
       resolution = %{context: %{}}
+
       opts = [
         repo: MockRepo,
         related_key: :user_id,
@@ -187,6 +190,7 @@ defmodule GreenFairy.Field.ConnectionResolverTest do
       parent = %{id: 1}
       args = %{first: 10, where: nil}
       resolution = %{context: %{}}
+
       opts = [
         repo: MockRepo,
         related_key: :user_id,
@@ -204,6 +208,7 @@ defmodule GreenFairy.Field.ConnectionResolverTest do
       parent = %{id: 1}
       args = %{first: 10, order_by: [%{field: :title, direction: :asc}]}
       resolution = %{context: %{}}
+
       opts = [
         repo: MockRepo,
         related_key: :user_id,
@@ -220,6 +225,7 @@ defmodule GreenFairy.Field.ConnectionResolverTest do
       parent = %{id: 1}
       args = %{first: 10, order_by: nil}
       resolution = %{context: %{}}
+
       opts = [
         repo: MockRepo,
         related_key: :user_id,
@@ -235,6 +241,7 @@ defmodule GreenFairy.Field.ConnectionResolverTest do
       parent = %{id: 1}
       args = %{first: 10, order_by: "invalid"}
       resolution = %{context: %{}}
+
       opts = [
         repo: MockRepo,
         related_key: :user_id,

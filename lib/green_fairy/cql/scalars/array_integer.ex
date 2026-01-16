@@ -23,6 +23,7 @@ defmodule GreenFairy.CQL.Scalars.ArrayInteger do
 
   @impl true
   def operator_input(:postgres), do: __MODULE__.Postgres.operator_input()
+
   def operator_input(adapter) do
     {operators, _type, _desc} = GreenFairy.CQL.Scalars.ArrayString.operator_input(adapter)
     {operators, :integer, "Operators for integer array fields"}

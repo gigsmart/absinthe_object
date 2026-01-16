@@ -40,26 +40,52 @@ defmodule GreenFairy.CQL.Scalars.String.Exlasticsearch do
     field_path = if binding, do: "#{binding}.#{field}", else: to_string(field)
 
     case operator do
-      :_eq -> add_term_query(query, field_path, value)
-      :_neq -> add_must_not_term_query(query, field_path, value)
-      :_in -> add_terms_query(query, field_path, value)
-      :_nin -> add_must_not_terms_query(query, field_path, value)
-      :_like -> add_wildcard_query(query, field_path, convert_sql_like_to_wildcard(value))
-      :_ilike -> add_wildcard_query(query, String.downcase(field_path), convert_sql_like_to_wildcard(String.downcase(value)))
-      :_contains -> add_match_phrase_query(query, field_path, value)
-      :_icontains -> add_match_query(query, field_path, value)
-      :_starts_with -> add_prefix_query(query, field_path, value)
+      :_eq ->
+        add_term_query(query, field_path, value)
+
+      :_neq ->
+        add_must_not_term_query(query, field_path, value)
+
+      :_in ->
+        add_terms_query(query, field_path, value)
+
+      :_nin ->
+        add_must_not_terms_query(query, field_path, value)
+
+      :_like ->
+        add_wildcard_query(query, field_path, convert_sql_like_to_wildcard(value))
+
+      :_ilike ->
+        add_wildcard_query(query, String.downcase(field_path), convert_sql_like_to_wildcard(String.downcase(value)))
+
+      :_contains ->
+        add_match_phrase_query(query, field_path, value)
+
+      :_icontains ->
+        add_match_query(query, field_path, value)
+
+      :_starts_with ->
+        add_prefix_query(query, field_path, value)
+
       :_is_null ->
         if value do
           add_must_not_exists_query(query, field_path)
         else
           add_exists_query(query, field_path)
         end
+
       # ES-specific operators
-      :_fuzzy -> add_fuzzy_query(query, field_path, value)
-      :_prefix -> add_prefix_query(query, field_path, value)
-      :_regexp -> add_regexp_query(query, field_path, value)
-      _ -> query
+      :_fuzzy ->
+        add_fuzzy_query(query, field_path, value)
+
+      :_prefix ->
+        add_prefix_query(query, field_path, value)
+
+      :_regexp ->
+        add_regexp_query(query, field_path, value)
+
+      _ ->
+        query
     end
   end
 
@@ -141,5 +167,6 @@ defmodule GreenFairy.CQL.Scalars.String.Exlasticsearch do
     |> String.replace("%", "*")
     |> String.replace("_", "?")
   end
+
   defp convert_sql_like_to_wildcard(pattern), do: pattern
 end

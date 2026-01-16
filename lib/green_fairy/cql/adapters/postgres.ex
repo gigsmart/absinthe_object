@@ -144,7 +144,8 @@ defmodule GreenFairy.CQL.Adapters.Postgres do
       cql_op_integer_array_input: scalar_operator_input({:array, :integer}),
       cql_op_enum_array_input: scalar_operator_input({:array, {:parameterized, Ecto.Enum, %{}}}),
       # Generic array for unknown types
-      cql_op_generic_array_input: {[:_includes, :_excludes, :_is_empty, :_is_null], :string, "Operators for generic array fields"}
+      cql_op_generic_array_input:
+        {[:_includes, :_excludes, :_is_empty, :_is_null], :string, "Operators for generic array fields"}
     }
   end
 
@@ -161,7 +162,14 @@ defmodule GreenFairy.CQL.Adapters.Postgres do
 
   @impl true
   # Accept both 5-arg (direct call) and 6-arg (via primary adapter) forms
-  def apply_operator(schema_or_query, field_or_query, operator_or_field, value_or_operator, opts_or_value, maybe_opts \\ [])
+  def apply_operator(
+        schema_or_query,
+        field_or_query,
+        operator_or_field,
+        value_or_operator,
+        opts_or_value,
+        maybe_opts \\ []
+      )
 
   # 5-arg form: (query, field, operator, value, opts) - direct call (tests)
   # When called with 5 args, maybe_opts defaults to []

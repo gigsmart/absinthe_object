@@ -212,88 +212,95 @@ defmodule GreenFairy.CQL.Schema.OperatorInput do
   @doc """
   Generates AST for a single operator input type.
   """
-  def generate_input(identifier, operators, scalar_type, description) do
+  def generate_input(identifier, operators, scalar_type, _description) do
     fields = Enum.map(operators, &operator_field(&1, scalar_type))
 
+    # Build the input_object AST using quote to ensure proper macro expansion
+    # Use fully qualified Absinthe.Schema.Notation.input_object to ensure it works
+    # regardless of what's imported in the calling context
     quote do
-      @desc unquote(description)
-      input_object unquote(identifier) do
-        (unquote_splicing(fields))
+      Absinthe.Schema.Notation.input_object unquote(identifier) do
+        unquote_splicing(fields)
       end
     end
   end
 
+  # Helper to generate field AST with fully qualified call
+  defp field_ast(name, type) do
+    quote do: Absinthe.Schema.Notation.field(unquote(name), unquote(type))
+  end
+
   # Standard comparison operators (camelCase versions)
-  defp operator_field(:eq, scalar), do: quote(do: field(:eq, unquote(scalar)))
-  defp operator_field(:neq, scalar), do: quote(do: field(:neq, unquote(scalar)))
-  defp operator_field(:gt, scalar), do: quote(do: field(:gt, unquote(scalar)))
-  defp operator_field(:gte, scalar), do: quote(do: field(:gte, unquote(scalar)))
-  defp operator_field(:lt, scalar), do: quote(do: field(:lt, unquote(scalar)))
-  defp operator_field(:lte, scalar), do: quote(do: field(:lte, unquote(scalar)))
-  defp operator_field(:in, scalar), do: quote(do: field(:in, list_of(unquote(scalar))))
-  defp operator_field(:nin, scalar), do: quote(do: field(:nin, list_of(unquote(scalar))))
+  defp operator_field(:eq, scalar), do: field_ast(:eq, scalar)
+  defp operator_field(:neq, scalar), do: field_ast(:neq, scalar)
+  defp operator_field(:gt, scalar), do: field_ast(:gt, scalar)
+  defp operator_field(:gte, scalar), do: field_ast(:gte, scalar)
+  defp operator_field(:lt, scalar), do: field_ast(:lt, scalar)
+  defp operator_field(:lte, scalar), do: field_ast(:lte, scalar)
+  defp operator_field(:in, scalar), do: quote(do: Absinthe.Schema.Notation.field(:in, list_of(unquote(scalar))))
+  defp operator_field(:nin, scalar), do: quote(do: Absinthe.Schema.Notation.field(:nin, list_of(unquote(scalar))))
 
   # Hasura-style underscore operators (underscore prefixed)
-  defp operator_field(:_eq, scalar), do: quote(do: field(:_eq, unquote(scalar)))
-  defp operator_field(:_ne, scalar), do: quote(do: field(:_ne, unquote(scalar)))
-  defp operator_field(:_neq, scalar), do: quote(do: field(:_neq, unquote(scalar)))
-  defp operator_field(:_gt, scalar), do: quote(do: field(:_gt, unquote(scalar)))
-  defp operator_field(:_gte, scalar), do: quote(do: field(:_gte, unquote(scalar)))
-  defp operator_field(:_lt, scalar), do: quote(do: field(:_lt, unquote(scalar)))
-  defp operator_field(:_lte, scalar), do: quote(do: field(:_lte, unquote(scalar)))
-  defp operator_field(:_in, scalar), do: quote(do: field(:_in, list_of(unquote(scalar))))
-  defp operator_field(:_nin, scalar), do: quote(do: field(:_nin, list_of(unquote(scalar))))
+  defp operator_field(:_eq, scalar), do: field_ast(:_eq, scalar)
+  defp operator_field(:_ne, scalar), do: field_ast(:_ne, scalar)
+  defp operator_field(:_neq, scalar), do: field_ast(:_neq, scalar)
+  defp operator_field(:_gt, scalar), do: field_ast(:_gt, scalar)
+  defp operator_field(:_gte, scalar), do: field_ast(:_gte, scalar)
+  defp operator_field(:_lt, scalar), do: field_ast(:_lt, scalar)
+  defp operator_field(:_lte, scalar), do: field_ast(:_lte, scalar)
+  defp operator_field(:_in, scalar), do: quote(do: Absinthe.Schema.Notation.field(:_in, list_of(unquote(scalar))))
+  defp operator_field(:_nin, scalar), do: quote(do: Absinthe.Schema.Notation.field(:_nin, list_of(unquote(scalar))))
 
   # String pattern operators
-  defp operator_field(:like, _scalar), do: quote(do: field(:like, :string))
-  defp operator_field(:nlike, _scalar), do: quote(do: field(:nlike, :string))
-  defp operator_field(:ilike, _scalar), do: quote(do: field(:ilike, :string))
-  defp operator_field(:nilike, _scalar), do: quote(do: field(:nilike, :string))
-  defp operator_field(:_like, _scalar), do: quote(do: field(:_like, :string))
-  defp operator_field(:_nlike, _scalar), do: quote(do: field(:_nlike, :string))
-  defp operator_field(:_ilike, _scalar), do: quote(do: field(:_ilike, :string))
-  defp operator_field(:_nilike, _scalar), do: quote(do: field(:_nilike, :string))
+  defp operator_field(:like, _scalar), do: field_ast(:like, :string)
+  defp operator_field(:nlike, _scalar), do: field_ast(:nlike, :string)
+  defp operator_field(:ilike, _scalar), do: field_ast(:ilike, :string)
+  defp operator_field(:nilike, _scalar), do: field_ast(:nilike, :string)
+  defp operator_field(:_like, _scalar), do: field_ast(:_like, :string)
+  defp operator_field(:_nlike, _scalar), do: field_ast(:_nlike, :string)
+  defp operator_field(:_ilike, _scalar), do: field_ast(:_ilike, :string)
+  defp operator_field(:_nilike, _scalar), do: field_ast(:_nilike, :string)
 
   # String matching operators (for _contains, _starts_with, etc.)
-  defp operator_field(:contains, _scalar), do: quote(do: field(:contains, :string))
-  defp operator_field(:starts_with, _scalar), do: quote(do: field(:starts_with, :string))
-  defp operator_field(:ends_with, _scalar), do: quote(do: field(:ends_with, :string))
-  defp operator_field(:_contains, _scalar), do: quote(do: field(:_contains, :string))
-  defp operator_field(:_icontains, _scalar), do: quote(do: field(:_icontains, :string))
-  defp operator_field(:_starts_with, _scalar), do: quote(do: field(:_starts_with, :string))
-  defp operator_field(:_istarts_with, _scalar), do: quote(do: field(:_istarts_with, :string))
-  defp operator_field(:_ends_with, _scalar), do: quote(do: field(:_ends_with, :string))
-  defp operator_field(:_iends_with, _scalar), do: quote(do: field(:_iends_with, :string))
+  defp operator_field(:contains, _scalar), do: field_ast(:contains, :string)
+  defp operator_field(:starts_with, _scalar), do: field_ast(:starts_with, :string)
+  defp operator_field(:ends_with, _scalar), do: field_ast(:ends_with, :string)
+  defp operator_field(:_contains, _scalar), do: field_ast(:_contains, :string)
+  defp operator_field(:_icontains, _scalar), do: field_ast(:_icontains, :string)
+  defp operator_field(:_starts_with, _scalar), do: field_ast(:_starts_with, :string)
+  defp operator_field(:_istarts_with, _scalar), do: field_ast(:_istarts_with, :string)
+  defp operator_field(:_ends_with, _scalar), do: field_ast(:_ends_with, :string)
+  defp operator_field(:_iends_with, _scalar), do: field_ast(:_iends_with, :string)
 
   # Null checking operators
-  defp operator_field(:is_nil, _scalar), do: quote(do: field(:is_nil, :boolean))
-  defp operator_field(:_is_null, _scalar), do: quote(do: field(:_is_null, :boolean))
+  defp operator_field(:is_nil, _scalar), do: field_ast(:is_nil, :boolean)
+  defp operator_field(:_is_null, _scalar), do: field_ast(:_is_null, :boolean)
 
   # Range operators
   # For _between, we use a list with exactly 2 elements [start, end]
   # This matches GigSmart's CqlOpDatetimeBetweenInput pattern but simpler
-  defp operator_field(:_between, scalar), do: quote(do: field(:_between, list_of(non_null(unquote(scalar)))))
+  defp operator_field(:_between, scalar), do: quote(do: Absinthe.Schema.Notation.field(:_between, list_of(non_null(unquote(scalar)))))
 
   # Array operators
-  defp operator_field(:_includes, scalar), do: quote(do: field(:_includes, unquote(scalar)))
-  defp operator_field(:_excludes, scalar), do: quote(do: field(:_excludes, unquote(scalar)))
-  defp operator_field(:_includes_all, scalar), do: quote(do: field(:_includes_all, list_of(non_null(unquote(scalar)))))
-  defp operator_field(:_excludes_all, scalar), do: quote(do: field(:_excludes_all, list_of(non_null(unquote(scalar)))))
-  defp operator_field(:_includes_any, scalar), do: quote(do: field(:_includes_any, list_of(non_null(unquote(scalar)))))
-  defp operator_field(:_excludes_any, scalar), do: quote(do: field(:_excludes_any, list_of(non_null(unquote(scalar)))))
-  defp operator_field(:_is_empty, _scalar), do: quote(do: field(:_is_empty, :boolean))
+  defp operator_field(:_includes, scalar), do: field_ast(:_includes, scalar)
+  defp operator_field(:_excludes, scalar), do: field_ast(:_excludes, scalar)
+  defp operator_field(:_includes_all, scalar), do: quote(do: Absinthe.Schema.Notation.field(:_includes_all, list_of(non_null(unquote(scalar)))))
+  defp operator_field(:_excludes_all, scalar), do: quote(do: Absinthe.Schema.Notation.field(:_excludes_all, list_of(non_null(unquote(scalar)))))
+  defp operator_field(:_includes_any, scalar), do: quote(do: Absinthe.Schema.Notation.field(:_includes_any, list_of(non_null(unquote(scalar)))))
+  defp operator_field(:_excludes_any, scalar), do: quote(do: Absinthe.Schema.Notation.field(:_excludes_any, list_of(non_null(unquote(scalar)))))
+  defp operator_field(:_is_empty, _scalar), do: field_ast(:_is_empty, :boolean)
 
   # Elasticsearch-specific full-text search operators
-  defp operator_field(:_match, _scalar), do: quote(do: field(:_match, :string))
-  defp operator_field(:_match_phrase, _scalar), do: quote(do: field(:_match_phrase, :string))
-  defp operator_field(:_match_phrase_prefix, _scalar), do: quote(do: field(:_match_phrase_prefix, :string))
-  defp operator_field(:_fuzzy, _scalar), do: quote(do: field(:_fuzzy, :string))
-  defp operator_field(:_prefix, _scalar), do: quote(do: field(:_prefix, :string))
-  defp operator_field(:_regexp, _scalar), do: quote(do: field(:_regexp, :string))
-  defp operator_field(:_wildcard, _scalar), do: quote(do: field(:_wildcard, :string))
+  defp operator_field(:_match, _scalar), do: field_ast(:_match, :string)
+  defp operator_field(:_match_phrase, _scalar), do: field_ast(:_match_phrase, :string)
+  defp operator_field(:_match_phrase_prefix, _scalar), do: field_ast(:_match_phrase_prefix, :string)
+  defp operator_field(:_fuzzy, _scalar), do: field_ast(:_fuzzy, :string)
+  defp operator_field(:_prefix, _scalar), do: field_ast(:_prefix, :string)
+  defp operator_field(:_regexp, _scalar), do: field_ast(:_regexp, :string)
+  defp operator_field(:_wildcard, _scalar), do: field_ast(:_wildcard, :string)
 
   # Period operators for date/time fields
   # These use custom input types defined by the DateTime scalar
-  defp operator_field(:_period, _scalar), do: quote(do: field(:_period, :cql_period_input))
-  defp operator_field(:_current_period, _scalar), do: quote(do: field(:_current_period, :cql_current_period_input))
+  defp operator_field(:_period, _scalar), do: field_ast(:_period, :cql_period_input)
+  defp operator_field(:_current_period, _scalar), do: field_ast(:_current_period, :cql_current_period_input)
 end

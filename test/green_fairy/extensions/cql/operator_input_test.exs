@@ -187,6 +187,7 @@ defmodule GreenFairy.CQL.OperatorInputTest do
 
     test "each generated AST is valid quoted expression" do
       alias GreenFairy.CQL.Adapters.Postgres
+
       for ast <- OperatorInput.generate_all(adapter: Postgres) do
         assert is_tuple(ast)
         assert elem(ast, 0) == :__block__

@@ -64,59 +64,59 @@ defmodule GreenFairy.CQL.Adapters.MSSQLTest do
 
   describe "scalar operators" do
     test "_eq operator", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_eq, "John", [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_eq, "John", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_neq operator", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_neq, "John", [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_neq, "John", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_in operator", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_in, ["John", "Jane"], [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_in, ["John", "Jane"], field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_nin operator", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_nin, ["Spam", "Bot"], [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_nin, ["Spam", "Bot"], field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_is_null operator", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_is_null, true, [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_is_null, true, field_type: :string)
       assert Helper.has_where?(result)
     end
   end
 
   describe "ILIKE emulation with COLLATE" do
     test "_ilike uses Latin1_General_CI_AS collation", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_ilike, "%JOHN%", [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_ilike, "%JOHN%", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE Latin1_General_CI_AS")
     end
 
     test "_nilike uses NOT LIKE with collation", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_nilike, "%SPAM%", [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_nilike, "%SPAM%", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE Latin1_General_CI_AS")
       assert Helper.has_fragment?(result, "NOT LIKE")
     end
 
     test "_istarts_with uses collation", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_istarts_with, "JO", [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_istarts_with, "JO", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE Latin1_General_CI_AS")
     end
 
     test "_iends_with uses collation", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_iends_with, "HN", [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_iends_with, "HN", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE Latin1_General_CI_AS")
     end
 
     test "_icontains uses collation", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_icontains, "OH", [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_icontains, "OH", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "COLLATE Latin1_General_CI_AS")
     end
@@ -124,21 +124,23 @@ defmodule GreenFairy.CQL.Adapters.MSSQLTest do
 
   describe "OPENJSON array operators" do
     test "_includes uses OPENJSON with EXISTS", %{query: query} do
-      result = MSSQL.apply_operator(query, :tags, :_includes, "premium", [field_type: {:array, :string}])
+      result = MSSQL.apply_operator(query, :tags, :_includes, "premium", field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "EXISTS")
       assert Helper.has_fragment?(result, "OPENJSON")
     end
 
     test "_excludes uses OPENJSON with NOT EXISTS", %{query: query} do
-      result = MSSQL.apply_operator(query, :tags, :_excludes, "spam", [field_type: {:array, :string}])
+      result = MSSQL.apply_operator(query, :tags, :_excludes, "spam", field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "NOT EXISTS")
       assert Helper.has_fragment?(result, "OPENJSON")
     end
 
     test "_includes_any uses OPENJSON with INNER JOIN", %{query: query} do
-      result = MSSQL.apply_operator(query, :tags, :_includes_any, ["premium", "verified"], [field_type: {:array, :string}])
+      result =
+        MSSQL.apply_operator(query, :tags, :_includes_any, ["premium", "verified"], field_type: {:array, :string})
+
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "EXISTS")
       assert Helper.has_fragment?(result, "OPENJSON")
@@ -146,7 +148,7 @@ defmodule GreenFairy.CQL.Adapters.MSSQLTest do
     end
 
     test "_is_empty with true checks for NULL or no rows", %{query: query} do
-      result = MSSQL.apply_operator(query, :tags, :_is_empty, true, [field_type: {:array, :string}])
+      result = MSSQL.apply_operator(query, :tags, :_is_empty, true, field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "OPENJSON")
       assert Helper.has_fragment?(result, "IS NULL")
@@ -154,7 +156,7 @@ defmodule GreenFairy.CQL.Adapters.MSSQLTest do
     end
 
     test "_is_empty with false checks for existing rows", %{query: query} do
-      result = MSSQL.apply_operator(query, :tags, :_is_empty, false, [field_type: {:array, :string}])
+      result = MSSQL.apply_operator(query, :tags, :_is_empty, false, field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "EXISTS")
       assert Helper.has_fragment?(result, "OPENJSON")
@@ -178,17 +180,17 @@ defmodule GreenFairy.CQL.Adapters.MSSQLTest do
 
   describe "edge cases" do
     test "handles NULL values", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_eq, nil, [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_eq, nil, field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "returns unmodified query for unsupported operator", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_unsupported_op, "value", [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_unsupported_op, "value", field_type: :string)
       assert result == query
     end
 
     test "handles empty array for _includes_any", %{query: query} do
-      result = MSSQL.apply_operator(query, :tags, :_includes_any, [], [field_type: {:array, :string}])
+      result = MSSQL.apply_operator(query, :tags, :_includes_any, [], field_type: {:array, :string})
       assert Helper.has_where?(result)
     end
   end
@@ -197,8 +199,8 @@ defmodule GreenFairy.CQL.Adapters.MSSQLTest do
     test "can chain multiple OPENJSON operations", %{query: query} do
       result =
         query
-        |> MSSQL.apply_operator(:tags, :_includes, "premium", [field_type: {:array, :string}])
-        |> MSSQL.apply_operator(:tags, :_excludes, "spam", [field_type: {:array, :string}])
+        |> MSSQL.apply_operator(:tags, :_includes, "premium", field_type: {:array, :string})
+        |> MSSQL.apply_operator(:tags, :_excludes, "spam", field_type: {:array, :string})
 
       assert length(result.wheres) == 2
       # Both should use OPENJSON
@@ -209,9 +211,9 @@ defmodule GreenFairy.CQL.Adapters.MSSQLTest do
     test "can mix scalar and array operators", %{query: query} do
       result =
         query
-        |> MSSQL.apply_operator(:name, :_ilike, "%john%", [field_type: :string])
-        |> MSSQL.apply_operator(:age, :_gte, 18, [field_type: :integer])
-        |> MSSQL.apply_operator(:tags, :_includes, "premium", [field_type: {:array, :string}])
+        |> MSSQL.apply_operator(:name, :_ilike, "%john%", field_type: :string)
+        |> MSSQL.apply_operator(:age, :_gte, 18, field_type: :integer)
+        |> MSSQL.apply_operator(:tags, :_includes, "premium", field_type: {:array, :string})
 
       assert length(result.wheres) == 3
     end
@@ -229,13 +231,13 @@ defmodule GreenFairy.CQL.Adapters.MSSQLTest do
     end
 
     test "handles special characters in patterns", %{query: query} do
-      result = MSSQL.apply_operator(query, :name, :_like, "%[test]%", [field_type: :string])
+      result = MSSQL.apply_operator(query, :name, :_like, "%[test]%", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_includes_any properly encodes JSON array" do
       query = Helper.base_query()
-      result = MSSQL.apply_operator(query, :tags, :_includes_any, ["test", "value"], [field_type: {:array, :string}])
+      result = MSSQL.apply_operator(query, :tags, :_includes_any, ["test", "value"], field_type: {:array, :string})
 
       # Should construct proper OPENJSON query
       assert Helper.has_where?(result)
@@ -253,7 +255,7 @@ defmodule GreenFairy.CQL.Adapters.MSSQLTest do
       # OPENJSON with EXISTS can be slower than native array operations
       # This is just documenting the trade-off
       query = Helper.base_query()
-      result = MSSQL.apply_operator(query, :tags, :_includes, "test", [field_type: {:array, :string}])
+      result = MSSQL.apply_operator(query, :tags, :_includes, "test", field_type: {:array, :string})
 
       # Verify it generates a subquery which may impact performance
       assert Helper.has_fragment?(result, "EXISTS")

@@ -11,8 +11,8 @@ defmodule GreenFairy.Field.AssociationTest do
 
     schema "authors" do
       field :name, :string
-      has_many :posts, __MODULE__.TestPost
-      has_one :profile, __MODULE__.TestProfile
+      has_many(:posts, __MODULE__.TestPost)
+      has_one(:profile, __MODULE__.TestProfile)
     end
   end
 
@@ -21,8 +21,8 @@ defmodule GreenFairy.Field.AssociationTest do
 
     schema "posts" do
       field :title, :string
-      belongs_to :author, __MODULE__.TestAuthor
-      has_many :comments, __MODULE__.TestComment
+      belongs_to(:author, __MODULE__.TestAuthor)
+      has_many(:comments, __MODULE__.TestComment)
     end
   end
 
@@ -31,8 +31,8 @@ defmodule GreenFairy.Field.AssociationTest do
 
     schema "comments" do
       field :body, :string
-      belongs_to :post, __MODULE__.TestPost
-      belongs_to :author, __MODULE__.TestAuthor
+      belongs_to(:post, __MODULE__.TestPost)
+      belongs_to(:author, __MODULE__.TestAuthor)
     end
   end
 
@@ -41,7 +41,7 @@ defmodule GreenFairy.Field.AssociationTest do
 
     schema "profiles" do
       field :bio, :string
-      belongs_to :author, __MODULE__.TestAuthor
+      belongs_to(:author, __MODULE__.TestAuthor)
     end
   end
 

@@ -21,12 +21,12 @@ defmodule GreenFairy.CQLArrayOperatorsTest do
       value :new
     end
 
-    enum_mapping %{
+    enum_mapping(%{
       premium: "premium",
       verified: "verified",
       featured: "featured",
       new: "new"
-    }
+    })
   end
 
   defmodule TestArticle do
@@ -319,7 +319,7 @@ defmodule GreenFairy.CQLArrayOperatorsTest do
       # This would be tested through actual schema compilation
       # For now, we verify the mapping logic
       alias GreenFairy.CQL.ScalarMapper
-    alias GreenFairy.CQL.Adapters.Postgres
+      alias GreenFairy.CQL.Adapters.Postgres
 
       enum_type = {:array, {:parameterized, Ecto.Enum, %{}}}
       assert ScalarMapper.operator_type_identifier(enum_type) == :cql_op_enum_array_input
@@ -387,7 +387,7 @@ defmodule GreenFairy.CQLArrayOperatorsTest do
   describe "Documentation" do
     test "array operator types have descriptions" do
       alias GreenFairy.CQL.ScalarMapper
-    alias GreenFairy.CQL.Adapters.Postgres
+      alias GreenFairy.CQL.Adapters.Postgres
 
       operator_types = Postgres.operator_inputs()
 
@@ -414,7 +414,7 @@ defmodule GreenFairy.CQLArrayOperatorsTest do
       # We're verifying the type definitions are correct
 
       alias GreenFairy.CQL.ScalarMapper
-    alias GreenFairy.CQL.Adapters.Postgres
+      alias GreenFairy.CQL.Adapters.Postgres
 
       operator_types = Postgres.operator_inputs()
       {operators, _scalar, _desc} = operator_types[:cql_op_enum_array_input]

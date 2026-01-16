@@ -16,9 +16,9 @@ defmodule GreenFairy.Filter.Elasticsearch.HelpersTest do
       result = Helpers.append_filter(query, %{"term" => %{"type" => "user"}})
 
       assert result["query"]["bool"]["filter"] == [
-        %{"term" => %{"status" => "active"}},
-        %{"term" => %{"type" => "user"}}
-      ]
+               %{"term" => %{"status" => "active"}},
+               %{"term" => %{"type" => "user"}}
+             ]
     end
 
     test "creates filter list when nil" do
@@ -55,9 +55,9 @@ defmodule GreenFairy.Filter.Elasticsearch.HelpersTest do
       result = Helpers.append_must(query, %{"match" => %{"body" => "content"}})
 
       assert result["query"]["bool"]["must"] == [
-        %{"match" => %{"title" => "test"}},
-        %{"match" => %{"body" => "content"}}
-      ]
+               %{"match" => %{"title" => "test"}},
+               %{"match" => %{"body" => "content"}}
+             ]
     end
 
     test "creates must list when nil" do
@@ -94,9 +94,9 @@ defmodule GreenFairy.Filter.Elasticsearch.HelpersTest do
       result = Helpers.append_must_not(query, %{"term" => %{"archived" => true}})
 
       assert result["query"]["bool"]["must_not"] == [
-        %{"term" => %{"status" => "deleted"}},
-        %{"term" => %{"archived" => true}}
-      ]
+               %{"term" => %{"status" => "deleted"}},
+               %{"term" => %{"archived" => true}}
+             ]
     end
 
     test "creates must_not list when nil" do

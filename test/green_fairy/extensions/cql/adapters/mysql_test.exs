@@ -63,59 +63,59 @@ defmodule GreenFairy.CQL.Adapters.MySQLTest do
 
   describe "scalar operators" do
     test "_eq operator", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_eq, "John", [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_eq, "John", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_neq operator", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_neq, "John", [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_neq, "John", field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_in operator", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_in, ["John", "Jane"], [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_in, ["John", "Jane"], field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_nin operator", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_nin, ["Spam", "Bot"], [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_nin, ["Spam", "Bot"], field_type: :string)
       assert Helper.has_where?(result)
     end
 
     test "_is_null operator", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_is_null, true, [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_is_null, true, field_type: :string)
       assert Helper.has_where?(result)
     end
   end
 
   describe "string pattern operators with ILIKE emulation" do
     test "_ilike uses LOWER() for case-insensitive matching", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_ilike, "%JOHN%", [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_ilike, "%JOHN%", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "LOWER(")
     end
 
     test "_nilike uses LOWER() with NOT", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_nilike, "%SPAM%", [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_nilike, "%SPAM%", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "LOWER(")
       assert Helper.has_fragment?(result, "NOT (")
     end
 
     test "_istarts_with uses LOWER()", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_istarts_with, "JO", [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_istarts_with, "JO", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "LOWER(")
     end
 
     test "_iends_with uses LOWER()", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_iends_with, "HN", [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_iends_with, "HN", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "LOWER(")
     end
 
     test "_icontains uses LOWER()", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_icontains, "OH", [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_icontains, "OH", field_type: :string)
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "LOWER(")
     end
@@ -124,33 +124,35 @@ defmodule GreenFairy.CQL.Adapters.MySQLTest do
   describe "JSON array operators" do
     @describetag :pending
     test "_includes uses JSON_CONTAINS", %{query: query} do
-      result = MySQL.apply_operator(query, :tags, :_includes, "premium", [field_type: {:array, :string}])
+      result = MySQL.apply_operator(query, :tags, :_includes, "premium", field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "JSON_CONTAINS")
       assert Helper.has_fragment?(result, "JSON_QUOTE")
     end
 
     test "_excludes uses NOT JSON_CONTAINS", %{query: query} do
-      result = MySQL.apply_operator(query, :tags, :_excludes, "spam", [field_type: {:array, :string}])
+      result = MySQL.apply_operator(query, :tags, :_excludes, "spam", field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "NOT JSON_CONTAINS")
     end
 
     test "_includes_any uses JSON_OVERLAPS", %{query: query} do
-      result = MySQL.apply_operator(query, :tags, :_includes_any, ["premium", "verified"], [field_type: {:array, :string}])
+      result =
+        MySQL.apply_operator(query, :tags, :_includes_any, ["premium", "verified"], field_type: {:array, :string})
+
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "JSON_OVERLAPS")
     end
 
     test "_is_empty with true checks for NULL or zero length", %{query: query} do
-      result = MySQL.apply_operator(query, :tags, :_is_empty, true, [field_type: {:array, :string}])
+      result = MySQL.apply_operator(query, :tags, :_is_empty, true, field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "JSON_LENGTH")
       assert Helper.has_fragment?(result, "IS NULL")
     end
 
     test "_is_empty with false checks for length > 0", %{query: query} do
-      result = MySQL.apply_operator(query, :tags, :_is_empty, false, [field_type: {:array, :string}])
+      result = MySQL.apply_operator(query, :tags, :_is_empty, false, field_type: {:array, :string})
       assert Helper.has_where?(result)
       assert Helper.has_fragment?(result, "JSON_LENGTH")
       assert Helper.has_fragment?(result, "> 0")
@@ -175,12 +177,12 @@ defmodule GreenFairy.CQL.Adapters.MySQLTest do
 
   describe "edge cases" do
     test "handles empty array for _includes_any", %{query: query} do
-      result = MySQL.apply_operator(query, :tags, :_includes_any, [], [field_type: {:array, :string}])
+      result = MySQL.apply_operator(query, :tags, :_includes_any, [], field_type: {:array, :string})
       assert Helper.has_where?(result)
     end
 
     test "returns unmodified query for unsupported operator", %{query: query} do
-      result = MySQL.apply_operator(query, :name, :_unsupported_op, "value", [field_type: :string])
+      result = MySQL.apply_operator(query, :name, :_unsupported_op, "value", field_type: :string)
       assert result == query
     end
   end
@@ -190,8 +192,8 @@ defmodule GreenFairy.CQL.Adapters.MySQLTest do
     test "can chain multiple JSON array operations", %{query: query} do
       result =
         query
-        |> MySQL.apply_operator(:tags, :_includes, "premium", [field_type: {:array, :string}])
-        |> MySQL.apply_operator(:tags, :_excludes, "spam", [field_type: {:array, :string}])
+        |> MySQL.apply_operator(:tags, :_includes, "premium", field_type: {:array, :string})
+        |> MySQL.apply_operator(:tags, :_excludes, "spam", field_type: {:array, :string})
 
       assert length(result.wheres) == 2
       # Both should use JSON functions
@@ -202,9 +204,9 @@ defmodule GreenFairy.CQL.Adapters.MySQLTest do
     test "can mix scalar and array operators", %{query: query} do
       result =
         query
-        |> MySQL.apply_operator(:name, :_ilike, "%john%", [field_type: :string])
-        |> MySQL.apply_operator(:age, :_gte, 18, [field_type: :integer])
-        |> MySQL.apply_operator(:tags, :_includes, "premium", [field_type: {:array, :string}])
+        |> MySQL.apply_operator(:name, :_ilike, "%john%", field_type: :string)
+        |> MySQL.apply_operator(:age, :_gte, 18, field_type: :integer)
+        |> MySQL.apply_operator(:tags, :_includes, "premium", field_type: {:array, :string})
 
       assert length(result.wheres) == 3
     end
@@ -216,7 +218,7 @@ defmodule GreenFairy.CQL.Adapters.MySQLTest do
     test "JSON functions require proper escaping" do
       # This test verifies that values are properly passed to fragments
       query = Helper.base_query()
-      result = MySQL.apply_operator(query, :tags, :_includes, "test'value", [field_type: {:array, :string}])
+      result = MySQL.apply_operator(query, :tags, :_includes, "test'value", field_type: {:array, :string})
 
       assert Helper.has_where?(result)
       # The fragment should be constructed, value will be bound as parameter
@@ -227,7 +229,7 @@ defmodule GreenFairy.CQL.Adapters.MySQLTest do
       query = Helper.base_query()
 
       # NULL check should work even for JSON fields
-      result = MySQL.apply_operator(query, :tags, :_is_null, true, [field_type: {:array, :string}])
+      result = MySQL.apply_operator(query, :tags, :_is_null, true, field_type: {:array, :string})
       assert Helper.has_where?(result)
     end
   end

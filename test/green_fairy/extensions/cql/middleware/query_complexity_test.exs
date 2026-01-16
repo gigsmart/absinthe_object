@@ -293,7 +293,8 @@ defmodule GreenFairy.Middleware.QueryComplexityTest do
       query = from(u in User, where: u.active == true)
       resolution = build_resolution(PostgresRepo, cql_query: query)
 
-      opts = [max_complexity: 1000]  # No repo
+      # No repo
+      opts = [max_complexity: 1000]
 
       result = QueryComplexity.call(resolution, opts)
 

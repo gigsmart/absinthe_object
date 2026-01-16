@@ -5,14 +5,14 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
 
   describe "parse_aggregate_block/1" do
     test "parses block with all aggregate types" do
-      block = {:__block__, [],
-        [
-          {:sum, [], [[:hours_worked, :total_pay]]},
-          {:avg, [], [[:hours_worked, :hourly_rate]]},
-          {:min, [], [[:start_time]]},
-          {:max, [], [[:end_time]]}
-        ]
-      }
+      block =
+        {:__block__, [],
+         [
+           {:sum, [], [[:hours_worked, :total_pay]]},
+           {:avg, [], [[:hours_worked, :hourly_rate]]},
+           {:min, [], [[:start_time]]},
+           {:max, [], [[:end_time]]}
+         ]}
 
       result = ConnectionAggregate.parse_aggregate_block(block)
 
@@ -23,11 +23,11 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
     end
 
     test "parses block with only sum" do
-      block = {:__block__, [],
-        [
-          {:sum, [], [[:hours_worked, :total_pay]]}
-        ]
-      }
+      block =
+        {:__block__, [],
+         [
+           {:sum, [], [[:hours_worked, :total_pay]]}
+         ]}
 
       result = ConnectionAggregate.parse_aggregate_block(block)
 
@@ -38,11 +38,11 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
     end
 
     test "parses block with only avg" do
-      block = {:__block__, [],
-        [
-          {:avg, [], [[:rate, :score]]}
-        ]
-      }
+      block =
+        {:__block__, [],
+         [
+           {:avg, [], [[:rate, :score]]}
+         ]}
 
       result = ConnectionAggregate.parse_aggregate_block(block)
 
@@ -96,13 +96,13 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
     end
 
     test "ignores unknown statements in block" do
-      block = {:__block__, [],
-        [
-          {:sum, [], [[:amount]]},
-          {:unknown_op, [], [[:field]]},
-          {:avg, [], [[:rate]]}
-        ]
-      }
+      block =
+        {:__block__, [],
+         [
+           {:sum, [], [[:amount]]},
+           {:unknown_op, [], [[:field]]},
+           {:avg, [], [[:rate]]}
+         ]}
 
       result = ConnectionAggregate.parse_aggregate_block(block)
 
@@ -274,6 +274,7 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
     test "computes eager aggregates with all operations" do
       import Ecto.Query
       query = from(i in AggregateItem)
+
       aggregates = %{
         sum: [:amount, :quantity],
         avg: [:price, :rating],
@@ -281,7 +282,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
         max: [:updated_at]
       }
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
 
       assert result.sum[:amount] == 1000
       assert result.sum[:quantity] == 50
@@ -294,6 +296,7 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
     test "computes deferred aggregates with all operations" do
       import Ecto.Query
       query = from(i in AggregateItem)
+
       aggregates = %{
         sum: [:amount],
         avg: [:price],
@@ -301,7 +304,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
         max: [:updated_at]
       }
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
 
       # Deferred mode returns functions
       assert is_function(result._sum_fns[:amount], 0)
@@ -321,7 +325,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
       query = from(i in AggregateItem)
       aggregates = %{sum: [:amount], avg: [], min: [], max: []}
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
 
       assert result.sum[:amount] == 1000
       refute Map.has_key?(result, :avg)
@@ -334,7 +339,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
       query = from(i in AggregateItem)
       aggregates = %{sum: [], avg: [:price], min: [], max: []}
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
 
       assert result.avg[:price] == 20.0
       refute Map.has_key?(result, :sum)
@@ -345,7 +351,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
       query = from(i in AggregateItem)
       aggregates = %{sum: [], avg: [], min: [:created_at], max: []}
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
 
       assert result.min[:created_at] == ~D[2024-01-01]
     end
@@ -355,7 +362,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
       query = from(i in AggregateItem)
       aggregates = %{sum: [], avg: [], min: [], max: [:updated_at]}
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
 
       assert result.max[:updated_at] == ~D[2024-12-31]
     end
@@ -365,7 +373,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
       query = from(i in AggregateItem)
       aggregates = %{sum: [:amount], avg: [], min: [], max: []}
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
 
       assert is_function(result._sum_fns[:amount], 0)
       refute Map.has_key?(result, :_avg_fns)
@@ -376,7 +385,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
       query = from(i in AggregateItem)
       aggregates = %{sum: [], avg: [:price], min: [], max: []}
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
 
       assert is_function(result._avg_fns[:price], 0)
       refute Map.has_key?(result, :_sum_fns)
@@ -387,7 +397,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
       query = from(i in AggregateItem)
       aggregates = %{sum: [], avg: [], min: [:created_at], max: []}
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
 
       assert is_function(result._min_fns[:created_at], 0)
     end
@@ -397,7 +408,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
       query = from(i in AggregateItem)
       aggregates = %{sum: [], avg: [], min: [], max: [:updated_at]}
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: true)
 
       assert is_function(result._max_fns[:updated_at], 0)
     end
@@ -407,7 +419,8 @@ defmodule GreenFairy.Field.ConnectionAggregateTest do
       query = from(i in AggregateItem)
       aggregates = %{sum: [], avg: [], min: [], max: []}
 
-      result = ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
+      result =
+        ConnectionAggregate.compute_aggregates(query, repo: MockAggregateRepo, aggregates: aggregates, deferred: false)
 
       assert result == %{}
     end

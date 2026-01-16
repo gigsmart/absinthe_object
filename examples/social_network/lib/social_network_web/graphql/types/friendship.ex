@@ -1,13 +1,14 @@
 defmodule SocialNetworkWeb.GraphQL.Types.Friendship do
   use GreenFairy.Type
 
+  alias SocialNetworkWeb.GraphQL.Enums
   alias SocialNetworkWeb.GraphQL.Interfaces
 
   type "Friendship", struct: SocialNetwork.Accounts.Friendship do
     implements Interfaces.Node
 
     field :id, non_null(:id)
-    field :status, :friendship_status
+    field :status, Enums.FriendshipStatus
 
     # Association fields - automatically inferred from Ecto schema
     assoc :user

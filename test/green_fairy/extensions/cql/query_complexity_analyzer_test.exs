@@ -1,5 +1,6 @@
 defmodule GreenFairy.CQL.QueryComplexityAnalyzerTest do
-  use ExUnit.Case, async: false  # Changed to false because we start shared repos
+  # Changed to false because we start shared repos
+  use ExUnit.Case, async: false
 
   alias GreenFairy.CQL.QueryComplexityAnalyzer
 
@@ -244,9 +245,10 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzerTest do
 
       # Should have higher score without LIMIT
       assert analysis.has_limit == false
+
       assert Enum.any?(analysis.suggestions, fn s ->
-        String.contains?(s, "LIMIT")
-      end)
+               String.contains?(s, "LIMIT")
+             end)
     end
 
     test "scores query with LIMIT lower" do
@@ -278,9 +280,10 @@ defmodule GreenFairy.CQL.QueryComplexityAnalyzerTest do
       assert {:ok, analysis} = QueryComplexityAnalyzer.analyze(query, SQLiteRepo)
 
       assert analysis.order_by_fields > 0
+
       assert Enum.any?(analysis.suggestions, fn s ->
-        String.contains?(s, "ORDER BY")
-      end)
+               String.contains?(s, "ORDER BY")
+             end)
     end
 
     test "detects large OFFSET" do

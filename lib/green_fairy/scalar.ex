@@ -295,6 +295,12 @@ defmodule GreenFairy.Scalar do
     cql_input_identifier = if cql_input_def, do: cql_input_def.identifier, else: nil
 
     quote do
+      # Register this scalar in the TypeRegistry for graph-based discovery
+      GreenFairy.TypeRegistry.register(
+        unquote(scalar_def[:identifier]),
+        __MODULE__
+      )
+
       # Generate CQL input type definition
       unquote(cql_input_type)
 

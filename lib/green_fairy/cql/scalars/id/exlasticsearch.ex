@@ -6,18 +6,30 @@ defmodule GreenFairy.CQL.Scalars.ID.Exlasticsearch do
     field_path = if binding, do: "#{binding}.#{field}", else: to_string(field)
 
     case operator do
-      :_eq -> add_term(query, field_path, value)
-      :_ne -> add_must_not_term(query, field_path, value)
-      :_neq -> add_must_not_term(query, field_path, value)
-      :_in -> add_terms(query, field_path, value)
-      :_nin -> add_must_not_terms(query, field_path, value)
+      :_eq ->
+        add_term(query, field_path, value)
+
+      :_ne ->
+        add_must_not_term(query, field_path, value)
+
+      :_neq ->
+        add_must_not_term(query, field_path, value)
+
+      :_in ->
+        add_terms(query, field_path, value)
+
+      :_nin ->
+        add_must_not_terms(query, field_path, value)
+
       :_is_null ->
         if value do
           add_must_not_exists(query, field_path)
         else
           add_exists(query, field_path)
         end
-      _ -> query
+
+      _ ->
+        query
     end
   end
 

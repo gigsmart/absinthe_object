@@ -51,6 +51,7 @@ defmodule GreenFairy.AuthorizedObject do
 
   def new(source, visible_fields, opts) when is_list(visible_fields) do
     on_unauthorized = Keyword.get(opts, :on_unauthorized, :error)
+
     if visible_fields == [] do
       nil
     else

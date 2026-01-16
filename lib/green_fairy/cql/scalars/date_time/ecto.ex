@@ -106,13 +106,27 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     interval = interval_string(unit, count)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= CURRENT_TIMESTAMP - INTERVAL ? AND ? < CURRENT_TIMESTAMP",
-          field(q, ^field), ^interval, field(q, ^field)))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= CURRENT_TIMESTAMP - INTERVAL ? AND ? < CURRENT_TIMESTAMP",
+          field(q, ^field),
+          ^interval,
+          field(q, ^field)
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= CURRENT_TIMESTAMP - INTERVAL ? AND ? < CURRENT_TIMESTAMP",
-          field(q, ^field), ^interval, field(q, ^field)))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= CURRENT_TIMESTAMP - INTERVAL ? AND ? < CURRENT_TIMESTAMP",
+          field(q, ^field),
+          ^interval,
+          field(q, ^field)
+        )
+      )
     end
   end
 
@@ -120,13 +134,27 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     interval = interval_string(unit, count)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? > CURRENT_TIMESTAMP AND ? <= CURRENT_TIMESTAMP + INTERVAL ?",
-          field(q, ^field), field(q, ^field), ^interval))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? > CURRENT_TIMESTAMP AND ? <= CURRENT_TIMESTAMP + INTERVAL ?",
+          field(q, ^field),
+          field(q, ^field),
+          ^interval
+        )
+      )
     else
-      where(query, [q],
-        fragment("? > CURRENT_TIMESTAMP AND ? <= CURRENT_TIMESTAMP + INTERVAL ?",
-          field(q, ^field), field(q, ^field), ^interval))
+      where(
+        query,
+        [q],
+        fragment(
+          "? > CURRENT_TIMESTAMP AND ? <= CURRENT_TIMESTAMP + INTERVAL ?",
+          field(q, ^field),
+          field(q, ^field),
+          ^interval
+        )
+      )
     end
   end
 
@@ -135,13 +163,31 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     interval = interval_string(unit, 1)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= date_trunc(?, CURRENT_TIMESTAMP) AND ? < date_trunc(?, CURRENT_TIMESTAMP) + INTERVAL ?",
-          field(q, ^field), ^trunc_unit, field(q, ^field), ^trunc_unit, ^interval))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= date_trunc(?, CURRENT_TIMESTAMP) AND ? < date_trunc(?, CURRENT_TIMESTAMP) + INTERVAL ?",
+          field(q, ^field),
+          ^trunc_unit,
+          field(q, ^field),
+          ^trunc_unit,
+          ^interval
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= date_trunc(?, CURRENT_TIMESTAMP) AND ? < date_trunc(?, CURRENT_TIMESTAMP) + INTERVAL ?",
-          field(q, ^field), ^trunc_unit, field(q, ^field), ^trunc_unit, ^interval))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= date_trunc(?, CURRENT_TIMESTAMP) AND ? < date_trunc(?, CURRENT_TIMESTAMP) + INTERVAL ?",
+          field(q, ^field),
+          ^trunc_unit,
+          field(q, ^field),
+          ^trunc_unit,
+          ^interval
+        )
+      )
     end
   end
 
@@ -150,13 +196,29 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     {unit_str, unit_val} = mysql_interval_parts(unit, count)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= DATE_SUB(NOW(), INTERVAL ? ?) AND ? < NOW()",
-          field(q, ^field), ^unit_val, ^unit_str, field(q, ^field)))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= DATE_SUB(NOW(), INTERVAL ? ?) AND ? < NOW()",
+          field(q, ^field),
+          ^unit_val,
+          ^unit_str,
+          field(q, ^field)
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= DATE_SUB(NOW(), INTERVAL ? ?) AND ? < NOW()",
-          field(q, ^field), ^unit_val, ^unit_str, field(q, ^field)))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= DATE_SUB(NOW(), INTERVAL ? ?) AND ? < NOW()",
+          field(q, ^field),
+          ^unit_val,
+          ^unit_str,
+          field(q, ^field)
+        )
+      )
     end
   end
 
@@ -164,37 +226,69 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     {unit_str, unit_val} = mysql_interval_parts(unit, count)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? > NOW() AND ? <= DATE_ADD(NOW(), INTERVAL ? ?)",
-          field(q, ^field), field(q, ^field), ^unit_val, ^unit_str))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? > NOW() AND ? <= DATE_ADD(NOW(), INTERVAL ? ?)",
+          field(q, ^field),
+          field(q, ^field),
+          ^unit_val,
+          ^unit_str
+        )
+      )
     else
-      where(query, [q],
-        fragment("? > NOW() AND ? <= DATE_ADD(NOW(), INTERVAL ? ?)",
-          field(q, ^field), field(q, ^field), ^unit_val, ^unit_str))
+      where(
+        query,
+        [q],
+        fragment(
+          "? > NOW() AND ? <= DATE_ADD(NOW(), INTERVAL ? ?)",
+          field(q, ^field),
+          field(q, ^field),
+          ^unit_val,
+          ^unit_str
+        )
+      )
     end
   end
 
   defp apply_current_period_mysql(query, field, :hour, binding) do
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= DATE_FORMAT(NOW(), '%Y-%m-%d %H:00:00') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:00:00'), INTERVAL 1 HOUR)",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= DATE_FORMAT(NOW(), '%Y-%m-%d %H:00:00') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:00:00'), INTERVAL 1 HOUR)",
+          field(q, ^field),
+          field(q, ^field)
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= DATE_FORMAT(NOW(), '%Y-%m-%d %H:00:00') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:00:00'), INTERVAL 1 HOUR)",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= DATE_FORMAT(NOW(), '%Y-%m-%d %H:00:00') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:00:00'), INTERVAL 1 HOUR)",
+          field(q, ^field),
+          field(q, ^field)
+        )
+      )
     end
   end
 
   defp apply_current_period_mysql(query, field, :day, binding) do
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= CURDATE() AND ? < DATE_ADD(CURDATE(), INTERVAL 1 DAY)",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [{^binding, q}],
+        fragment("? >= CURDATE() AND ? < DATE_ADD(CURDATE(), INTERVAL 1 DAY)", field(q, ^field), field(q, ^field))
+      )
     else
-      where(query, [q],
-        fragment("? >= CURDATE() AND ? < DATE_ADD(CURDATE(), INTERVAL 1 DAY)",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [q],
+        fragment("? >= CURDATE() AND ? < DATE_ADD(CURDATE(), INTERVAL 1 DAY)", field(q, ^field), field(q, ^field))
+      )
     end
   end
 
@@ -202,49 +296,101 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     week_start = mysql_week_start_offset()
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) - ? DAY) AND ? < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) - ? DAY), INTERVAL 1 WEEK)",
-          field(q, ^field), ^week_start, field(q, ^field), ^week_start))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) - ? DAY) AND ? < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) - ? DAY), INTERVAL 1 WEEK)",
+          field(q, ^field),
+          ^week_start,
+          field(q, ^field),
+          ^week_start
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) - ? DAY) AND ? < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) - ? DAY), INTERVAL 1 WEEK)",
-          field(q, ^field), ^week_start, field(q, ^field), ^week_start))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) - ? DAY) AND ? < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) - ? DAY), INTERVAL 1 WEEK)",
+          field(q, ^field),
+          ^week_start,
+          field(q, ^field),
+          ^week_start
+        )
+      )
     end
   end
 
   defp apply_current_period_mysql(query, field, :month, binding) do
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= DATE_FORMAT(NOW(), '%Y-%m-01') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= DATE_FORMAT(NOW(), '%Y-%m-01') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)",
+          field(q, ^field),
+          field(q, ^field)
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= DATE_FORMAT(NOW(), '%Y-%m-01') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= DATE_FORMAT(NOW(), '%Y-%m-01') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)",
+          field(q, ^field),
+          field(q, ^field)
+        )
+      )
     end
   end
 
   defp apply_current_period_mysql(query, field, :quarter, binding) do
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= MAKEDATE(YEAR(NOW()), 1) + INTERVAL QUARTER(NOW())-1 QUARTER AND ? < MAKEDATE(YEAR(NOW()), 1) + INTERVAL QUARTER(NOW()) QUARTER",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= MAKEDATE(YEAR(NOW()), 1) + INTERVAL QUARTER(NOW())-1 QUARTER AND ? < MAKEDATE(YEAR(NOW()), 1) + INTERVAL QUARTER(NOW()) QUARTER",
+          field(q, ^field),
+          field(q, ^field)
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= MAKEDATE(YEAR(NOW()), 1) + INTERVAL QUARTER(NOW())-1 QUARTER AND ? < MAKEDATE(YEAR(NOW()), 1) + INTERVAL QUARTER(NOW()) QUARTER",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= MAKEDATE(YEAR(NOW()), 1) + INTERVAL QUARTER(NOW())-1 QUARTER AND ? < MAKEDATE(YEAR(NOW()), 1) + INTERVAL QUARTER(NOW()) QUARTER",
+          field(q, ^field),
+          field(q, ^field)
+        )
+      )
     end
   end
 
   defp apply_current_period_mysql(query, field, :year, binding) do
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= DATE_FORMAT(NOW(), '%Y-01-01') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-01-01'), INTERVAL 1 YEAR)",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= DATE_FORMAT(NOW(), '%Y-01-01') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-01-01'), INTERVAL 1 YEAR)",
+          field(q, ^field),
+          field(q, ^field)
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= DATE_FORMAT(NOW(), '%Y-01-01') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-01-01'), INTERVAL 1 YEAR)",
-          field(q, ^field), field(q, ^field)))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= DATE_FORMAT(NOW(), '%Y-01-01') AND ? < DATE_ADD(DATE_FORMAT(NOW(), '%Y-01-01'), INTERVAL 1 YEAR)",
+          field(q, ^field),
+          field(q, ^field)
+        )
+      )
     end
   end
 
@@ -253,13 +399,17 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     modifier = sqlite_modifier(unit, count, :subtract)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= datetime('now', ?) AND ? < datetime('now')",
-          field(q, ^field), ^modifier, field(q, ^field)))
+      where(
+        query,
+        [{^binding, q}],
+        fragment("? >= datetime('now', ?) AND ? < datetime('now')", field(q, ^field), ^modifier, field(q, ^field))
+      )
     else
-      where(query, [q],
-        fragment("? >= datetime('now', ?) AND ? < datetime('now')",
-          field(q, ^field), ^modifier, field(q, ^field)))
+      where(
+        query,
+        [q],
+        fragment("? >= datetime('now', ?) AND ? < datetime('now')", field(q, ^field), ^modifier, field(q, ^field))
+      )
     end
   end
 
@@ -267,13 +417,17 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     modifier = sqlite_modifier(unit, count, :add)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? > datetime('now') AND ? <= datetime('now', ?)",
-          field(q, ^field), field(q, ^field), ^modifier))
+      where(
+        query,
+        [{^binding, q}],
+        fragment("? > datetime('now') AND ? <= datetime('now', ?)", field(q, ^field), field(q, ^field), ^modifier)
+      )
     else
-      where(query, [q],
-        fragment("? > datetime('now') AND ? <= datetime('now', ?)",
-          field(q, ^field), field(q, ^field), ^modifier))
+      where(
+        query,
+        [q],
+        fragment("? > datetime('now') AND ? <= datetime('now', ?)", field(q, ^field), field(q, ^field), ^modifier)
+      )
     end
   end
 
@@ -281,13 +435,29 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     {start_mod, end_mod} = sqlite_current_period_modifiers(unit)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= datetime('now', ?) AND ? < datetime('now', ?)",
-          field(q, ^field), ^start_mod, field(q, ^field), ^end_mod))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= datetime('now', ?) AND ? < datetime('now', ?)",
+          field(q, ^field),
+          ^start_mod,
+          field(q, ^field),
+          ^end_mod
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= datetime('now', ?) AND ? < datetime('now', ?)",
-          field(q, ^field), ^start_mod, field(q, ^field), ^end_mod))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= datetime('now', ?) AND ? < datetime('now', ?)",
+          field(q, ^field),
+          ^start_mod,
+          field(q, ^field),
+          ^end_mod
+        )
+      )
     end
   end
 
@@ -296,13 +466,29 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     {datepart, count_val} = mssql_datepart(unit, count)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= DATEADD(?, ?, GETDATE()) AND ? < GETDATE()",
-          field(q, ^field), ^datepart, ^(-count_val), field(q, ^field)))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? >= DATEADD(?, ?, GETDATE()) AND ? < GETDATE()",
+          field(q, ^field),
+          ^datepart,
+          ^(-count_val),
+          field(q, ^field)
+        )
+      )
     else
-      where(query, [q],
-        fragment("? >= DATEADD(?, ?, GETDATE()) AND ? < GETDATE()",
-          field(q, ^field), ^datepart, ^(-count_val), field(q, ^field)))
+      where(
+        query,
+        [q],
+        fragment(
+          "? >= DATEADD(?, ?, GETDATE()) AND ? < GETDATE()",
+          field(q, ^field),
+          ^datepart,
+          ^(-count_val),
+          field(q, ^field)
+        )
+      )
     end
   end
 
@@ -310,13 +496,29 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     {datepart, count_val} = mssql_datepart(unit, count)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? > GETDATE() AND ? <= DATEADD(?, ?, GETDATE())",
-          field(q, ^field), field(q, ^field), ^datepart, ^count_val))
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "? > GETDATE() AND ? <= DATEADD(?, ?, GETDATE())",
+          field(q, ^field),
+          field(q, ^field),
+          ^datepart,
+          ^count_val
+        )
+      )
     else
-      where(query, [q],
-        fragment("? > GETDATE() AND ? <= DATEADD(?, ?, GETDATE())",
-          field(q, ^field), field(q, ^field), ^datepart, ^count_val))
+      where(
+        query,
+        [q],
+        fragment(
+          "? > GETDATE() AND ? <= DATEADD(?, ?, GETDATE())",
+          field(q, ^field),
+          field(q, ^field),
+          ^datepart,
+          ^count_val
+        )
+      )
     end
   end
 
@@ -324,13 +526,13 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
     {start_expr, end_expr} = mssql_current_period_expressions(unit)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("? >= ? AND ? < ?",
-          field(q, ^field), ^start_expr, field(q, ^field), ^end_expr))
+      where(
+        query,
+        [{^binding, q}],
+        fragment("? >= ? AND ? < ?", field(q, ^field), ^start_expr, field(q, ^field), ^end_expr)
+      )
     else
-      where(query, [q],
-        fragment("? >= ? AND ? < ?",
-          field(q, ^field), ^start_expr, field(q, ^field), ^end_expr))
+      where(query, [q], fragment("? >= ? AND ? < ?", field(q, ^field), ^start_expr, field(q, ^field), ^end_expr))
     end
   end
 
@@ -389,10 +591,13 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
 
   defp sqlite_current_period_modifiers(:week) do
     # SQLite: 0=Sunday. Adjust for Monday start if configured
-    offset = case Application.get_env(:green_fairy, :week_start, :monday) do
-      :sunday -> "-6 days"
-      _ -> "weekday 1', '-7 days"  # Monday
-    end
+    offset =
+      case Application.get_env(:green_fairy, :week_start, :monday) do
+        :sunday -> "-6 days"
+        # Monday
+        _ -> "weekday 1', '-7 days"
+      end
+
     {offset, "weekday 1"}
   end
 
@@ -418,38 +623,34 @@ defmodule GreenFairy.CQL.Scalars.DateTime.Ecto do
   defp mssql_datepart(:year, count), do: {"YEAR", count}
 
   defp mssql_current_period_expressions(:hour) do
-    {"DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()), 0)",
-     "DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()) + 1, 0)"}
+    {"DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()), 0)", "DATEADD(HOUR, DATEDIFF(HOUR, 0, GETDATE()) + 1, 0)"}
   end
 
   defp mssql_current_period_expressions(:day) do
-    {"CAST(GETDATE() AS DATE)",
-     "DATEADD(DAY, 1, CAST(GETDATE() AS DATE))"}
+    {"CAST(GETDATE() AS DATE)", "DATEADD(DAY, 1, CAST(GETDATE() AS DATE))"}
   end
 
   defp mssql_current_period_expressions(:week) do
     # MSSQL: @@DATEFIRST configures week start. Default to Monday (1)
-    week_start = case Application.get_env(:green_fairy, :week_start, :monday) do
-      :sunday -> 7
-      _ -> 1
-    end
+    week_start =
+      case Application.get_env(:green_fairy, :week_start, :monday) do
+        :sunday -> 7
+        _ -> 1
+      end
 
     {"DATEADD(DAY, #{week_start} - DATEPART(WEEKDAY, GETDATE()), CAST(GETDATE() AS DATE))",
      "DATEADD(WEEK, 1, DATEADD(DAY, #{week_start} - DATEPART(WEEKDAY, GETDATE()), CAST(GETDATE() AS DATE)))"}
   end
 
   defp mssql_current_period_expressions(:month) do
-    {"DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()), 0)",
-     "DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()) + 1, 0)"}
+    {"DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()), 0)", "DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()) + 1, 0)"}
   end
 
   defp mssql_current_period_expressions(:quarter) do
-    {"DATEADD(QUARTER, DATEDIFF(QUARTER, 0, GETDATE()), 0)",
-     "DATEADD(QUARTER, DATEDIFF(QUARTER, 0, GETDATE()) + 1, 0)"}
+    {"DATEADD(QUARTER, DATEDIFF(QUARTER, 0, GETDATE()), 0)", "DATEADD(QUARTER, DATEDIFF(QUARTER, 0, GETDATE()) + 1, 0)"}
   end
 
   defp mssql_current_period_expressions(:year) do
-    {"DATEADD(YEAR, DATEDIFF(YEAR, 0, GETDATE()), 0)",
-     "DATEADD(YEAR, DATEDIFF(YEAR, 0, GETDATE()) + 1, 0)"}
+    {"DATEADD(YEAR, DATEDIFF(YEAR, 0, GETDATE()), 0)", "DATEADD(YEAR, DATEDIFF(YEAR, 0, GETDATE()) + 1, 0)"}
   end
 end

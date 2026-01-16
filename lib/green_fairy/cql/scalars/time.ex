@@ -7,8 +7,7 @@ defmodule GreenFairy.CQL.Scalars.Time do
 
   @impl true
   def operator_input(_adapter) do
-    {[:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null], :time,
-     "Operators for time fields"}
+    {[:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null], :time, "Operators for time fields"}
   end
 
   @impl true

@@ -154,19 +154,20 @@ defmodule GreenFairy.CQL.AdapterCapabilities do
       version: version,
       version_string: version_to_string(version),
       # Built-in features
-      full_text_search: version >= {5, 6},
-      json_support: version >= {5, 7},
+      full_text_search: version >= {5, 6, 0},
+      json_support: version >= {5, 7, 0},
       jsonb_support: false,
       array_support: false,
       regex_support: true,
       # MySQL-specific features
       json_overlaps: version >= {8, 0, 17},
-      json_table: version >= {8, 0},
-      cte_support: version >= {8, 0},
-      window_functions: version >= {8, 0},
+      json_table: version >= {8, 0, 0},
+      cte_support: version >= {8, 0, 0},
+      window_functions: version >= {8, 0, 0},
       # Feature availability
       similarity_search: false,
-      geo_queries: version >= {5, 7},  # Basic spatial support
+      # Basic spatial support
+      geo_queries: version >= {5, 7, 0},
       postgis: false
     }
   end
@@ -290,18 +291,22 @@ defmodule GreenFairy.CQL.AdapterCapabilities do
       version: version,
       version_string: version_to_string(version),
       # Built-in features
-      json_support: version >= {13, 0},  # SQL Server 2016
-      full_text_search: true,  # Available in most versions
+      # SQL Server 2016
+      json_support: version >= {13, 0},
+      # Available in most versions
+      full_text_search: true,
       regex_support: false,
       array_support: false,
       jsonb_support: false,
       # MSSQL-specific features
-      openjson: version >= {13, 0},  # SQL Server 2016
+      # SQL Server 2016
+      openjson: version >= {13, 0},
       json_path: version >= {13, 0},
       string_split: version >= {13, 0},
       # Feature availability
       similarity_search: false,
-      geo_queries: true,  # Spatial types available
+      # Spatial types available
+      geo_queries: true,
       postgis: false
     }
   end
@@ -331,7 +336,6 @@ defmodule GreenFairy.CQL.AdapterCapabilities do
 
   defp version_to_string({major, minor}), do: "#{major}.#{minor}"
   defp version_to_string({major, minor, patch}), do: "#{major}.#{minor}.#{patch}"
-  defp version_to_string(_), do: "unknown"
 
   @doc """
   Generate a human-readable capability report.
@@ -430,14 +434,14 @@ defmodule GreenFairy.CQL.AdapterCapabilities do
 
       error_message =
         message ||
-        """
-        Feature '#{feature}' is not available.
+          """
+          Feature '#{feature}' is not available.
 
-        Database: #{format_adapter(adapter)} #{version}
-        Required feature: #{format_feature(feature)}
+          Database: #{format_adapter(adapter)} #{version}
+          Required feature: #{format_feature(feature)}
 
-        See documentation for setup instructions.
-        """
+          See documentation for setup instructions.
+          """
 
       raise RuntimeError, error_message
     end

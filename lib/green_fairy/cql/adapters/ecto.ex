@@ -112,7 +112,14 @@ defmodule GreenFairy.CQL.Adapters.Ecto do
   end
 
   @impl true
-  def apply_operator(schema_or_query, field_or_query, operator_or_field, value_or_operator, opts_or_value, maybe_opts \\ [])
+  def apply_operator(
+        schema_or_query,
+        field_or_query,
+        operator_or_field,
+        value_or_operator,
+        opts_or_value,
+        maybe_opts \\ []
+      )
 
   def apply_operator(query, field, operator, value, opts, []) when is_list(opts) do
     apply_operator_impl(query, field, operator, value, opts)

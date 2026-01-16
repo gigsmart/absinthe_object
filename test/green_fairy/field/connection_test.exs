@@ -504,6 +504,7 @@ defmodule GreenFairy.Field.ConnectionTest do
       statements = [
         {:resolve, [], [fn _, _ -> nil end]}
       ]
+
       block = {:__block__, [], statements}
 
       {_edge_block, _connection_fields, resolver, _aggregates} = Connection.parse_connection_block(block)
@@ -537,6 +538,7 @@ defmodule GreenFairy.Field.ConnectionTest do
       statements = [
         {:loader, [], [fn _, _ -> nil end]}
       ]
+
       block = {:__block__, [], statements}
 
       {_edge_block, _connection_fields, resolver, _aggregates} = Connection.parse_connection_block(block)
@@ -546,9 +548,11 @@ defmodule GreenFairy.Field.ConnectionTest do
 
     test "parses block with aggregate" do
       aggregate_block = {:__block__, [], [{:sum, [], [[:amount]]}]}
+
       statements = [
         {:aggregate, [], [[do: aggregate_block]]}
       ]
+
       block = {:__block__, [], statements}
 
       {_edge_block, _connection_fields, _resolver, aggregates} = Connection.parse_connection_block(block)
@@ -561,6 +565,7 @@ defmodule GreenFairy.Field.ConnectionTest do
       statements = [
         {:edge, [], [[], [do: {:field, [], [:extra, :string]}]]}
       ]
+
       block = {:__block__, [], statements}
 
       {edge_block, _connection_fields, _resolver, _aggregates} = Connection.parse_connection_block(block)

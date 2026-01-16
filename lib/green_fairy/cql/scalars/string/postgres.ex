@@ -33,7 +33,8 @@ defmodule GreenFairy.CQL.Scalars.String.Postgres do
 
     case operator do
       :_eq -> apply_eq(query, field, value, binding)
-      :_ne -> apply_neq(query, field, value, binding)  # Alias for _neq
+      # Alias for _neq
+      :_ne -> apply_neq(query, field, value, binding)
       :_neq -> apply_neq(query, field, value, binding)
       :_gt -> apply_gt(query, field, value, binding)
       :_gte -> apply_gte(query, field, value, binding)
@@ -79,7 +80,9 @@ defmodule GreenFairy.CQL.Scalars.String.Postgres do
   def apply_ilike(query, field, pattern, binding), do: where(query, [{^binding, a}], ilike(field(a, ^field), ^pattern))
 
   def apply_nilike(query, field, pattern, nil), do: where(query, [q], not ilike(field(q, ^field), ^pattern))
-  def apply_nilike(query, field, pattern, binding), do: where(query, [{^binding, a}], not ilike(field(a, ^field), ^pattern))
+
+  def apply_nilike(query, field, pattern, binding),
+    do: where(query, [{^binding, a}], not ilike(field(a, ^field), ^pattern))
 
   def apply_istarts_with(query, field, prefix, nil) do
     pattern = "#{prefix}%"

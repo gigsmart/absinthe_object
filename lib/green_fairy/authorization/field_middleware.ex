@@ -107,6 +107,7 @@ defmodule GreenFairy.Authorization.FieldMiddleware do
       message: "Not authorized to access field '#{field_name}'",
       code: :unauthorized
     }
+
     Absinthe.Resolution.put_result(resolution, {:error, error})
   end
 end

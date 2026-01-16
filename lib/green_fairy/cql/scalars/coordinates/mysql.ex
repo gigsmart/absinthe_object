@@ -18,16 +18,24 @@ defmodule GreenFairy.CQL.Scalars.Coordinates.MySQL do
     {lat, lng} = normalize_coordinates(value)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("ST_Equals(?, ST_GeomFromText(?, 4326))",
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "ST_Equals(?, ST_GeomFromText(?, 4326))",
           field(q, ^field),
-          ^"POINT(#{lng} #{lat})")
+          ^"POINT(#{lng} #{lat})"
+        )
       )
     else
-      where(query, [q],
-        fragment("ST_Equals(?, ST_GeomFromText(?, 4326))",
+      where(
+        query,
+        [q],
+        fragment(
+          "ST_Equals(?, ST_GeomFromText(?, 4326))",
           field(q, ^field),
-          ^"POINT(#{lng} #{lat})")
+          ^"POINT(#{lng} #{lat})"
+        )
       )
     end
   end
@@ -42,16 +50,24 @@ defmodule GreenFairy.CQL.Scalars.Coordinates.MySQL do
     {lat, lng} = normalize_coordinates(value)
 
     if binding do
-      where(query, [{^binding, q}],
-        fragment("NOT ST_Equals(?, ST_GeomFromText(?, 4326))",
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "NOT ST_Equals(?, ST_GeomFromText(?, 4326))",
           field(q, ^field),
-          ^"POINT(#{lng} #{lat})")
+          ^"POINT(#{lng} #{lat})"
+        )
       )
     else
-      where(query, [q],
-        fragment("NOT ST_Equals(?, ST_GeomFromText(?, 4326))",
+      where(
+        query,
+        [q],
+        fragment(
+          "NOT ST_Equals(?, ST_GeomFromText(?, 4326))",
           field(q, ^field),
-          ^"POINT(#{lng} #{lat})")
+          ^"POINT(#{lng} #{lat})"
+        )
       )
     end
   end
@@ -82,18 +98,26 @@ defmodule GreenFairy.CQL.Scalars.Coordinates.MySQL do
 
     # MySQL ST_Distance_Sphere returns distance in meters
     if binding do
-      where(query, [{^binding, q}],
-        fragment("ST_Distance_Sphere(?, ST_GeomFromText(?, 4326)) <= ?",
+      where(
+        query,
+        [{^binding, q}],
+        fragment(
+          "ST_Distance_Sphere(?, ST_GeomFromText(?, 4326)) <= ?",
           field(q, ^field),
           ^"POINT(#{lng} #{lat})",
-          ^distance)
+          ^distance
+        )
       )
     else
-      where(query, [q],
-        fragment("ST_Distance_Sphere(?, ST_GeomFromText(?, 4326)) <= ?",
+      where(
+        query,
+        [q],
+        fragment(
+          "ST_Distance_Sphere(?, ST_GeomFromText(?, 4326)) <= ?",
           field(q, ^field),
           ^"POINT(#{lng} #{lat})",
-          ^distance)
+          ^distance
+        )
       )
     end
   end

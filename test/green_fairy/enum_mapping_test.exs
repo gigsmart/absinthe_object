@@ -16,11 +16,11 @@ defmodule GreenFairy.EnumMappingTest do
       end
 
       # Values are the same in GraphQL and Ecto
-      enum_mapping %{
+      enum_mapping(%{
         active: :active,
         inactive: :inactive,
         pending: :pending
-      }
+      })
     end
 
     test "serialize returns the Ecto value" do
@@ -53,12 +53,12 @@ defmodule GreenFairy.EnumMappingTest do
       end
 
       # GraphQL uses descriptive names, database uses numbers
-      enum_mapping %{
+      enum_mapping(%{
         low: 1,
         medium: 5,
         high: 8,
         urgent: 10
-      }
+      })
     end
 
     test "serialize converts GraphQL value to database value" do
@@ -92,11 +92,11 @@ defmodule GreenFairy.EnumMappingTest do
       end
 
       # GraphQL uses atoms, database uses strings
-      enum_mapping %{
+      enum_mapping(%{
         admin: "ADMIN",
         moderator: "MODERATOR",
         user: "USER"
-      }
+      })
     end
 
     test "serialize converts GraphQL value to database string" do
@@ -123,11 +123,11 @@ defmodule GreenFairy.EnumMappingTest do
       end
 
       # GraphQL uses descriptive names, Ecto uses shorter names
-      enum_mapping %{
+      enum_mapping(%{
         everyone: :public,
         friends_only: :friends,
         only_me: :private
-      }
+      })
     end
 
     test "serialize converts GraphQL value to Ecto value" do
@@ -180,12 +180,12 @@ defmodule GreenFairy.EnumMappingTest do
         value :failed
       end
 
-      enum_mapping %{
+      enum_mapping(%{
         pending_payment: "PENDING",
         paid: "COMPLETED",
         refunded: "REFUNDED",
         failed: "FAILED"
-      }
+      })
     end
 
     test "round-trip transformation preserves values" do
