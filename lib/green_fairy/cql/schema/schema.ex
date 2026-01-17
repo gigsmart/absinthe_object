@@ -116,7 +116,6 @@ defmodule GreenFairy.CQL.Schema do
       cql_types
       |> Enum.filter(&function_exported?(&1, :__cql_generate_order_input__, 0))
       |> Enum.map(& &1.__cql_generate_order_input__())
-      |> Enum.reject(&is_nil/1)
 
     # Combine all type ASTs
     all_type_asts = enum_operator_asts ++ filter_asts ++ order_asts
