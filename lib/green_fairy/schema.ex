@@ -300,7 +300,7 @@ defmodule GreenFairy.Schema do
     # Generate CQL types for all CQL-enabled types
     cql_types_statements = generate_cql_types(discovered, env.module)
 
-    # Build all statements as a list, filtering out nils
+    # Build all statements as a list, filtering out nils and non-AST values
     statements =
       [
         cql_types_statements,
@@ -320,6 +320,8 @@ defmodule GreenFairy.Schema do
       ]
       |> List.flatten()
       |> Enum.reject(&is_nil/1)
+      # Filter out any non-AST values (like raw integers) that might have leaked in
+      |> Enum.filter(&is_tuple/1)
 
     {:__block__, [], statements}
   end
