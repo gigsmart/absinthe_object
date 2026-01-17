@@ -39,7 +39,7 @@ defmodule GreenFairy.CQLFilterMacroTest do
       field :birthdate, :date
 
       # Pattern 1: Boolean filter with custom constraint
-      filter :worker_over18, :boolean,
+      filter(:worker_over18, :boolean,
         apply: fn query, op, value, _ctx ->
           case {op, value} do
             {:eq, true} ->
@@ -53,9 +53,10 @@ defmodule GreenFairy.CQLFilterMacroTest do
           end
         end,
         description: "Whether the worker is over 18 years of age"
+      )
 
       # Pattern 2: String filter with custom logic
-      filter :name_prefix, :string,
+      filter(:name_prefix, :string,
         apply: fn query, op, value, _ctx ->
           case op do
             :eq ->
@@ -70,11 +71,13 @@ defmodule GreenFairy.CQLFilterMacroTest do
               {:ok, query}
           end
         end
+      )
 
       # Pattern 3: Hidden filter (not in schema)
-      filter :internal_flag, :boolean,
+      filter(:internal_flag, :boolean,
         apply: fn query, _op, _value, _ctx -> {:ok, query} end,
         hidden: true
+      )
     end
   end
 
@@ -144,13 +147,14 @@ defmodule GreenFairy.CQLFilterMacroTest do
       filter = %{worker_over18: %{_eq: true}}
       query = from(w in TestWorker)
 
-      {:ok, result} = GreenFairy.CQL.QueryCompiler.compile(
-        query,
-        filter,
-        TestWorker,
-        adapter: GreenFairy.Adapters.Ecto,
-        type_module: TestWorkerType
-      )
+      {:ok, result} =
+        GreenFairy.CQL.QueryCompiler.compile(
+          query,
+          filter,
+          TestWorker,
+          adapter: GreenFairy.Adapters.Ecto,
+          type_module: TestWorkerType
+        )
 
       # The result should have a where clause
       assert result.wheres != []
@@ -160,13 +164,14 @@ defmodule GreenFairy.CQLFilterMacroTest do
       filter = %{name_prefix: %{_eq: "John"}}
       query = from(w in TestWorker)
 
-      {:ok, result} = GreenFairy.CQL.QueryCompiler.compile(
-        query,
-        filter,
-        TestWorker,
-        adapter: GreenFairy.Adapters.Ecto,
-        type_module: TestWorkerType
-      )
+      {:ok, result} =
+        GreenFairy.CQL.QueryCompiler.compile(
+          query,
+          filter,
+          TestWorker,
+          adapter: GreenFairy.Adapters.Ecto,
+          type_module: TestWorkerType
+        )
 
       assert result.wheres != []
     end
@@ -182,7 +187,7 @@ defmodule GreenFairy.CQLFilterMacroTest do
         type "ContextTestWorker", struct: TestWorker do
           field :id, non_null(:id)
 
-          filter :with_context, :boolean,
+          filter(:with_context, :boolean,
             apply: fn query, _op, _value, ctx ->
               # Context should have args, context, and parent_alias
               if Map.has_key?(ctx, :args) and Map.has_key?(ctx, :context) do
@@ -191,21 +196,23 @@ defmodule GreenFairy.CQLFilterMacroTest do
                 {:error, "Missing context"}
               end
             end
+          )
         end
       end
 
       filter = %{with_context: %{_eq: true}}
       query = from(w in TestWorker)
 
-      {:ok, _result} = GreenFairy.CQL.QueryCompiler.compile(
-        query,
-        filter,
-        TestWorker,
-        adapter: GreenFairy.Adapters.Ecto,
-        type_module: ContextTestWorkerType,
-        args: %{foo: "bar"},
-        context: %{current_user: nil}
-      )
+      {:ok, _result} =
+        GreenFairy.CQL.QueryCompiler.compile(
+          query,
+          filter,
+          TestWorker,
+          adapter: GreenFairy.Adapters.Ecto,
+          type_module: ContextTestWorkerType,
+          args: %{foo: "bar"},
+          context: %{current_user: nil}
+        )
     end
 
     test "compile handles error return from apply function" do
@@ -217,10 +224,11 @@ defmodule GreenFairy.CQLFilterMacroTest do
         type "ErrorTestWorker", struct: TestWorker do
           field :id, non_null(:id)
 
-          filter :always_error, :boolean,
+          filter(:always_error, :boolean,
             apply: fn query, _op, _value, _ctx ->
               {:error, "Always fails"}
             end
+          )
         end
       end
 
@@ -228,13 +236,14 @@ defmodule GreenFairy.CQLFilterMacroTest do
       query = from(w in TestWorker)
 
       # Should still succeed, but query is unchanged
-      {:ok, result} = GreenFairy.CQL.QueryCompiler.compile(
-        query,
-        filter,
-        TestWorker,
-        adapter: GreenFairy.Adapters.Ecto,
-        type_module: ErrorTestWorkerType
-      )
+      {:ok, result} =
+        GreenFairy.CQL.QueryCompiler.compile(
+          query,
+          filter,
+          TestWorker,
+          adapter: GreenFairy.Adapters.Ecto,
+          type_module: ErrorTestWorkerType
+        )
 
       # Query should be unchanged (no where clauses added)
       assert result.wheres == []
@@ -253,7 +262,7 @@ defmodule GreenFairy.CQLFilterMacroTest do
           field :id, non_null(:id)
 
           # Filter that tracks which operator it receives
-          filter :check_op, :boolean,
+          filter(:check_op, :boolean,
             apply: fn query, op, _value, _ctx ->
               # The op should be normalized (no leading underscore)
               if op == :eq do
@@ -262,6 +271,7 @@ defmodule GreenFairy.CQLFilterMacroTest do
                 {:ok, query}
               end
             end
+          )
         end
       end
 
@@ -269,13 +279,14 @@ defmodule GreenFairy.CQLFilterMacroTest do
       filter = %{check_op: %{_eq: true}}
       query = from(w in TestWorker)
 
-      {:ok, result} = GreenFairy.CQL.QueryCompiler.compile(
-        query,
-        filter,
-        TestWorker,
-        adapter: GreenFairy.Adapters.Ecto,
-        type_module: NormTestWorkerType
-      )
+      {:ok, result} =
+        GreenFairy.CQL.QueryCompiler.compile(
+          query,
+          filter,
+          TestWorker,
+          adapter: GreenFairy.Adapters.Ecto,
+          type_module: NormTestWorkerType
+        )
 
       # Filter should have been applied (op was normalized to :eq)
       assert result.wheres != []

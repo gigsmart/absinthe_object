@@ -309,15 +309,16 @@ defmodule GreenFairy.CQL do
   # Process new-style filters (with apply function)
   defp get_cql_filter_info(cql_filters) do
     # Build a list of filter configs that can be turned into AST
-    filter_configs = Enum.map(cql_filters, fn f ->
-      %{
-        field: f.field,
-        type: f.type,
-        apply_fn_ast: f.apply_fn_ast,
-        description: f.description,
-        hidden: f.hidden
-      }
-    end)
+    filter_configs =
+      Enum.map(cql_filters, fn f ->
+        %{
+          field: f.field,
+          type: f.type,
+          apply_fn_ast: f.apply_fn_ast,
+          description: f.description,
+          hidden: f.hidden
+        }
+      end)
 
     fields = Enum.map(cql_filters, & &1.field)
     {filter_configs, fields}
@@ -326,18 +327,19 @@ defmodule GreenFairy.CQL do
   # Generate AST to build the filters map at runtime
   defp generate_cql_filters_map(filter_configs) do
     # Build a map literal with each filter
-    map_entries = Enum.map(filter_configs, fn config ->
-      {config.field,
-       quote do
-         %{
-           field: unquote(config.field),
-           type: unquote(config.type),
-           apply_fn: unquote(config.apply_fn_ast),
-           description: unquote(config.description),
-           hidden: unquote(config.hidden)
-         }
-       end}
-    end)
+    map_entries =
+      Enum.map(filter_configs, fn config ->
+        {config.field,
+         quote do
+           %{
+             field: unquote(config.field),
+             type: unquote(config.type),
+             apply_fn: unquote(config.apply_fn_ast),
+             description: unquote(config.description),
+             hidden: unquote(config.hidden)
+           }
+         end}
+      end)
 
     # Return AST for map construction
     {:%{}, [], map_entries}
