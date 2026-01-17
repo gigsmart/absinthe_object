@@ -527,15 +527,8 @@ defmodule GreenFairy.Schema do
     end
   end
 
-  defp generate_query_with_explicit_and_expose(explicit_module, expose_ast) do
+  defp generate_query_with_explicit_and_expose(explicit_module, {:__block__, _, expose_statements}) do
     identifier = explicit_module.__green_fairy_query_fields_identifier__()
-
-    # Wrap expose_ast in list for unquote_splicing
-    expose_statements =
-      case expose_ast do
-        {:__block__, _, stmts} -> stmts
-        single -> [single]
-      end
 
     quote do
       query do

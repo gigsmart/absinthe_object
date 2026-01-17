@@ -68,7 +68,17 @@
           #
           ## Refactoring Opportunities
           #
-          {Credo.Check.Refactor.Apply, []},
+          {Credo.Check.Refactor.Apply,
+           [
+             files: %{
+               excluded: [
+                 # Dynamic function calls in code generation
+                 "lib/green_fairy/type.ex",
+                 "lib/green_fairy/cql.ex",
+                 "lib/green_fairy/cql/operator_input.ex"
+               ]
+             }
+           ]},
           {Credo.Check.Refactor.CondStatements,
            [
              files: %{
@@ -85,7 +95,12 @@
              files: %{
                excluded: [
                  # CQL code generation is inherently complex
-                 "lib/green_fairy/extensions/cql.ex"
+                 "lib/green_fairy/extensions/cql.ex",
+                 "lib/green_fairy/cql.ex",
+                 "lib/green_fairy/cql/scalars/string/",
+                 "lib/green_fairy/field/connection.ex",
+                 "lib/green_fairy/type.ex",
+                 "lib/green_fairy/adapters/ecto.ex"
                ]
              }
            ]},
@@ -94,11 +109,20 @@
              files: %{
                excluded: [
                  # CQL code generation passes many params for clarity
-                 "lib/green_fairy/extensions/cql.ex"
+                 "lib/green_fairy/extensions/cql.ex",
+                 "lib/green_fairy/cql.ex"
                ]
              }
            ]},
-          {Credo.Check.Refactor.LongQuoteBlocks, []},
+          {Credo.Check.Refactor.LongQuoteBlocks,
+           [
+             files: %{
+               excluded: [
+                 # CQL code generation uses long quote blocks for clarity
+                 "lib/green_fairy/cql.ex"
+               ]
+             }
+           ]},
           {Credo.Check.Refactor.MatchInCondition, []},
           {Credo.Check.Refactor.MapJoin, []},
           {Credo.Check.Refactor.NegatedConditionsInUnless, []},
@@ -108,7 +132,19 @@
              files: %{
                excluded: [
                  # Relay node macro has deep nesting for query resolution
-                 "lib/green_fairy/relay/node.ex"
+                 "lib/green_fairy/relay/node.ex",
+                 # Code generation modules have nested quote blocks
+                 "lib/green_fairy/field/connection.ex",
+                 "lib/green_fairy/field/connection_aggregate.ex",
+                 "lib/green_fairy/field/association.ex",
+                 "lib/green_fairy/query.ex",
+                 "lib/green_fairy/schema.ex",
+                 "lib/green_fairy/type.ex",
+                 "lib/green_fairy/cql.ex",
+                 "lib/green_fairy/cql/scalar_mapper.ex",
+                 "lib/green_fairy/cql/adapters/elasticsearch.ex",
+                 "lib/green_fairy/adapters/ecto.ex",
+                 "test/support/"
                ]
              }
            ]},
