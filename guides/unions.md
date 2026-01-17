@@ -9,16 +9,10 @@ union member types don't need to share any common fields.
 defmodule MyApp.GraphQL.Unions.SearchResult do
   use GreenFairy.Union
 
-  union "SearchResult" do
-    types [:user, :post, :comment, :organization]
+  alias MyApp.GraphQL.Types
 
-    resolve_type fn
-      %MyApp.User{}, _ -> :user
-      %MyApp.Post{}, _ -> :post
-      %MyApp.Comment{}, _ -> :comment
-      %MyApp.Organization{}, _ -> :organization
-      _, _ -> nil
-    end
+  union "SearchResult" do
+    types [Types.User, Types.Post, Types.Comment, Types.Organization]
   end
 end
 ```
@@ -29,67 +23,19 @@ This generates:
 union SearchResult = User | Post | Comment | Organization
 ```
 
-## Type Resolution
+That's it! No `resolve_type` callback needed - GreenFairy automatically resolves types based on the struct of the returned value.
 
-The `resolve_type` callback determines which concrete type is being returned:
+## Automatic Type Resolution
 
-```elixir
-union "SearchResult" do
-  types [:user, :post, :comment]
+GreenFairy automatically resolves union types based on the struct of the returned value. When you reference type modules directly, GreenFairy extracts the struct information from those types.
 
-  resolve_type fn value, _resolution ->
-    case value do
-      %MyApp.User{} -> :user
-      %MyApp.Post{} -> :post
-      %MyApp.Comment{} -> :comment
-      _ -> nil
-    end
-  end
-end
-```
+**How it works:**
 
-The function receives:
-1. The resolved value
-2. The Absinthe resolution info
+1. Union declares `types [Types.User, Types.Post]`
+2. Each type module has a `struct:` option that maps to a backing module
+3. At runtime, when a `%MyApp.User{}` is returned, GreenFairy looks up the struct in the registry and returns `:user`
 
-### Using Struct Module
-
-A cleaner pattern using the struct's module:
-
-```elixir
-union "SearchResult" do
-  types [:user, :post, :comment]
-
-  resolve_type fn
-    %{__struct__: MyApp.User}, _ -> :user
-    %{__struct__: MyApp.Post}, _ -> :post
-    %{__struct__: MyApp.Comment}, _ -> :comment
-    _, _ -> nil
-  end
-end
-```
-
-### Dynamic Resolution
-
-For extensible systems:
-
-```elixir
-union "SearchResult" do
-  types [:user, :post, :comment, :page, :file]
-
-  resolve_type fn value, _ ->
-    type_map = %{
-      MyApp.User => :user,
-      MyApp.Post => :post,
-      MyApp.Comment => :comment,
-      MyApp.Page => :page,
-      MyApp.File => :file
-    }
-
-    Map.get(type_map, value.__struct__)
-  end
-end
-```
+This means you never need to write manual `resolve_type` callbacks for unions.
 
 ## Querying Unions
 
@@ -187,19 +133,11 @@ Response:
 defmodule MyApp.GraphQL.Unions.FeedItem do
   use GreenFairy.Union
 
+  alias MyApp.GraphQL.Types
+
   union "FeedItem" do
     @desc "An item in the activity feed"
-
-    types [:post, :comment, :like, :follow, :share]
-
-    resolve_type fn
-      %MyApp.Post{}, _ -> :post
-      %MyApp.Comment{}, _ -> :comment
-      %MyApp.Like{}, _ -> :like
-      %MyApp.Follow{}, _ -> :follow
-      %MyApp.Share{}, _ -> :share
-      _, _ -> nil
-    end
+    types [Types.Post, Types.Comment, Types.Like, Types.Follow, Types.Share]
   end
 end
 ```
@@ -224,15 +162,10 @@ For mutations that can return different result types:
 defmodule MyApp.GraphQL.Unions.AuthResult do
   use GreenFairy.Union
 
-  union "AuthResult" do
-    types [:auth_success, :auth_error, :mfa_required]
+  alias MyApp.GraphQL.Types
 
-    resolve_type fn
-      %{token: _}, _ -> :auth_success
-      %{error: _}, _ -> :auth_error
-      %{mfa_token: _}, _ -> :mfa_required
-      _, _ -> nil
-    end
+  union "AuthResult" do
+    types [Types.AuthSuccess, Types.AuthError, Types.MfaRequired]
   end
 end
 ```
@@ -246,9 +179,9 @@ field :login, :auth_result do
 
   resolve fn _, args, _ ->
     case MyApp.Auth.login(args) do
-      {:ok, session} -> {:ok, %{token: session.token, user: session.user}}
-      {:mfa_required, token} -> {:ok, %{mfa_token: token}}
-      {:error, reason} -> {:ok, %{error: reason}}
+      {:ok, session} -> {:ok, %AuthSuccess{token: session.token, user: session.user}}
+      {:mfa_required, token} -> {:ok, %MfaRequired{mfa_token: token}}
+      {:error, reason} -> {:ok, %AuthError{error: reason}}
     end
   end
 end
@@ -282,15 +215,10 @@ mutation {
 defmodule MyApp.GraphQL.Unions.Media do
   use GreenFairy.Union
 
-  union "Media" do
-    types [:image, :video, :audio, :document]
+  alias MyApp.GraphQL.Types
 
-    resolve_type fn
-      %{mime_type: "image/" <> _}, _ -> :image
-      %{mime_type: "video/" <> _}, _ -> :video
-      %{mime_type: "audio/" <> _}, _ -> :audio
-      _, _ -> :document
-    end
+  union "Media" do
+    types [Types.Image, Types.Video, Types.Audio, Types.Document]
   end
 end
 ```
@@ -301,30 +229,56 @@ end
 defmodule MyApp.GraphQL.Unions.NotificationPayload do
   use GreenFairy.Union
 
-  union "NotificationPayload" do
-    types [:user, :post, :comment, :order, :message]
+  alias MyApp.GraphQL.Types
 
-    resolve_type fn value, _ ->
-      # Pattern match on struct module
-      case value.__struct__ do
-        MyApp.User -> :user
-        MyApp.Post -> :post
-        MyApp.Comment -> :comment
-        MyApp.Order -> :order
-        MyApp.Message -> :message
-        _ -> nil
-      end
-    end
+  union "NotificationPayload" do
+    types [Types.User, Types.Post, Types.Comment, Types.Order, Types.Message]
   end
 end
 ```
+
+## Advanced: Custom Type Resolution
+
+In rare cases where automatic resolution isn't sufficient (e.g., returning plain maps instead of structs), you can provide a custom `resolve_type` callback:
+
+```elixir
+union "SearchResult" do
+  types [Types.User, Types.Post, Types.Comment]
+
+  # Only needed for non-struct returns (e.g., plain maps from external APIs)
+  resolve_type fn
+    %{type: "user"}, _ -> :user
+    %{type: "post"}, _ -> :post
+    %{type: "comment"}, _ -> :comment
+    _, _ -> nil
+  end
+end
+```
+
+Or for pattern matching on field values:
+
+```elixir
+union "Media" do
+  types [Types.Image, Types.Video, Types.Audio, Types.Document]
+
+  # Resolve based on mime_type field instead of struct
+  resolve_type fn
+    %{mime_type: "image/" <> _}, _ -> :image
+    %{mime_type: "video/" <> _}, _ -> :video
+    %{mime_type: "audio/" <> _}, _ -> :audio
+    _, _ -> :document
+  end
+end
+```
+
+This is an escape hatch - prefer using structs with automatic resolution.
 
 ## Unions vs Interfaces
 
 | Feature | Unions | Interfaces |
 |---------|--------|------------|
 | Shared fields | No | Yes (required) |
-| Type resolution | Required | Required |
+| Type resolution | Automatic | Automatic |
 | Member types | Explicit list | Types opt-in via `implements` |
 | Best for | Unrelated types | Related types with common fields |
 
@@ -361,6 +315,6 @@ Every union module exports:
 
 ## Next Steps
 
-- [Interfaces](interfaces.html) - Alternative for types with shared fields
-- [Object Types](object-types.html) - Defining union member types
-- [Operations](operations.html) - Using unions in queries and mutations
+- [Interfaces](interfaces.md) - Alternative for types with shared fields
+- [Object Types](object-types.md) - Defining union member types
+- [Operations](operations.md) - Using unions in queries and mutations

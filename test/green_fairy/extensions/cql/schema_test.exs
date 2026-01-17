@@ -31,7 +31,7 @@ defmodule GreenFairy.CQL.SchemaTest do
     end
 
     test "cql_filter_type_for returns identifier" do
-      identifier = Schema.Helpers.cql_filter_type_for(MockUserType)
+      identifier = Schema.cql_filter_type_for(MockUserType)
       assert identifier == :cql_filter_user_input
     end
   end
@@ -39,7 +39,7 @@ defmodule GreenFairy.CQL.SchemaTest do
   describe "cql_order_type_for/1" do
     # Reuse MockUserType from above
     test "returns order input type identifier" do
-      identifier = Schema.Helpers.cql_order_type_for(__MODULE__.MockUserType)
+      identifier = Schema.cql_order_type_for(__MODULE__.MockUserType)
       assert identifier == :cql_order_user_input
     end
   end

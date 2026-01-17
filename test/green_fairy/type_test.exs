@@ -347,7 +347,7 @@ defmodule GreenFairy.TypeTest do
     use GreenFairy.Type
 
     type "TypeWithAuth", struct: TestUser do
-      authorize(fn object, ctx ->
+      authorize(fn _object, ctx ->
         if ctx[:admin] do
           :all
         else
@@ -382,7 +382,7 @@ defmodule GreenFairy.TypeTest do
     use GreenFairy.Type
 
     type "TypeWith3ArityAuth" do
-      authorize(fn object, ctx, info ->
+      authorize(fn _object, _ctx, info ->
         if info[:path] == [:query, :user] do
           :all
         else

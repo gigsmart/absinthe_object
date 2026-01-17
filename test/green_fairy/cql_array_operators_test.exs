@@ -386,7 +386,6 @@ defmodule GreenFairy.CQLArrayOperatorsTest do
 
   describe "Documentation" do
     test "array operator types have descriptions" do
-      alias GreenFairy.CQL.ScalarMapper
       alias GreenFairy.CQL.Adapters.Postgres
 
       operator_types = Postgres.operator_inputs()
@@ -413,7 +412,6 @@ defmodule GreenFairy.CQLArrayOperatorsTest do
       # This is enforced by GraphQL type system at runtime
       # We're verifying the type definitions are correct
 
-      alias GreenFairy.CQL.ScalarMapper
       alias GreenFairy.CQL.Adapters.Postgres
 
       operator_types = Postgres.operator_inputs()

@@ -393,6 +393,6 @@ end
 
 ## Next Steps
 
-- [CQL Guide](cql.html) - Full CQL documentation
-- [CQL Adapter System](cql-adapters.html) - Multi-database support
-- [CQL Advanced Features](cql-advanced.html) - Full-text search, geo queries
+- [CQL Guide](cql.md) - Full CQL documentation
+- [CQL Adapter System](cql_adapter_system.md) - Multi-database support
+- [CQL Advanced Features](cql_advanced_features.md) - Full-text search, geo queries

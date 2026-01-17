@@ -18,12 +18,14 @@ Use the `connection` macro inside a type:
 defmodule MyApp.GraphQL.Types.User do
   use GreenFairy.Type
 
+  alias MyApp.GraphQL.Types
+
   type "User", struct: MyApp.User do
     field :id, non_null(:id)
     field :name, :string
 
     # Paginated list of friends
-    connection :friends, MyApp.GraphQL.Types.User do
+    connection :friends, Types.User do
       # Custom edge fields (optional)
       edge do
         field :friendship_date, :datetime
@@ -139,9 +141,12 @@ You can also define connections at the query level:
 defmodule MyApp.GraphQL.Queries.UserQueries do
   use GreenFairy.Query
 
+  alias MyApp.GraphQL.Types
+  alias MyApp.GraphQL.Inputs
+
   queries do
-    connection :users, MyApp.GraphQL.Types.User do
-      arg :filter, :user_filter_input
+    connection :users, Types.User do
+      arg :filter, Inputs.UserFilter
 
       resolve fn _, args, _ ->
         users = MyApp.Accounts.list_users(args[:filter])
@@ -175,6 +180,8 @@ query {
 
 ## Next Steps
 
-- [CQL](cql.html) - Add filtering and sorting to connections
-- [Relay](relay.html) - Full Relay specification support
-- [Relationships](relationships.html) - DataLoader for efficient loading
+- [CQL](cql.md) - Add filtering and sorting to connections
+- [Relay](relay.md) - Full Relay specification support
+- [Relationships](relationships.md) - DataLoader for efficient loading
+- [Operations](operations.md) - Query, mutation, and subscription modules
+- [Expose](expose.md) - Auto-generate query fields from types

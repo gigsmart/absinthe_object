@@ -2,8 +2,9 @@ defmodule GreenFairy.Relay.GlobalId do
   @moduledoc """
   Global ID encoding and decoding for Relay Object Identification.
 
-  Relay uses globally unique IDs that encode both the type and the local ID
-  of an object. This module provides functions to encode and decode these IDs.
+  **Note:** This module delegates to `GreenFairy.GlobalId.Base64` for backwards
+  compatibility. For new code, use `GreenFairy.GlobalId` directly, which supports
+  custom encoding implementations via the `GreenFairy.GlobalId` behaviour.
 
   ## Format
 
@@ -24,6 +25,14 @@ defmodule GreenFairy.Relay.GlobalId do
 
       GlobalId.decode!("VXNlcjoxMjM=")
       #=> {"User", "123"}
+
+  ## Custom Global IDs
+
+  To use a custom encoding scheme, implement the `GreenFairy.GlobalId` behaviour
+  and configure it in your schema:
+
+      use GreenFairy.Schema,
+        global_id: MyApp.CustomGlobalId
 
   ## In Types
 

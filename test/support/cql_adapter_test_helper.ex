@@ -102,9 +102,7 @@ defmodule GreenFairy.CQLAdapterTestHelper do
     result
   end
 
-  @doc """
-  Mock User schema for testing.
-  """
+  # Mock User schema for testing.
   defmodule User do
     use Ecto.Schema
 
@@ -120,9 +118,7 @@ defmodule GreenFairy.CQLAdapterTestHelper do
     end
   end
 
-  @doc """
-  Mock Post schema for testing associations.
-  """
+  # Mock Post schema for testing associations.
   defmodule Post do
     use Ecto.Schema
 
@@ -139,6 +135,7 @@ defmodule GreenFairy.CQLAdapterTestHelper do
   Common scalar operator test scenarios.
   Returns a list of {operator, value, description} tuples.
   """
+  @spec scalar_test_scenarios() :: list({atom(), any(), String.t()})
   def scalar_test_scenarios do
     [
       {:_eq, "test", "equality"},

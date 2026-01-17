@@ -61,6 +61,24 @@ adapter = GreenFairy.Extensions.CQL.Adapter.detect_adapter(repo_module)
 # - GreenFairy.Extensions.CQL.Adapters.MSSQL for Ecto.Adapters.Tds
 ```
 
+### Adapter Detection Cascade
+
+When detecting adapters from a struct module, GreenFairy uses a cascade:
+
+1. **Ecto Schema** → Detects database adapter from repo
+2. **Elasticsearch Document** → Uses Elasticsearch adapter
+3. **Plain Struct** → Falls back to Memory adapter
+
+```elixir
+# Ecto schema with repo → Postgres/MySQL/etc adapter
+GreenFairy.CQL.Adapter.detect_adapter_for_struct(MyApp.Accounts.User)
+#=> GreenFairy.CQL.Adapters.Postgres
+
+# Plain struct → Memory adapter
+GreenFairy.CQL.Adapter.detect_adapter_for_struct(MyApp.PlainConfig)
+#=> GreenFairy.CQL.Adapters.Memory
+```
+
 ### Manual Configuration
 
 Override automatic detection via application config:
@@ -132,6 +150,88 @@ fragment("? @> ?::uuid[]", field(q, :uuids), ["..."])
 ```
 
 The adapter handles this automatically based on field type.
+
+---
+
+### Memory Adapter (Fallback)
+
+**Module:** `GreenFairy.CQL.Adapters.Memory`
+
+The Memory adapter is the fallback for types backed by plain structs without database backing. It provides in-memory filtering and sorting using Elixir's `Enum` module.
+
+**Features:**
+- ✅ Basic scalar operators (`_eq`, `_neq`, `_gt`, `_gte`, `_lt`, `_lte`, `_in`, `_nin`, `_is_null`)
+- ✅ Array operators (`_includes`, `_excludes`, `_is_empty`)
+- ✅ Ascending/descending sort
+- ❌ No database operations (in-memory only)
+- ❌ No full-text search
+
+**When It's Used:**
+
+The Memory adapter is automatically selected when:
+- A type uses a plain `defstruct` (not an Ecto schema)
+- No repo can be inferred for an Ecto schema
+- The struct doesn't match any other adapter
+
+**Usage:**
+
+```elixir
+# Plain struct type - automatically uses Memory adapter
+defmodule MyApp.Config do
+  defstruct [:id, :name, :value, :tags]
+end
+
+type "Config", struct: MyApp.Config do
+  expose :id
+  field :id, non_null(:id)
+  field :name, :string
+  field :value, :string
+end
+```
+
+**Manual Filtering:**
+
+For types using the Memory adapter, use the helper functions in your resolvers:
+
+```elixir
+alias GreenFairy.CQL.Adapters.Memory
+
+def list_configs(_parent, args, _ctx) do
+  configs = MyApp.get_all_configs()
+
+  filtered = Memory.apply_filters(configs, args[:filter])
+  sorted = Memory.apply_order(filtered, args[:order])
+
+  {:ok, sorted}
+end
+
+# Or combined:
+def list_configs(_parent, args, _ctx) do
+  configs = MyApp.get_all_configs()
+  {:ok, Memory.apply_query(configs, args[:filter], args[:order])}
+end
+```
+
+**Filter Examples:**
+
+```elixir
+items = [
+  %{id: 1, name: "Alice", age: 30},
+  %{id: 2, name: "Bob", age: 25}
+]
+
+# Equality
+Memory.apply_filters(items, %{name: %{_eq: "Alice"}})
+#=> [%{id: 1, name: "Alice", age: 30}]
+
+# Comparison
+Memory.apply_filters(items, %{age: %{_gte: 28}})
+#=> [%{id: 1, name: "Alice", age: 30}]
+
+# In list
+Memory.apply_filters(items, %{name: %{_in: ["Alice", "Charlie"]}})
+#=> [%{id: 1, name: "Alice", age: 30}]
+```
 
 ---
 

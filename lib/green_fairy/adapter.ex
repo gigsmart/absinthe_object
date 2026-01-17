@@ -295,12 +295,24 @@ defmodule GreenFairy.Adapter do
         if repo do
           GreenFairy.Adapters.Ecto.Detector.adapter_for!(repo, opts)
         else
-          {:error, :repo_not_found}
+          # No repo found, fall back to Memory adapter
+          GreenFairy.Adapters.Memory.new(struct_module, opts)
         end
 
+      # Elasticsearch document
+      elasticsearch_document?(struct_module) ->
+        GreenFairy.Adapters.Elasticsearch.new(Keyword.put(opts, :model, struct_module))
+
+      # Plain struct - use Memory adapter as fallback
       true ->
-        {:error, :unknown_struct_type}
+        GreenFairy.Adapters.Memory.new(struct_module, opts)
     end
+  end
+
+  defp elasticsearch_document?(module) do
+    Code.ensure_loaded?(module) and
+      (function_exported?(module, :__es_index__, 0) or
+         function_exported?(module, :__mapping__, 0))
   end
 
   defp ecto_schema?(module) do

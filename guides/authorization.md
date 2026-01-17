@@ -274,10 +274,10 @@ type "User", struct: MyApp.User do
 end
 ```
 
-CQL filtering is automatically enabled for all types with a backing struct. See the [CQL Guide](cql.html) for more details.
+CQL filtering is automatically enabled for all types with a backing struct. See the [CQL Guide](cql.md) for more details.
 
 ## Next Steps
 
-- [Relationships](relationships.html) - Define associations between types
-- [Connections](connections.html) - Relay-style pagination
-- [CQL Guide](cql.html) - Automatic filtering and ordering
+- [Relationships](relationships.md) - Define associations between types
+- [Connections](connections.md) - Relay-style pagination
+- [CQL Guide](cql.md) - Automatic filtering and ordering

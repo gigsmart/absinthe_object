@@ -37,7 +37,7 @@ defmodule GreenFairy.Type do
       use Absinthe.Schema.Notation
       import Absinthe.Schema.Notation, except: [object: 2]
 
-      import GreenFairy.Type, only: [type: 2, type: 3, authorize: 1]
+      import GreenFairy.Type, only: [type: 2, type: 3, authorize: 1, expose: 1, expose: 2]
       import GreenFairy.Field.Connection, only: [connection: 2, connection: 3]
       import GreenFairy.Field.Loader, only: [loader: 1, loader: 4]
       # assoc is handled via AST transformation, not as a regular macro
@@ -50,6 +50,7 @@ defmodule GreenFairy.Type do
       Module.register_attribute(__MODULE__, :green_fairy_authorize_fn, accumulate: false)
       Module.register_attribute(__MODULE__, :green_fairy_extensions, accumulate: true)
       Module.register_attribute(__MODULE__, :green_fairy_referenced_types, accumulate: true)
+      Module.register_attribute(__MODULE__, :green_fairy_expose, accumulate: true)
       Module.register_attribute(__MODULE__, :cql_custom_filters, accumulate: true)
 
       # Import CQL macros for custom filters
@@ -138,6 +139,54 @@ defmodule GreenFairy.Type do
 
     quote do
       @green_fairy_policy unquote(policy)
+    end
+  end
+
+  @doc """
+  Exposes this type as a query field, fetchable by the given field.
+
+  The field type is automatically inferred from the struct's adapter.
+
+  ## Usage
+
+      type "User", struct: MyApp.User do
+        expose :id           # Generates query: user(id: ID!): User
+        expose :email        # Generates query: userByEmail(email: String!): User
+
+        field :id, non_null(:id)
+        field :email, :string
+        field :name, :string
+      end
+
+  ## Options
+
+  - `:as` - Custom query field name (default: type_name or type_name_by_field)
+  - `:unique` - Whether this field is unique (default: true for :id, false otherwise)
+
+  ## Generated Queries
+
+  For `expose :id`:
+  - Query field name: `:user` (singular of type name)
+  - Fetches via: `Repo.get(User, id)`
+
+  For `expose :email`:
+  - Query field name: `:user_by_email`
+  - Fetches via: `Repo.get_by(User, email: email)`
+
+  ## How It Works
+
+  1. The field type is looked up from the adapter (Ecto schema, etc.)
+  2. A query field is auto-generated with the appropriate arg type
+  3. The resolver decodes GlobalId (if :id) or uses the raw value
+  4. Fetches from the database using the schema's configured repo
+
+  """
+  defmacro expose(field_name, opts \\ []) do
+    quote do
+      @green_fairy_expose %{
+        field: unquote(field_name),
+        opts: unquote(opts)
+      }
     end
   end
 
@@ -761,6 +810,7 @@ defmodule GreenFairy.Type do
     policy_def = Module.get_attribute(env.module, :green_fairy_policy)
     authorize_fn = Module.get_attribute(env.module, :green_fairy_authorize_fn)
     extensions_def = Module.get_attribute(env.module, :green_fairy_extensions) || []
+    expose_def = Module.get_attribute(env.module, :green_fairy_expose) || []
 
     # Generate registration calls for each interface if struct is defined
     registrations =
@@ -872,6 +922,11 @@ defmodule GreenFairy.Type do
       @doc false
       def __green_fairy_referenced_types__ do
         unquote(Macro.escape(Module.get_attribute(env.module, :green_fairy_referenced_types) || []))
+      end
+
+      @doc false
+      def __green_fairy_expose__ do
+        unquote(Macro.escape(Enum.reverse(expose_def)))
       end
     end
   end

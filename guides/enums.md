@@ -273,6 +273,6 @@ Every enum module exports these functions:
 
 ## Next Steps
 
-- [Object Types](object-types.html) - Define GraphQL object types
-- [Input Types](input-types.html) - Complex mutation arguments
-- [CQL Filtering](cql.html) - Advanced filtering with CQL
+- [Object Types](object-types.md) - Define GraphQL object types
+- [Input Types](input-types.md) - Complex mutation arguments
+- [CQL Filtering](cql.md) - Advanced filtering with CQL

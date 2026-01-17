@@ -41,8 +41,29 @@ defmodule GreenFairy.Schema do
   - `:query` - Module to use as root query (or use `root_query` macro)
   - `:mutation` - Module to use as root mutation (or use `root_mutation` macro)
   - `:subscription` - Module to use as root subscription (or use `root_subscription` macro)
+  - `:repo` - Ecto repo module for database operations and Node resolution
+  - `:global_id` - Custom GlobalId implementation (defaults to `GreenFairy.GlobalId.Base64`)
   - `:dataloader` - DataLoader configuration
     - `:sources` - List of `{source_name, repo_or_source}` tuples
+
+  ## Custom Global IDs
+
+  You can implement custom global ID encoding/decoding:
+
+      defmodule MyApp.CustomGlobalId do
+        @behaviour GreenFairy.GlobalId
+
+        @impl true
+        def encode(type_name, id), do: # your encoding
+
+        @impl true
+        def decode(global_id), do: # your decoding
+      end
+
+      use GreenFairy.Schema,
+        query: MyApp.RootQuery,
+        repo: MyApp.Repo,
+        global_id: MyApp.CustomGlobalId
 
   ## Type Discovery
 
@@ -65,6 +86,7 @@ defmodule GreenFairy.Schema do
     dataloader_opts = Keyword.get(opts, :dataloader, [])
     repo_ast = Keyword.get(opts, :repo)
     cql_adapter_ast = Keyword.get(opts, :cql_adapter)
+    global_id_ast = Keyword.get(opts, :global_id)
     query_module_ast = Keyword.get(opts, :query)
     mutation_module_ast = Keyword.get(opts, :mutation)
     subscription_module_ast = Keyword.get(opts, :subscription)
@@ -72,6 +94,7 @@ defmodule GreenFairy.Schema do
     # Expand module aliases to actual atoms
     repo = if repo_ast, do: Macro.expand(repo_ast, __CALLER__), else: nil
     cql_adapter = if cql_adapter_ast, do: Macro.expand(cql_adapter_ast, __CALLER__), else: nil
+    global_id = if global_id_ast, do: Macro.expand(global_id_ast, __CALLER__), else: nil
     query_module = if query_module_ast, do: Macro.expand(query_module_ast, __CALLER__), else: nil
     mutation_module = if mutation_module_ast, do: Macro.expand(mutation_module_ast, __CALLER__), else: nil
     subscription_module = if subscription_module_ast, do: Macro.expand(subscription_module_ast, __CALLER__), else: nil
@@ -88,6 +111,7 @@ defmodule GreenFairy.Schema do
       @green_fairy_dataloader unquote(Macro.escape(dataloader_opts))
       @green_fairy_repo unquote(repo)
       @green_fairy_cql_adapter unquote(cql_adapter)
+      @green_fairy_global_id unquote(global_id)
       @green_fairy_query_module unquote(query_module)
       @green_fairy_mutation_module unquote(mutation_module)
       @green_fairy_subscription_module unquote(subscription_module)
@@ -222,6 +246,8 @@ defmodule GreenFairy.Schema do
   @doc false
   defmacro __before_compile__(env) do
     dataloader_opts = Module.get_attribute(env.module, :green_fairy_dataloader)
+    repo = Module.get_attribute(env.module, :green_fairy_repo)
+    global_id = Module.get_attribute(env.module, :green_fairy_global_id)
 
     # Get explicit module configurations
     query_module = Module.get_attribute(env.module, :green_fairy_query_module)
@@ -258,12 +284,15 @@ defmodule GreenFairy.Schema do
     # Generate import_types for all discovered modules
     import_statements = generate_imports(grouped)
 
+    # Collect expose definitions from discovered object types
+    expose_fields = collect_expose_fields(discovered, repo)
+
     # Note: Explicit root modules are handled in __using__, not here
     # Here we only handle inline definitions and auto-discovered modules
 
     # Generate root operation types for inline and discovered ONLY (explicit handled in __using__)
     # Only generate if there's no explicit module (explicit modules are handled in __using__)
-    query_block = generate_before_compile_root_block(:query, query_module, inline_query, grouped[:queries] || [])
+    query_block = generate_before_compile_root_block(:query, query_module, inline_query, grouped[:queries] || [], expose_fields)
 
     mutation_block =
       generate_before_compile_root_block(:mutation, mutation_module, inline_mutation, grouped[:mutations] || [])
@@ -277,16 +306,20 @@ defmodule GreenFairy.Schema do
       )
 
     # Generate dataloader context if configured
-    dataloader_context = generate_dataloader_context(dataloader_opts)
+    dataloader_context = generate_dataloader_context(dataloader_opts, repo, global_id)
+
+    # Generate CQL types for all CQL-enabled types
+    cql_types_statements = generate_cql_types(discovered, env.module)
 
     # Build all statements as a list, filtering out nils
     statements =
       [
+        cql_types_statements,
         import_statements,
         [query_block],
         [mutation_block],
         [subscription_block],
-        if(dataloader_context, do: [dataloader_context], else: []),
+        [dataloader_context],
         [
           quote do
             @doc false
@@ -302,15 +335,164 @@ defmodule GreenFairy.Schema do
     {:__block__, [], statements}
   end
 
+  # Generate CQL types (operator inputs, filter inputs, order inputs) for all CQL-enabled types
+  defp generate_cql_types(discovered, schema_module) do
+    # Filter to CQL-enabled types
+    cql_types =
+      discovered
+      |> Enum.filter(fn module ->
+        Code.ensure_loaded?(module) and function_exported?(module, :__cql_config__, 0)
+      end)
+
+    # If no CQL types, return empty
+    if cql_types == [] do
+      []
+    else
+      # Detect adapter from the schema's configuration
+      adapter = Module.get_attribute(schema_module, :green_fairy_cql_adapter)
+      adapter = adapter || detect_cql_adapter(schema_module)
+
+      # Generate CQL types module name
+      cql_types_module = Module.concat(schema_module, CqlTypes)
+
+      # Generate operator types and order base types
+      order_base_types_ast = GreenFairy.CQL.Schema.OrderInput.generate_base_types()
+      operator_types_ast = GreenFairy.CQL.Schema.OperatorInput.generate_all(adapter: adapter)
+      base_types_ast = operator_types_ast ++ order_base_types_ast
+
+      # Collect enums used by CQL types
+      used_enums = collect_cql_enums(cql_types)
+      enum_operator_asts = generate_cql_enum_operator_asts(used_enums)
+
+      # Generate filter and order input ASTs for all CQL types
+      filter_asts =
+        cql_types
+        |> Enum.filter(&function_exported?(&1, :__cql_generate_filter_input__, 0))
+        |> Enum.map(& &1.__cql_generate_filter_input__())
+
+      order_asts =
+        cql_types
+        |> Enum.filter(&function_exported?(&1, :__cql_generate_order_input__, 0))
+        |> Enum.map(& &1.__cql_generate_order_input__())
+
+      all_type_asts = enum_operator_asts ++ filter_asts ++ order_asts
+
+      [
+        # Define CQL types module inline
+        quote do
+          defmodule unquote(cql_types_module) do
+            @moduledoc false
+            use Absinthe.Schema.Notation
+
+            unquote_splicing(base_types_ast)
+          end
+        end,
+        # Import the generated types
+        quote do
+          import_types(unquote(cql_types_module))
+        end,
+        # Import period types for datetime operators
+        quote do
+          import_types(GreenFairy.CQL.Scalars.DateTime.PeriodDirection)
+          import_types(GreenFairy.CQL.Scalars.DateTime.PeriodUnit)
+          import_types(GreenFairy.CQL.Scalars.DateTime.PeriodInput)
+          import_types(GreenFairy.CQL.Scalars.DateTime.CurrentPeriodInput)
+        end
+        # Inject filter/order types directly into schema
+        | all_type_asts
+      ]
+    end
+  end
+
+  defp detect_cql_adapter(schema_module) do
+    repo = Module.get_attribute(schema_module, :green_fairy_repo)
+
+    if repo do
+      GreenFairy.CQL.Adapter.detect_adapter(repo)
+    else
+      repo = Application.get_env(:green_fairy, :repo)
+
+      if repo do
+        GreenFairy.CQL.Adapter.detect_adapter(repo)
+      else
+        GreenFairy.CQL.Adapters.Postgres
+      end
+    end
+  end
+
+  defp collect_cql_enums(cql_types) do
+    cql_types
+    |> Enum.flat_map(fn type_module ->
+      if function_exported?(type_module, :__cql_used_enums__, 0) do
+        type_module.__cql_used_enums__()
+      else
+        []
+      end
+    end)
+    |> Enum.uniq()
+  end
+
+  defp generate_cql_enum_operator_asts(enum_identifiers) do
+    Enum.flat_map(enum_identifiers, fn enum_id ->
+      scalar_ast = GreenFairy.CQL.Schema.EnumOperatorInput.generate(enum_id)
+      array_ast = GreenFairy.CQL.Schema.EnumOperatorInput.generate_array(enum_id)
+      [scalar_ast, array_ast]
+    end)
+  end
+
+  # Collect expose definitions from discovered object types
+  defp collect_expose_fields(discovered, repo) do
+    discovered
+    |> Enum.filter(fn module ->
+      function_exported?(module, :__green_fairy_expose__, 0) and
+        module.__green_fairy_expose__() != []
+    end)
+    |> Enum.flat_map(fn module ->
+      type_def = module.__green_fairy_definition__()
+      expose_defs = module.__green_fairy_expose__()
+
+      Enum.map(expose_defs, fn expose_def ->
+        Map.merge(expose_def, %{
+          type_module: module,
+          type_name: type_def[:name],
+          type_identifier: type_def[:identifier],
+          struct_module: type_def[:struct],
+          repo: repo
+        })
+      end)
+    end)
+  end
+
   # Generate root block for __before_compile__ - skips if explicit module exists
   # (explicit modules are handled in __using__)
-  defp generate_before_compile_root_block(_type, explicit_module, _inline_block, _discovered_modules)
+  defp generate_before_compile_root_block(_type, explicit_module, _inline_block, _discovered_modules, _expose_fields \\ [])
+
+  defp generate_before_compile_root_block(_type, explicit_module, _inline_block, _discovered_modules, _expose_fields)
        when not is_nil(explicit_module) do
     # Explicit module is handled in __using__, return nil here
     nil
   end
 
-  defp generate_before_compile_root_block(type, _explicit_module, inline_block, discovered_modules) do
+  defp generate_before_compile_root_block(:query, _explicit_module, inline_block, discovered_modules, expose_fields) do
+    # Generate expose fields AST
+    expose_ast = generate_expose_query_fields(expose_fields)
+
+    cond do
+      inline_block != nil ->
+        # Combine inline with expose fields
+        combined = combine_query_blocks(inline_block, expose_ast)
+        generate_root_from_inline(:query, combined)
+
+      discovered_modules != [] or expose_fields != [] ->
+        # Combine discovered with expose fields
+        generate_root_from_discovered_with_expose(:query, discovered_modules, expose_ast)
+
+      true ->
+        nil
+    end
+  end
+
+  defp generate_before_compile_root_block(type, _explicit_module, inline_block, discovered_modules, _expose_fields) do
     # Only handle inline and discovered (explicit is nil at this point)
     cond do
       inline_block != nil ->
@@ -321,6 +503,126 @@ defmodule GreenFairy.Schema do
 
       true ->
         nil
+    end
+  end
+
+  # Generate query fields for expose definitions
+  defp generate_expose_query_fields([]), do: nil
+
+  defp generate_expose_query_fields(expose_fields) do
+    field_asts =
+      Enum.map(expose_fields, fn expose_def ->
+        generate_single_expose_field(expose_def)
+      end)
+
+    {:__block__, [], field_asts}
+  end
+
+  defp generate_single_expose_field(expose_def) do
+    field_name = expose_def.field
+    type_name = expose_def.type_name
+    type_identifier = expose_def.type_identifier
+    struct_module = expose_def.struct_module
+    repo = expose_def.repo
+    opts = expose_def.opts || []
+
+    # Determine query field name
+    query_field_name =
+      if field_name == :id do
+        # For :id, use the type name (e.g., :user)
+        Keyword.get(opts, :as, type_identifier)
+      else
+        # For other fields, use type_by_field (e.g., :user_by_email)
+        Keyword.get(opts, :as, :"#{type_identifier}_by_#{field_name}")
+      end
+
+    # Get field type from the struct's adapter
+    arg_type = get_field_type_from_adapter(struct_module, field_name)
+
+    quote do
+      field unquote(query_field_name), unquote(type_identifier) do
+        arg(unquote(field_name), non_null(unquote(arg_type)))
+
+        resolve(fn _parent, args, ctx ->
+          field_value = Map.get(args, unquote(field_name))
+          struct_module = unquote(struct_module)
+          repo = Map.get(ctx, :repo) || unquote(repo)
+
+          if struct_module && repo do
+            result =
+              if unquote(field_name) == :id do
+                # For :id field, decode GlobalId first
+                case GreenFairy.GlobalId.decode_id(field_value) do
+                  {:ok, {_type_name, local_id}} ->
+                    repo.get(struct_module, local_id)
+
+                  {:error, _} ->
+                    # Try as raw ID
+                    repo.get(struct_module, field_value)
+                end
+              else
+                # For other fields, use get_by
+                repo.get_by(struct_module, [{unquote(field_name), field_value}])
+              end
+
+            case result do
+              nil -> {:error, "#{unquote(type_name)} not found"}
+              record -> {:ok, record}
+            end
+          else
+            {:error, "Cannot resolve #{unquote(type_name)}: no struct or repo configured"}
+          end
+        end)
+      end
+    end
+  end
+
+  # Get field type from the struct's adapter
+  defp get_field_type_from_adapter(nil, _field), do: :string
+
+  defp get_field_type_from_adapter(struct_module, field) do
+    adapter = GreenFairy.Adapter.find_adapter(struct_module, nil)
+
+    if adapter && function_exported?(adapter.__struct__, :field_type, 2) do
+      case adapter.__struct__.field_type(struct_module, field) do
+        :id -> :id
+        :integer -> :integer
+        :string -> :string
+        :boolean -> :boolean
+        {:parameterized, Ecto.UUID, _} -> :id
+        Ecto.UUID -> :id
+        _ -> :string
+      end
+    else
+      # Default to :id for :id field, :string otherwise
+      if field == :id, do: :id, else: :string
+    end
+  end
+
+  defp combine_query_blocks(inline_block, nil), do: inline_block
+  defp combine_query_blocks(inline_block, {:__block__, _, []}), do: inline_block
+
+  defp combine_query_blocks({:__block__, meta, statements}, {:__block__, _, expose_statements}) do
+    {:__block__, meta, statements ++ expose_statements}
+  end
+
+  defp combine_query_blocks(single_statement, {:__block__, _, expose_statements}) do
+    {:__block__, [], [single_statement | expose_statements]}
+  end
+
+  defp generate_root_from_discovered_with_expose(:query, discovered_modules, expose_ast) do
+    quote do
+      query do
+        unquote_splicing(
+          Enum.map(discovered_modules, fn module ->
+            quote do
+              import_fields(unquote(module).__green_fairy_query_fields_identifier__())
+            end
+          end)
+        )
+
+        unquote(expose_ast)
+      end
     end
   end
 
@@ -348,20 +650,8 @@ defmodule GreenFairy.Schema do
     end
   end
 
-  defp generate_root_from_discovered(:query, modules) do
-    import_statements =
-      Enum.map(modules, fn _module ->
-        quote do
-          import_fields :green_fairy_queries
-        end
-      end)
-
-    quote do
-      query do
-        (unquote_splicing(import_statements))
-      end
-    end
-  end
+  # Note: :query is handled by generate_root_from_discovered_with_expose/3
+  # which supports both discovered modules and expose fields
 
   defp generate_root_from_discovered(:mutation, modules) do
     import_statements =
@@ -472,14 +762,18 @@ defmodule GreenFairy.Schema do
     end)
   end
 
-  defp generate_dataloader_context([]) do
+  defp generate_dataloader_context([], repo, global_id) do
     # Always generate default context, plugins, and node_name for GreenFairy schemas
     # Users can override these by defining their own functions
     quote do
-      # Default context that sets up an empty dataloader
+      # Default context that sets up an empty dataloader and includes repo for Node resolution
       def context(ctx) do
         loader = Dataloader.new()
-        Map.put(ctx, :loader, loader)
+
+        ctx
+        |> Map.put(:loader, loader)
+        |> Map.put(:repo, unquote(repo))
+        |> Map.put(:global_id, unquote(global_id) || GreenFairy.GlobalId.Base64)
       end
 
       def plugins do
@@ -490,14 +784,24 @@ defmodule GreenFairy.Schema do
       def node_name do
         node()
       end
+
+      @doc false
+      def __green_fairy_repo__ do
+        unquote(repo)
+      end
+
+      @doc false
+      def __green_fairy_global_id__ do
+        unquote(global_id) || GreenFairy.GlobalId.Base64
+      end
     end
   end
 
-  defp generate_dataloader_context(opts) do
+  defp generate_dataloader_context(opts, repo, global_id) do
     sources = Keyword.get(opts, :sources, [])
 
     if sources == [] do
-      generate_dataloader_context([])
+      generate_dataloader_context([], repo, global_id)
     else
       quote do
         def context(ctx) do
@@ -505,7 +809,10 @@ defmodule GreenFairy.Schema do
             Dataloader.new()
             |> Dataloader.add_source(:repo, Dataloader.Ecto.new(unquote(hd(sources))))
 
-          Map.put(ctx, :loader, loader)
+          ctx
+          |> Map.put(:loader, loader)
+          |> Map.put(:repo, unquote(repo))
+          |> Map.put(:global_id, unquote(global_id) || GreenFairy.GlobalId.Base64)
         end
 
         def plugins do
@@ -515,6 +822,16 @@ defmodule GreenFairy.Schema do
         # Required for Absinthe.Subscription in distributed environments
         def node_name do
           node()
+        end
+
+        @doc false
+        def __green_fairy_repo__ do
+          unquote(repo)
+        end
+
+        @doc false
+        def __green_fairy_global_id__ do
+          unquote(global_id) || GreenFairy.GlobalId.Base64
         end
       end
     end

@@ -49,6 +49,9 @@ defmodule GreenFairy.CQL.EnumAutoGenerationTest do
     def __schema__(:prefix), do: nil
     def __schema__(:fields), do: [:id, :status, :user_role, :tags]
     def __schema__(:primary_key), do: [:id]
+    def __schema__(:associations), do: []
+    def __schema__(:embeds), do: []
+
     def __schema__(:type, :id), do: :id
 
     def __schema__(:type, :status),
@@ -56,8 +59,6 @@ defmodule GreenFairy.CQL.EnumAutoGenerationTest do
 
     def __schema__(:type, :user_role), do: {:parameterized, Ecto.Enum, %{values: [:admin, :member, :guest]}}
     def __schema__(:type, :tags), do: {:array, {:parameterized, Ecto.Enum, %{values: [:urgent, :normal]}}}
-    def __schema__(:associations), do: []
-    def __schema__(:embeds), do: []
     def __schema__(:association, _field), do: nil
   end
 

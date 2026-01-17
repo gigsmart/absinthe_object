@@ -148,7 +148,8 @@ defmodule GreenFairy.ExtensionTest do
 
     test "extensions are registered in order" do
       extensions = MultiExtendedType.__green_fairy_extensions__()
-      assert extensions == [TestExtension, AnotherExtension]
+      # CQL is auto-registered on all types, followed by explicitly used extensions
+      assert extensions == [GreenFairy.CQL, TestExtension, AnotherExtension]
     end
   end
 

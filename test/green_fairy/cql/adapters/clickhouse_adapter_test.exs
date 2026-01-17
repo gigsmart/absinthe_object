@@ -1,7 +1,7 @@
 defmodule GreenFairy.CQL.Adapters.ClickHouseAdapterTest do
   use ExUnit.Case, async: true
 
-  import Ecto.Query
+  require Ecto.Query
 
   alias GreenFairy.CQL.Scalars.String, as: StringScalar
   alias GreenFairy.CQL.Scalars.ArrayString

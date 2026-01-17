@@ -30,7 +30,7 @@ defmodule GreenFairy.InputTest do
     use GreenFairy.Input
 
     input "AuthorizedInput" do
-      authorize(fn input, ctx ->
+      authorize(fn _input, ctx ->
         cond do
           ctx[:admin] == true -> :all
           ctx[:user] == true -> [:email, :name]

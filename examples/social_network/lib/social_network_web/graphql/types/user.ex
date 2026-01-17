@@ -6,6 +6,9 @@ defmodule SocialNetworkWeb.GraphQL.Types.User do
   type "User", struct: SocialNetwork.Accounts.User do
     implements Interfaces.Node
 
+    # Expose this type as a query field - auto-generates: user(id: ID!): User
+    expose :id
+
     # CQL is automatically enabled for types with structs!
     # Authorization: admins see all fields, others see limited fields
     authorize fn _user, ctx ->

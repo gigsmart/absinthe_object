@@ -12,13 +12,6 @@ defmodule MyApp.GraphQL.Interfaces.Node do
   interface "Node" do
     @desc "A globally unique identifier"
     field :id, non_null(:id)
-
-    resolve_type fn
-      %MyApp.User{}, _ -> :user
-      %MyApp.Post{}, _ -> :post
-      %MyApp.Comment{}, _ -> :comment
-      _, _ -> nil
-    end
   end
 end
 ```
@@ -30,6 +23,8 @@ interface Node {
   id: ID!
 }
 ```
+
+That's it! No `resolve_type` callback needed - GreenFairy automatically resolves types.
 
 ## Implementing Interfaces
 
@@ -63,53 +58,17 @@ end
 
 Implementing types must include all fields defined by the interface.
 
-## Type Resolution
+## Automatic Type Resolution
 
-The `resolve_type` callback determines which concrete type to use when the interface
-is returned from a query:
+GreenFairy automatically resolves interface types based on the struct of the returned value. When a type declares `implements` with a `struct:` option, it registers itself in the type registry.
 
-```elixir
-interface "Node" do
-  field :id, non_null(:id)
+**How it works:**
 
-  resolve_type fn
-    %MyApp.User{}, _ -> :user
-    %MyApp.Post{}, _ -> :post
-    %MyApp.Comment{}, _ -> :comment
-    _, _ -> nil
-  end
-end
-```
+1. Type declares `type "User", struct: MyApp.User do implements Node end`
+2. GreenFairy registers: `MyApp.User` → `:user` for the `Node` interface
+3. At runtime, when a `%MyApp.User{}` is returned for a Node field, GreenFairy looks up the struct in the registry and returns `:user`
 
-The function receives:
-1. The resolved value (the struct/map being returned)
-2. The Absinthe resolution info
-
-### Automatic Type Resolution
-
-When types register their struct with `implements`, GreenFairy can automatically
-resolve types via the `GreenFairy.Registry`:
-
-```elixir
-interface "Node" do
-  field :id, non_null(:id)
-
-  # Auto-resolve based on struct -> type mappings
-  resolve_type fn value, _ ->
-    GreenFairy.Registry.resolve_type(value, MyApp.GraphQL.Interfaces.Node)
-  end
-end
-```
-
-This works because each type with a `:struct` option registers itself:
-
-```elixir
-# This automatically registers MyApp.User -> :user for Node interface
-type "User", struct: MyApp.User do
-  implements MyApp.GraphQL.Interfaces.Node
-  # ...
-end
-```
+This means you never need to write manual `resolve_type` callbacks for interfaces - just ensure your types have the `struct:` option and use `implements`.
 
 ## Multiple Interfaces
 
@@ -122,12 +81,6 @@ defmodule MyApp.GraphQL.Interfaces.Timestamped do
   interface "Timestamped" do
     field :inserted_at, non_null(:datetime)
     field :updated_at, non_null(:datetime)
-
-    resolve_type fn
-      %MyApp.User{}, _ -> :user
-      %MyApp.Post{}, _ -> :post
-      _, _ -> nil
-    end
   end
 end
 
@@ -162,17 +115,6 @@ defmodule MyApp.GraphQL.Interfaces.Searchable do
     field :highlights, list_of(:string) do
       arg :max_length, :integer, default_value: 100
     end
-
-    resolve_type fn
-      %{__struct__: module}, _ ->
-        case module do
-          MyApp.User -> :user
-          MyApp.Post -> :post
-          MyApp.Comment -> :comment
-          _ -> nil
-        end
-      _, _ -> nil
-    end
   end
 end
 ```
@@ -183,7 +125,7 @@ Use inline fragments to access type-specific fields:
 
 ```graphql
 query {
-  node(id: "123") {
+  node(id: "VXNlcjoxMjM=") {
     id
     ... on User {
       email
@@ -223,27 +165,18 @@ defmodule MyApp.GraphQL.Interfaces.Node do
   interface "Node" do
     @desc "Globally unique identifier"
     field :id, non_null(:id)
-
-    resolve_type fn value, _ ->
-      GreenFairy.Registry.resolve_type(value, __MODULE__)
-    end
   end
 end
 ```
 
-With a root query field:
+Use with the `node_field()` macro in your queries:
 
 ```elixir
-queries do
-  field :node, :node do
-    arg :id, non_null(:id)
+defmodule MyApp.GraphQL.RootQuery do
+  use GreenFairy.Query
 
-    resolve fn _, %{id: global_id}, _ ->
-      case MyApp.GlobalId.decode(global_id) do
-        {:ok, type, local_id} -> fetch_by_type(type, local_id)
-        :error -> {:error, "Invalid ID"}
-      end
-    end
+  queries do
+    node_field()  # Auto-resolves any Node type by GlobalId
   end
 end
 ```
@@ -260,14 +193,26 @@ defmodule MyApp.GraphQL.Interfaces.Actor do
     field :id, non_null(:id)
     field :display_name, non_null(:string)
     field :avatar_url, :string
-
-    resolve_type fn
-      %MyApp.User{}, _ -> :user
-      %MyApp.Organization{}, _ -> :organization
-      %MyApp.Bot{}, _ -> :bot
-      _, _ -> nil
-    end
   end
+end
+```
+
+Then implement in your types:
+
+```elixir
+type "User", struct: MyApp.User do
+  implements MyApp.GraphQL.Interfaces.Actor
+  # fields...
+end
+
+type "Organization", struct: MyApp.Organization do
+  implements MyApp.GraphQL.Interfaces.Actor
+  # fields...
+end
+
+type "Bot", struct: MyApp.Bot do
+  implements MyApp.GraphQL.Interfaces.Actor
+  # fields...
 end
 ```
 
@@ -284,13 +229,28 @@ defmodule MyApp.GraphQL.Interfaces.Auditable do
     field :updated_by, :user
     field :created_at, non_null(:datetime)
     field :updated_at, non_null(:datetime)
-
-    resolve_type fn value, _ ->
-      GreenFairy.Registry.resolve_type(value, __MODULE__)
-    end
   end
 end
 ```
+
+## Advanced: Custom Type Resolution
+
+In rare cases where automatic resolution isn't sufficient (e.g., returning plain maps instead of structs), you can provide a custom `resolve_type` callback:
+
+```elixir
+interface "SearchResult" do
+  field :score, :float
+
+  # Only needed for non-struct returns
+  resolve_type fn
+    %{type: "user"}, _ -> :user
+    %{type: "post"}, _ -> :post
+    _, _ -> nil
+  end
+end
+```
+
+This is an escape hatch - prefer using structs with automatic resolution.
 
 ## Module Functions
 
@@ -312,6 +272,7 @@ Every interface module exports:
 
 ## Next Steps
 
-- [Object Types](object-types.html) - Types that implement interfaces
-- [Unions](unions.html) - Alternative to interfaces for polymorphism
-- [Relay](relay.html) - Relay-compliant Node interface
+- [Object Types](object-types.md) - Types that implement interfaces
+- [Unions](unions.md) - Alternative to interfaces for polymorphism
+- [Relay](relay.md) - Relay-compliant Node interface
+- [Expose](expose.md) - Auto-generate query fields from types

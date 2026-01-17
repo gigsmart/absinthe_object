@@ -180,6 +180,8 @@ Custom scalars can define their own CQL filter operators for advanced filtering.
 
 ### Basic CQL Operators
 
+CQL operator input types are **automatically generated** based on the scalar's underlying type. You don't need to define them manually.
+
 ```elixir
 defmodule MyApp.GraphQL.Scalars.Money do
   use GreenFairy.Scalar
@@ -200,36 +202,21 @@ defmodule MyApp.GraphQL.Scalars.Money do
     end
 
     serialize fn cents -> cents end
-
-    # Define available CQL operators
-    operators [:eq, :neq, :gt, :gte, :lt, :lte, :between]
-
-    # Define the CQL operator input type
-    cql_input "CqlOpMoneyInput" do
-      field :_eq, :money
-      field :_neq, :money
-      field :_gt, :money
-      field :_gte, :money
-      field :_lt, :money
-      field :_lte, :money
-      field :_in, list_of(non_null(:money))
-      field :_nin, list_of(non_null(:money))
-      field :_between, :money_range_input
-      field :_is_null, :boolean
-    end
   end
 end
 ```
 
-### Geospatial Scalar with Custom Filters
+Since Money parses to an integer, it will automatically use the integer operators (`_eq`, `_neq`, `_gt`, `_gte`, `_lt`, `_lte`, `_in`, `_nin`, `_is_null`).
 
-A complete example using PostGIS for geographic queries:
+### Geospatial Scalar
+
+For scalars that need custom database-specific operators (like PostGIS spatial functions), implement the `GreenFairy.CQL.Scalar` behaviour. See the [Custom Scalars Guide](custom-scalars.md) for details.
 
 ```elixir
 defmodule MyApp.GraphQL.Scalars.Point do
   use GreenFairy.Scalar
 
-  @moduledoc "GraphQL scalar for geographic points using PostGIS"
+  @moduledoc "GraphQL scalar for geographic points"
 
   scalar "Point" do
     description "A geographic point (longitude, latitude)"
@@ -251,37 +238,6 @@ defmodule MyApp.GraphQL.Scalars.Point do
     serialize fn %Geo.Point{coordinates: {lng, lat}} ->
       %{lng: lng, lat: lat}
     end
-
-    # Available operators
-    operators [:eq, :near, :within_distance, :within_bounds]
-
-    # CQL input type
-    cql_input "CqlOpPointInput" do
-      field :_eq, :point
-      field :_near, :point_near_input
-      field :_within_distance, :point_distance_input
-      field :_within_bounds, :bounding_box_input
-      field :_is_null, :boolean
-    end
-
-    # Custom filter: find points near a location
-    filter :near, fn field, %Geo.Point{} = point, opts ->
-      distance = opts[:distance] || 1000  # meters
-      {:fragment, "ST_DWithin(?::geography, ?::geography, ?)", field, point, distance}
-    end
-
-    # Custom filter: find points within distance
-    filter :within_distance, fn field, %{point: point, distance: distance} ->
-      {:fragment, "ST_DWithin(?::geography, ?::geography, ?)", field, point, distance}
-    end
-
-    # Custom filter: find points within bounding box
-    filter :within_bounds, fn field, %{sw: sw, ne: ne} ->
-      {:fragment,
-        "ST_Within(?, ST_MakeEnvelope(?, ?, ?, ?, 4326))",
-        field, sw.coordinates |> elem(0), sw.coordinates |> elem(1),
-        ne.coordinates |> elem(0), ne.coordinates |> elem(1)}
-    end
   end
 
   defp get_field(fields, name) do
@@ -293,7 +249,11 @@ defmodule MyApp.GraphQL.Scalars.Point do
 end
 ```
 
-Supporting input types for the Point scalar:
+For database-specific spatial operators, implement the `GreenFairy.CQL.Scalar` behaviour in a separate module. See the [Custom Scalars Guide](custom-scalars.md) for the full pattern.
+
+### Supporting Input Types
+
+When using custom operators, you may need supporting input types:
 
 ```elixir
 defmodule MyApp.GraphQL.Inputs.PointNearInput do
@@ -400,6 +360,6 @@ Every scalar module exports:
 
 ## Next Steps
 
-- [Object Types](object-types.html) - Using scalars in object fields
-- [Input Types](input-types.html) - Using scalars in inputs
-- [CQL](cql.html) - Advanced filtering with custom operators
+- [Object Types](object-types.md) - Using scalars in object fields
+- [Input Types](input-types.md) - Using scalars in inputs
+- [CQL](cql.md) - Advanced filtering with custom operators

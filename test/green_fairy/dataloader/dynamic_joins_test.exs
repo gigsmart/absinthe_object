@@ -89,7 +89,7 @@ defmodule GreenFairy.Dataloader.DynamicJoinsTest do
 
       result = DynamicJoins.invert_query(partition, [1, 2, 3])
 
-      assert %{query: query, partition: ^partition} = result
+      assert %{query: _query, partition: ^partition} = result
       assert result.scope_key == :id
     end
 
@@ -366,7 +366,7 @@ defmodule GreenFairy.Dataloader.DynamicJoinsTest do
 
   describe "partitioned/3" do
     defmodule MockRepo do
-      def all(query) do
+      def all(_query) do
         # Return mock results with partition_id_
         [
           %{id: 1, name: "Result 1", partition_id_: 10},

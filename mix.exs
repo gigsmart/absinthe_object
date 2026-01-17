@@ -118,11 +118,20 @@ defmodule GreenFairy.MixProject do
         {"README.md", [title: "Overview"]},
         "guides/getting-started.md",
         "guides/types.md",
+        "guides/object-types.md",
+        "guides/interfaces.md",
+        "guides/input-types.md",
+        "guides/enums.md",
+        "guides/unions.md",
+        "guides/scalars.md",
+        "guides/custom-scalars.md",
         "guides/authorization.md",
         "guides/relationships.md",
         "guides/connections.md",
         "guides/operations.md",
+        "guides/expose.md",
         "guides/relay.md",
+        "guides/global-id.md",
         "guides/global-config.md",
         "guides/cql.md",
         "guides/cql_getting_started.md",
@@ -136,13 +145,24 @@ defmodule GreenFairy.MixProject do
           "guides/getting-started.md",
           "guides/global-config.md"
         ],
-        "Core Concepts": [
+        Types: [
           "guides/types.md",
+          "guides/object-types.md",
+          "guides/interfaces.md",
+          "guides/input-types.md",
+          "guides/enums.md",
+          "guides/unions.md",
+          "guides/scalars.md",
+          "guides/custom-scalars.md"
+        ],
+        "Core Concepts": [
           "guides/authorization.md",
           "guides/relationships.md",
           "guides/connections.md",
           "guides/operations.md",
-          "guides/relay.md"
+          "guides/expose.md",
+          "guides/relay.md",
+          "guides/global-id.md"
         ],
         "CQL (Query Language)": [
           "guides/cql.md",

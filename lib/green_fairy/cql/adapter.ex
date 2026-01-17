@@ -376,6 +376,71 @@ defmodule GreenFairy.CQL.Adapter do
   end
 
   @doc """
+  Detects the appropriate CQL adapter from a struct module.
+
+  This function cascades through adapters to find the best match:
+  1. Ecto schema → Ecto-based adapter (Postgres, MySQL, etc.)
+  2. Elasticsearch mapping → Elasticsearch adapter
+  3. Plain struct → Memory adapter (fallback)
+
+  ## Examples
+
+      detect_adapter_for_struct(MyApp.User)
+      # => GreenFairy.CQL.Adapters.Postgres (if Ecto schema)
+
+      detect_adapter_for_struct(MyApp.PlainStruct)
+      # => GreenFairy.CQL.Adapters.Memory (fallback)
+
+  """
+  def detect_adapter_for_struct(nil), do: GreenFairy.CQL.Adapters.Memory
+
+  def detect_adapter_for_struct(struct_module) when is_atom(struct_module) do
+    cond do
+      # Check if it's an Ecto schema with a repo
+      ecto_schema?(struct_module) ->
+        repo = infer_repo(struct_module)
+        if repo, do: detect_adapter(repo), else: GreenFairy.CQL.Adapters.Memory
+
+      # Check if it's an Elasticsearch document
+      elasticsearch_document?(struct_module) ->
+        GreenFairy.CQL.Adapters.Elasticsearch
+
+      # Fallback to Memory adapter for plain structs
+      true ->
+        GreenFairy.CQL.Adapters.Memory
+    end
+  end
+
+  defp ecto_schema?(module) do
+    Code.ensure_loaded?(module) and function_exported?(module, :__schema__, 1)
+  end
+
+  defp elasticsearch_document?(module) do
+    Code.ensure_loaded?(module) and
+      (function_exported?(module, :__es_index__, 0) or
+         function_exported?(module, :__mapping__, 0))
+  end
+
+  defp infer_repo(struct_module) do
+    # Try to find repo from module prefix
+    # e.g., MyApp.Accounts.User -> MyApp.Repo
+    parts = Module.split(struct_module)
+
+    if length(parts) >= 2 do
+      app_module = parts |> Enum.take(1) |> Module.concat()
+      repo_module = Module.concat(app_module, Repo)
+
+      if Code.ensure_loaded?(repo_module) and function_exported?(repo_module, :__adapter__, 0) do
+        repo_module
+      else
+        nil
+      end
+    else
+      nil
+    end
+  end
+
+  @doc """
   Validates that an operator is supported by the adapter for a given field type.
 
   Returns `:ok` if supported, `{:error, reason}` otherwise.

@@ -120,79 +120,21 @@ end
 
 ## Input Authorization
 
-Control which fields different users can submit:
-
-```elixir
-defmodule MyApp.GraphQL.Inputs.UpdateUserInput do
-  use GreenFairy.Input
-
-  input "UpdateUserInput" do
-    authorize fn _input, ctx ->
-      current_user = ctx[:current_user]
-
-      cond do
-        current_user && current_user.admin -> :all
-        current_user -> [:name, :email, :avatar_url]
-        true -> :none
-      end
-    end
-
-    field :name, :string
-    field :email, :string
-    field :avatar_url, :string
-    field :role, :user_role         # Admin only
-    field :verified, :boolean       # Admin only
-    field :permissions, list_of(:string)  # Admin only
-  end
-end
-```
-
-### Validating in Resolvers
-
-Use `__filter_input__/2` to validate and filter unauthorized fields:
-
-```elixir
-field :update_user, :user do
-  arg :id, non_null(:id)
-  arg :input, non_null(:update_user_input)
-
-  resolve fn _, %{id: id, input: raw_input}, ctx ->
-    case UpdateUserInput.__filter_input__(raw_input, ctx) do
-      {:ok, filtered_input} ->
-        # filtered_input only contains authorized fields
-        MyApp.Accounts.update_user(id, filtered_input)
-
-      {:error, {:unauthorized_fields, fields}} ->
-        {:error, "Cannot update fields: #{Enum.join(fields, ", ")}"}
-    end
-  end
-end
-```
-
-### Strict vs Lenient Mode
-
-By default, unauthorized fields are silently removed. For strict validation:
+Control which fields users can submit:
 
 ```elixir
 input "UpdateUserInput" do
-  authorize fn _input, ctx, opts ->
-    # opts[:strict] can be passed from resolver
-    if ctx[:current_user]?.admin do
-      :all
-    else
-      [:name, :email]
-    end
+  authorize fn _input, ctx ->
+    if ctx[:current_user]?.admin, do: :all, else: [:name, :email]
   end
 
-  # ...
-end
-
-# In resolver - strict mode raises on unauthorized fields
-case UpdateUserInput.__filter_input__(input, ctx, strict: true) do
-  {:ok, filtered} -> # proceed
-  {:error, {:unauthorized_fields, fields}} -> # handle error
+  field :name, :string
+  field :email, :string
+  field :role, :user_role  # Admin only
 end
 ```
+
+See the [Authorization Guide](authorization.md) for details.
 
 ## Common Patterns
 
@@ -241,7 +183,7 @@ end
 ```
 
 Or use the `relay_mutation` macro which handles this automatically.
-See the [Relay Guide](relay.html).
+See the [Relay Guide](relay.md).
 
 ### Filter Inputs
 
@@ -389,7 +331,7 @@ Every input module exports:
 
 ## Next Steps
 
-- [Object Types](object-types.html) - Query result types
-- [Mutations](operations.html) - Using inputs in mutations
-- [Authorization](authorization.html) - Input field authorization
-- [Relay](relay.html) - Relay mutation conventions
+- [Object Types](object-types.md) - Query result types
+- [Mutations](operations.md) - Using inputs in mutations
+- [Authorization](authorization.md) - Input field authorization
+- [Relay](relay.md) - Relay mutation conventions

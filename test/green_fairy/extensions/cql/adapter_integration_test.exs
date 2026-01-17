@@ -160,16 +160,12 @@ defmodule GreenFairy.CQL.AdapterIntegrationTest do
     test "generate_all with PostgreSQL adapter includes all array operators" do
       types = OperatorInput.generate_all(adapter: Postgres)
 
-      # Find the string array operator type
-      # The AST format is {:__block__, _, [{:@, _, [{:desc, _, [description]}]}, {:input_object, _, [identifier, [do: ...]]}]}
-      # or just {:input_object, _, [identifier, [do: ...]]} depending on whether @desc is present
+      # Find the string array operator type using string-based matching
+      # (AST format varies depending on macro expansion)
       string_array_ast =
         Enum.find(types, fn ast ->
-          case ast do
-            {:__block__, _, [_desc_attr, {:input_object, _, [:cql_op_string_array_input | _]}]} -> true
-            {:input_object, _, [:cql_op_string_array_input | _]} -> true
-            _ -> false
-          end
+          ast_string = Macro.to_string(ast)
+          String.contains?(ast_string, "cql_op_string_array_input")
         end)
 
       assert string_array_ast != nil

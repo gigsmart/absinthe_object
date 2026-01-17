@@ -55,7 +55,7 @@ defmodule GreenFairy.Field.DataloaderTest do
       end
 
       @impl true
-      def fetch(source, batch_key, item) do
+      def fetch(_source, batch_key, _item) do
         # Return test data based on the batch key
         case batch_key do
           {:posts, _args} -> {:ok, [%{id: 1, title: "Post 1"}, %{id: 2, title: "Post 2"}]}
@@ -77,6 +77,16 @@ defmodule GreenFairy.Field.DataloaderTest do
       @impl true
       def timeout(_source) do
         :infinity
+      end
+
+      @impl true
+      def async?(_source) do
+        false
+      end
+
+      @impl true
+      def put(source, _batch_key, _key, _value) do
+        source
       end
     end
 

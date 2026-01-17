@@ -193,6 +193,12 @@ defmodule GreenFairy.CQL.Schema do
 
       # Import the types from the generated module
       import_types(unquote(cql_types_module))
+
+      # Import period types for datetime operators
+      import_types(GreenFairy.CQL.Scalars.DateTime.PeriodDirection)
+      import_types(GreenFairy.CQL.Scalars.DateTime.PeriodUnit)
+      import_types(GreenFairy.CQL.Scalars.DateTime.PeriodInput)
+      import_types(GreenFairy.CQL.Scalars.DateTime.CurrentPeriodInput)
     end
   end
 

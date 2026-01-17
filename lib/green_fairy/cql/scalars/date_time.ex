@@ -43,12 +43,7 @@ defmodule GreenFairy.CQL.Scalars.DateTime do
   @behaviour GreenFairy.CQL.Scalar
 
   @base_operators [:_eq, :_ne, :_neq, :_gt, :_gte, :_lt, :_lte, :_in, :_nin, :_is_null]
-  # Period operators require auxiliary types that haven't been implemented yet:
-  # :_between requires a between input type
-  # :_period requires :cql_period_input
-  # :_current_period requires :cql_current_period_input
-  # These will be added when the period operators feature is implemented
-  @period_operators [:_between]
+  @period_operators [:_between, :_period, :_current_period]
 
   @impl true
   def operator_input(:postgres) do

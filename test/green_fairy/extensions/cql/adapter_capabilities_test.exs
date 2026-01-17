@@ -138,12 +138,10 @@ defmodule GreenFairy.CQL.AdapterCapabilitiesTest do
 
       assert caps.adapter == :mysql
       assert caps.version == {5, 5, 62}
-      # Note: Due to tuple comparison (3-element vs 2-element), version >= {5, 7}
-      # evaluates to true because Elixir compares tuple sizes first.
-      # This is a known limitation in the capability detection code.
-      assert caps.full_text_search == true
-      # json_support would be "true" due to tuple comparison quirk
-      # cte_support would also be affected
+      # MySQL 5.5.x does not have full-text search (requires >= 5.6.0)
+      assert caps.full_text_search == false
+      # MySQL 5.5.x does not have JSON support (requires >= 5.7.0)
+      assert caps.json_support == false
     end
 
     test "detects SQLite capabilities with JSON" do

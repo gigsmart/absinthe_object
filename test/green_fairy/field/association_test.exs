@@ -2,8 +2,8 @@ defmodule GreenFairy.Field.AssociationTest do
   use ExUnit.Case, async: true
 
   defmodule TestRepo do
-    def all(queryable), do: []
-    def get(queryable, id), do: nil
+    def all(_queryable), do: []
+    def get(_queryable, _id), do: nil
   end
 
   defmodule TestAuthor do
@@ -81,7 +81,7 @@ defmodule GreenFairy.Field.AssociationTest do
         )
 
       # Should generate a field with list_of and pagination args
-      assert {:field, [], [:comments, {:list_of, [], [type_identifier]}, opts]} = ast
+      assert {:field, [], [:comments, {:list_of, [], [type_identifier]}, _opts]} = ast
       assert is_atom(type_identifier)
 
       # Check that pagination args are present

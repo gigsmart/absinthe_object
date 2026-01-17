@@ -94,8 +94,6 @@ Add filters for computed fields or fields not in the Ecto schema:
 
 ```elixir
 type "User", struct: MyApp.User do
-  use CQL
-
   field :id, non_null(:id)
   field :first_name, :string
   field :last_name, :string
@@ -136,8 +134,6 @@ CQL respects your type's authorization rules. Users can only filter on fields th
 
 ```elixir
 type "User", struct: MyApp.User do
-  use CQL
-
   authorize fn user, ctx ->
     if ctx[:current_user]?.admin do
       :all
@@ -237,8 +233,6 @@ Then use the scalar in your type:
 
 ```elixir
 type "Location", struct: MyApp.Location do
-  use CQL
-
   field :id, non_null(:id)
   field :name, :string
   field :coordinates, :point  # Uses Geo.Point with custom operators

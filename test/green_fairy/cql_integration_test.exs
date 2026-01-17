@@ -8,12 +8,13 @@ defmodule GreenFairy.CQLIntegrationTest do
     def __schema__(:prefix), do: nil
     def __schema__(:fields), do: [:id, :name, :email, :age]
     def __schema__(:primary_key), do: [:id]
+    def __schema__(:associations), do: []
+    def __schema__(:embeds), do: []
+
     def __schema__(:type, :id), do: :id
     def __schema__(:type, :name), do: :string
     def __schema__(:type, :email), do: :string
     def __schema__(:type, :age), do: :integer
-    def __schema__(:associations), do: []
-    def __schema__(:embeds), do: []
     def __schema__(:association, _field), do: nil
   end
 
@@ -71,12 +72,13 @@ defmodule GreenFairy.CQLIntegrationTest do
       def __schema__(:prefix), do: nil
       def __schema__(:fields), do: [:id, :title, :first_name, :last_name]
       def __schema__(:primary_key), do: [:id]
+      def __schema__(:associations), do: []
+      def __schema__(:embeds), do: []
+
       def __schema__(:type, :id), do: :id
       def __schema__(:type, :title), do: :string
       def __schema__(:type, :first_name), do: :string
       def __schema__(:type, :last_name), do: :string
-      def __schema__(:associations), do: []
-      def __schema__(:embeds), do: []
     end
 
     defmodule TestPostType do

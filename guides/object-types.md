@@ -54,7 +54,7 @@ end
 
 ### Simple Fields
 
-Fields map directly to struct/map keys:
+Fields map directly to struct/map keys. Use atoms for built-in scalars:
 
 ```elixir
 type "User", struct: MyApp.User do
@@ -108,243 +108,139 @@ end
 
 ### Fields with Arguments
 
+For fields returning other types, use module references:
+
 ```elixir
-type "User", struct: MyApp.User do
-  field :avatar_url, :string do
-    arg :size, :integer, default_value: 100
+defmodule MyApp.GraphQL.Types.User do
+  use GreenFairy.Type
 
-    resolve fn user, %{size: size}, _ ->
-      {:ok, "#{user.avatar_base_url}?s=#{size}"}
+  alias MyApp.GraphQL.Types
+  alias MyApp.GraphQL.Enums
+
+  type "User", struct: MyApp.User do
+    field :avatar_url, :string do
+      arg :size, :integer, default_value: 100
+
+      resolve fn user, %{size: size}, _ ->
+        {:ok, "#{user.avatar_base_url}?s=#{size}"}
+      end
     end
-  end
 
-  field :posts, list_of(:post) do
-    arg :limit, :integer, default_value: 10
-    arg :status, :post_status
+    field :posts, list_of(Types.Post) do
+      arg :limit, :integer, default_value: 10
+      arg :status, Enums.PostStatus
 
-    resolve fn user, args, _ ->
-      {:ok, MyApp.Posts.list_for_user(user.id, args)}
+      resolve fn user, args, _ ->
+        {:ok, MyApp.Posts.list_for_user(user.id, args)}
+      end
     end
   end
 end
 ```
-
-## Batch Loading
-
-Use `loader` for efficient batch loading (prevents N+1 queries):
-
-```elixir
-type "User", struct: MyApp.User do
-  field :organization, :organization do
-    loader fn users, _args, _ctx ->
-      org_ids = Enum.map(users, & &1.organization_id) |> Enum.uniq()
-      orgs = MyApp.Organizations.get_many(org_ids)
-      orgs_by_id = Map.new(orgs, &{&1.id, &1})
-
-      Map.new(users, fn user ->
-        {user, Map.get(orgs_by_id, user.organization_id)}
-      end)
-    end
-  end
-
-  field :recent_activity, list_of(:activity) do
-    arg :limit, :integer, default_value: 5
-
-    loader fn users, args, _ctx ->
-      user_ids = Enum.map(users, & &1.id)
-      activities = MyApp.Activity.recent_for_users(user_ids, args.limit)
-
-      Enum.group_by(activities, & &1.user_id)
-      |> then(fn grouped ->
-        Map.new(users, fn user ->
-          {user, Map.get(grouped, user.id, [])}
-        end)
-      end)
-    end
-  end
-end
-```
-
-The loader function receives:
-1. List of parent objects (all users being resolved)
-2. Arguments
-3. Context
-
-Returns a map of `parent -> resolved_value`.
-
-**Note:** A field cannot have both `resolve` and `loader` - they are mutually exclusive.
 
 ## Associations
 
-Use `assoc` for Ecto associations with automatic DataLoader integration:
+Associations are automatically batch-loaded using DataLoader:
 
 ```elixir
-type "User", struct: MyApp.User do
-  field :id, non_null(:id)
+defmodule MyApp.GraphQL.Types.User do
+  use GreenFairy.Type
 
-  # Automatically uses DataLoader
-  assoc :organization
-  assoc :posts
-  assoc :comments
+  alias MyApp.GraphQL.Types
 
-  # With options
-  assoc :active_posts, as: :posts, where: [status: :published]
+  type "User", struct: MyApp.User do
+    field :id, non_null(:id)
+
+    # Automatically batch-loaded
+    field :organization, Types.Organization
+    field :posts, list_of(Types.Post)
+  end
 end
 ```
 
-See the [Relationships Guide](relationships.html) for details.
+No custom loaders needed - GreenFairy detects associations from your Ecto schema and uses DataLoader automatically.
+
+See the [Relationships Guide](relationships.md) for advanced patterns.
 
 ## Connections (Pagination)
 
 Use `connection` for Relay-style pagination:
 
 ```elixir
-type "User", struct: MyApp.User do
-  field :id, non_null(:id)
+defmodule MyApp.GraphQL.Types.User do
+  use GreenFairy.Type
 
-  connection :posts, node_type: :post do
-    arg :status, :post_status
+  alias MyApp.GraphQL.Types
+  alias MyApp.GraphQL.Enums
 
-    resolve fn user, args, _ ->
-      MyApp.Posts.paginate_for_user(user.id, args)
+  type "User", struct: MyApp.User do
+    field :id, non_null(:id)
+
+    connection :posts, Types.Post do
+      arg :status, Enums.PostStatus
+
+      resolve fn user, args, _ ->
+        MyApp.Posts.paginate_for_user(user.id, args)
+      end
     end
   end
 end
 ```
 
-See the [Connections Guide](connections.html) for details.
+See the [Connections Guide](connections.md) for details.
 
 ## Implementing Interfaces
 
 ```elixir
-type "User", struct: MyApp.User do
-  implements MyApp.GraphQL.Interfaces.Node
-  implements MyApp.GraphQL.Interfaces.Timestamped
+defmodule MyApp.GraphQL.Types.User do
+  use GreenFairy.Type
 
-  field :id, non_null(:id)
-  field :inserted_at, non_null(:datetime)
-  field :updated_at, non_null(:datetime)
-  # ... other fields
+  alias MyApp.GraphQL.Interfaces
+
+  type "User", struct: MyApp.User do
+    implements Interfaces.Node
+    implements Interfaces.Timestamped
+
+    field :id, non_null(:id)
+    field :inserted_at, non_null(:datetime)
+    field :updated_at, non_null(:datetime)
+    # ... other fields
+  end
 end
 ```
 
 ## Authorization
 
-Control field visibility based on the current user:
+Control field visibility with the `authorize` callback:
 
 ```elixir
 type "User", struct: MyApp.User do
   authorize fn user, ctx ->
-    current_user = ctx[:current_user]
-
-    cond do
-      # Admins see everything
-      current_user && current_user.admin -> :all
-
-      # Users see everything about themselves
-      current_user && current_user.id == user.id -> :all
-
-      # Others see limited fields
-      true -> [:id, :name, :avatar_url]
-    end
+    if ctx[:current_user]?.admin, do: :all, else: [:id, :name]
   end
 
   field :id, non_null(:id)
   field :name, :string
-  field :avatar_url, :string
-  field :email, :string          # Hidden from others
-  field :phone, :string          # Hidden from others
-  field :ssn, :string            # Hidden from others
+  field :email, :string  # Hidden from non-admins
 end
 ```
 
-### Path-Aware Authorization
+See the [Authorization Guide](authorization.md) for details.
 
-Access the query path for context-sensitive authorization:
+## CQL Filtering
 
-```elixir
-type "Comment", struct: MyApp.Comment do
-  authorize fn comment, ctx, info ->
-    # info.path = [:query, :post, :comments]
-    # info.parent = %Post{...}
-    # info.parents = [%Post{...}]
-
-    post = info.parent
-
-    if post.public do
-      :all
-    else
-      [:id, :body]  # Hide author info on private posts
-    end
-  end
-
-  field :id, non_null(:id)
-  field :body, :string
-  field :author, :user
-end
-```
-
-### Field-Level Unauthorized Behavior
-
-```elixir
-type "User", struct: MyApp.User, on_unauthorized: :return_nil do
-  # Type default: return nil for unauthorized fields
-
-  field :id, non_null(:id)
-  field :name, :string
-  field :email, :string
-  field :ssn, :string, on_unauthorized: :error  # Override: raise error
-end
-```
-
-See the [Authorization Guide](authorization.html) for details.
-
-## CQL (Automatic Filtering)
-
-Types with a `:struct` option automatically get CQL support:
+Types with a `:struct` option automatically get CQL filter and order inputs:
 
 ```elixir
 type "User", struct: MyApp.User do
   field :id, non_null(:id)
   field :name, :string
-  field :email, :string
-  field :status, :user_status
   field :age, :integer
 end
+# Generates: CqlFilterUserInput, CqlOrderUserInput
 ```
 
-This generates `CqlFilterUserInput` and `CqlOrderUserInput` types automatically.
-
-### Custom Filters
-
-Add custom filters for computed fields:
-
-```elixir
-type "User", struct: MyApp.User do
-  field :id, non_null(:id)
-  field :first_name, :string
-  field :last_name, :string
-
-  # Custom filter for computed field
-  custom_filter :full_name, [:_eq, :_ilike], fn query, op, value ->
-    import Ecto.Query
-
-    case op do
-      :_eq ->
-        from(u in query,
-          where: fragment("concat(?, ' ', ?)", u.first_name, u.last_name) == ^value
-        )
-
-      :_ilike ->
-        from(u in query,
-          where: ilike(fragment("concat(?, ' ', ?)", u.first_name, u.last_name), ^"%#{value}%")
-        )
-    end
-  end
-end
-```
-
-See the [CQL Guide](cql.html) for details.
+See the [CQL Guide](cql.md) for details.
 
 ## Complete Example
 
@@ -352,68 +248,35 @@ See the [CQL Guide](cql.html) for details.
 defmodule MyApp.GraphQL.Types.User do
   use GreenFairy.Type
 
-  type "User", struct: MyApp.User, on_unauthorized: :return_nil do
+  alias MyApp.GraphQL.Interfaces
+  alias MyApp.GraphQL.Types
+  alias MyApp.GraphQL.Enums
+
+  type "User", struct: MyApp.User do
     @desc "A user account in the system"
 
-    implements MyApp.GraphQL.Interfaces.Node
-    implements MyApp.GraphQL.Interfaces.Timestamped
+    implements Interfaces.Node
 
-    authorize fn user, ctx ->
-      case ctx[:current_user] do
-        %{admin: true} -> :all
-        %{id: id} when id == user.id -> :all
-        _ -> [:id, :name, :avatar_url, :inserted_at]
-      end
-    end
-
-    # Basic fields
+    # Basic fields - auto-resolved from struct
     field :id, non_null(:id)
     field :name, :string
     field :email, non_null(:string)
-    field :avatar_url, :string
-    field :status, :user_status
+    field :status, Enums.UserStatus
     field :inserted_at, non_null(:datetime)
-    field :updated_at, non_null(:datetime)
 
-    # Computed field
+    # Association - auto batch-loaded
+    field :organization, Types.Organization
+    field :posts, list_of(Types.Post)
+
+    # Computed field (only when you need custom logic)
     field :display_name, non_null(:string) do
       resolve fn user, _, _ ->
         {:ok, user.name || user.email}
       end
     end
 
-    # Field with arguments
-    field :avatar, :string do
-      arg :size, :integer, default_value: 100
-
-      resolve fn user, %{size: size}, _ ->
-        {:ok, "#{user.avatar_url}?s=#{size}"}
-      end
-    end
-
-    # Association
-    assoc :organization
-
-    # Connection
-    connection :posts, node_type: :post do
-      arg :status, :post_status
-
-      resolve fn user, args, _ ->
-        MyApp.Posts.paginate_for_user(user.id, args)
-      end
-    end
-
-    # Batch-loaded field
-    field :unread_notifications_count, :integer do
-      loader fn users, _args, _ctx ->
-        user_ids = Enum.map(users, & &1.id)
-        counts = MyApp.Notifications.unread_counts(user_ids)
-
-        Map.new(users, fn user ->
-          {user, Map.get(counts, user.id, 0)}
-        end)
-      end
-    end
+    # Connection with pagination
+    connection :friends, Types.User
   end
 end
 ```
@@ -442,7 +305,7 @@ Every type module exports:
 
 ## Next Steps
 
-- [Relationships](relationships.html) - Associations and DataLoader
-- [Connections](connections.html) - Relay-style pagination
-- [Authorization](authorization.html) - Field-level access control
-- [CQL](cql.html) - Automatic filtering and sorting
+- [Relationships](relationships.md) - Associations and DataLoader
+- [Connections](connections.md) - Relay-style pagination
+- [Authorization](authorization.md) - Field-level access control
+- [CQL](cql.md) - Automatic filtering and sorting

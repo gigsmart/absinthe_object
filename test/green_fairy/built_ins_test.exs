@@ -65,7 +65,7 @@ defmodule GreenFairy.BuiltInsTest do
 
       # This will trigger the resolve_type function
       result = Absinthe.run(query, NodeSchema)
-      assert {:ok, %{data: data}} = result
+      assert {:ok, %{data: _data}} = result
       # The result may have errors due to type resolution returning nil
       # but the code path is exercised
     end

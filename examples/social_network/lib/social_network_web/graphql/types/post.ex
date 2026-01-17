@@ -7,6 +7,9 @@ defmodule SocialNetworkWeb.GraphQL.Types.Post do
   type "Post", struct: SocialNetwork.Content.Post do
     implements Interfaces.Node
 
+    # Expose this type as a query field - auto-generates: post(id: ID!): Post
+    expose :id
+
     # CQL is automatically enabled for types with structs!
     # Authorization: all users can see all post fields
     authorize fn _post, _ctx ->

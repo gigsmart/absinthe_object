@@ -2,6 +2,7 @@ defmodule GreenFairy.CQL.OperatorInputTest do
   use ExUnit.Case, async: true
 
   alias GreenFairy.CQL.Schema.OperatorInput
+  alias GreenFairy.CQL.Adapters.Postgres
 
   describe "type_for/1" do
     test "returns operator type for id" do
@@ -109,9 +110,9 @@ defmodule GreenFairy.CQL.OperatorInputTest do
     end
   end
 
-  describe "operator_types/0" do
+  describe "adapter.operator_inputs/0" do
     test "returns map of operator types" do
-      types = OperatorInput.operator_types()
+      types = Postgres.operator_inputs()
 
       assert is_map(types)
       assert Map.has_key?(types, :cql_op_id_input)
@@ -128,7 +129,7 @@ defmodule GreenFairy.CQL.OperatorInputTest do
     end
 
     test "each operator type has operators, scalar, and description" do
-      for {_identifier, {operators, scalar, description}} <- OperatorInput.operator_types() do
+      for {_identifier, {operators, scalar, description}} <- Postgres.operator_inputs() do
         assert is_list(operators)
         assert is_atom(scalar)
         assert is_binary(description)
@@ -136,7 +137,7 @@ defmodule GreenFairy.CQL.OperatorInputTest do
     end
 
     test "id operators include eq, neq, in, is_nil" do
-      {operators, _scalar, _desc} = OperatorInput.operator_types()[:cql_op_id_input]
+      {operators, _scalar, _desc} = Postgres.operator_inputs()[:cql_op_id_input]
       assert :_eq in operators
       assert :_neq in operators
       assert :_in in operators
@@ -144,7 +145,7 @@ defmodule GreenFairy.CQL.OperatorInputTest do
     end
 
     test "string operators include text operations" do
-      {operators, _scalar, _desc} = OperatorInput.operator_types()[:cql_op_string_input]
+      {operators, _scalar, _desc} = Postgres.operator_inputs()[:cql_op_string_input]
       assert :_eq in operators
       assert :_neq in operators
       assert :_contains in operators
@@ -155,7 +156,7 @@ defmodule GreenFairy.CQL.OperatorInputTest do
     end
 
     test "integer operators include comparison operations" do
-      {operators, _scalar, _desc} = OperatorInput.operator_types()[:cql_op_integer_input]
+      {operators, _scalar, _desc} = Postgres.operator_inputs()[:cql_op_integer_input]
       assert :_eq in operators
       assert :_neq in operators
       assert :_gt in operators
@@ -167,7 +168,7 @@ defmodule GreenFairy.CQL.OperatorInputTest do
     end
 
     test "boolean operators are limited" do
-      {operators, _scalar, _desc} = OperatorInput.operator_types()[:cql_op_boolean_input]
+      {operators, _scalar, _desc} = Postgres.operator_inputs()[:cql_op_boolean_input]
       assert :_eq in operators
       assert :_is_null in operators
       refute :gt in operators
@@ -177,7 +178,6 @@ defmodule GreenFairy.CQL.OperatorInputTest do
 
   describe "generate_all/0" do
     test "returns list of AST for all operator types" do
-      alias GreenFairy.CQL.Adapters.Postgres
       ast_list = OperatorInput.generate_all(adapter: Postgres)
 
       assert is_list(ast_list)
@@ -186,11 +186,11 @@ defmodule GreenFairy.CQL.OperatorInputTest do
     end
 
     test "each generated AST is valid quoted expression" do
-      alias GreenFairy.CQL.Adapters.Postgres
-
       for ast <- OperatorInput.generate_all(adapter: Postgres) do
         assert is_tuple(ast)
-        assert elem(ast, 0) == :__block__
+        # AST can be a block or a direct macro call
+        ast_string = Macro.to_string(ast)
+        assert ast_string =~ "input_object"
       end
     end
   end
@@ -199,7 +199,9 @@ defmodule GreenFairy.CQL.OperatorInputTest do
     test "generates input_object AST" do
       ast = OperatorInput.generate_input(:test_input, [:eq, :neq], :string, "Test input")
 
-      assert {:__block__, _, _} = ast
+      ast_string = Macro.to_string(ast)
+      assert ast_string =~ "input_object"
+      assert ast_string =~ "test_input"
     end
   end
 end

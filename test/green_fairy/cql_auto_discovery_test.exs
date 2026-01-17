@@ -126,12 +126,9 @@ defmodule GreenFairy.CQLAutoDiscoveryTest do
       filter_ast = TestSchema4.Types.Article.__cql_generate_filter_input__()
 
       # The AST should be a quoted expression that defines an input object
-      # It may be wrapped in a block with @desc attribute
-      case filter_ast do
-        {:input_object, _, _} -> :ok
-        {:__block__, _, [{:@, _, [{:desc, _, _}]}, {:input_object, _, _}]} -> :ok
-        other -> flunk("Expected input_object AST, got: #{inspect(other)}")
-      end
+      ast_string = Macro.to_string(filter_ast)
+      assert ast_string =~ "input_object"
+      assert ast_string =~ "cql_filter_article_input"
     end
   end
 

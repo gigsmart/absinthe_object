@@ -225,15 +225,17 @@ defmodule GreenFairy.AdapterTest do
       assert result == explicit_adapter
     end
 
-    test "returns error for non-Ecto struct without explicit adapter" do
+    test "returns Memory adapter for non-Ecto struct without explicit adapter" do
+      # Memory adapter is the fallback for plain structs
       result = Adapter.filter_adapter_for(PlainStruct)
-      assert result == {:error, :unknown_struct_type}
+      assert %GreenFairy.Adapters.Memory{struct_module: PlainStruct} = result
     end
 
-    test "returns error when repo cannot be inferred" do
+    test "returns Memory adapter when repo cannot be inferred" do
       # MockEctoSchema has __schema__ but no inferable repo
+      # Falls back to Memory adapter
       result = Adapter.filter_adapter_for(MockEctoSchema)
-      assert result == {:error, :repo_not_found}
+      assert %GreenFairy.Adapters.Memory{struct_module: MockEctoSchema} = result
     end
   end
 

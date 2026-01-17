@@ -69,6 +69,38 @@ end
 
 ## Global Object Identification
 
+### Custom GlobalId Implementation
+
+GreenFairy uses a behaviour-based approach for global IDs, allowing you to implement custom encoding:
+
+```elixir
+defmodule MyApp.CustomGlobalId do
+  @behaviour GreenFairy.GlobalId
+
+  @impl true
+  def encode(type_name, id) do
+    # Your custom encoding (e.g., Hashids, UUIDs, etc.)
+    MyApp.Hashids.encode("#{type_name}:#{id}")
+  end
+
+  @impl true
+  def decode(global_id) do
+    case MyApp.Hashids.decode(global_id) do
+      {:ok, decoded} ->
+        [type_name, id] = String.split(decoded, ":")
+        {:ok, {type_name, id}}
+      :error ->
+        {:error, :invalid_global_id}
+    end
+  end
+end
+
+# Configure in your schema:
+use GreenFairy.Schema,
+  repo: MyApp.Repo,
+  global_id: MyApp.CustomGlobalId
+```
+
 ### Global IDs
 
 The `global_id` macro generates a field that returns a Base64-encoded ID containing both the type name and local ID:
@@ -81,7 +113,7 @@ global_id :id, type_name: "User" # Override the type name
 
 ### Encoding and Decoding
 
-Use `GreenFairy.Relay.GlobalId` to work with global IDs:
+Use `GreenFairy.GlobalId` to work with global IDs:
 
 ```elixir
 alias GreenFairy.Relay.GlobalId

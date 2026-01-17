@@ -415,7 +415,7 @@ defmodule GreenFairy.Middleware.QueryComplexityTest do
     }
   end
 
-  defp build_resolution_with_context(repo, state \\ []) do
+  defp build_resolution_with_context(repo, state) do
     query = Keyword.get(state, :cql_query)
 
     context =

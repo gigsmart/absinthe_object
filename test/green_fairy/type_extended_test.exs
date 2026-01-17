@@ -379,8 +379,9 @@ defmodule GreenFairy.TypeExtendedTest do
       end
     end
 
-    test "__green_fairy_extensions__ returns empty list when no extensions" do
-      assert ExtType.__green_fairy_extensions__() == []
+    test "__green_fairy_extensions__ returns CQL when no explicit extensions" do
+      # CQL is auto-registered on all types by default
+      assert ExtType.__green_fairy_extensions__() == [GreenFairy.CQL]
     end
   end
 
